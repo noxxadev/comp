@@ -1,118 +1,133 @@
 <!DOCTYPE html>
 <html lang="id">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IP & Location ID Validator - DataAnalyzer</title>
+    <title>IP Validator — COMP Tools</title>
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="index-hub.css">
     <link rel="stylesheet" href="iplocationvalidator.css">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
-
 <body>
-    <!-- Navigation -->
-    <nav class="analyzer-nav">
-        <div class="nav-container">
-            <a href="index.html" class="back-button">
-                <i class="fas fa-arrow-left"></i>
-                Kembali ke Beranda
-            </a>
-            
-            <div class="nav-actions">
-                <a href="index.html" class="nav-link">
-                    <i class="fas fa-home"></i>
-                    Beranda
-                </a>
+<div class="hub-shell validator-shell">
+    <aside class="hub-sidebar validator-sidebar" id="sidebar">
+        <div class="hub-logo">
+            <div class="hub-mark">CP</div>
+            <div>
+                <div class="hub-brand">COMP Tools</div>
+                <div class="hub-subbrand">Data &amp; comparison suite</div>
             </div>
         </div>
-    </nav>
+        <nav class="hub-nav" aria-label="Tool navigation">
+            <a href="index.html"><i class="fas fa-grid-2"></i><span>Tools Hub</span></a>
+            <a href="excel-analyzer.html"><i class="fas fa-file-excel"></i><span>Sub Account</span></a>
+            <a href="offline-analyzer.html"><i class="fas fa-database"></i><span>Offline</span></a>
+            <a class="active" href="iplocationvalidator.html"><i class="fas fa-location-dot"></i><span>IP Validator</span></a>
+            <a href="data-matcher.html"><i class="fas fa-link"></i><span>Pool vs Dashboard</span></a>
+            <a href="bulk-compare.html"><i class="fas fa-scale-balanced"></i><span>Bulk Compare</span></a>
+            <a href="theme-preview.html"><i class="fas fa-palette"></i><span>Theme Preview</span></a>
+        </nav>
+        <div class="hub-meta"><strong>IP VALIDATOR</strong><span>Miner vs Dashboard</span></div>
+    </aside>
 
-    <div class="analyzer-container">
-        <div class="analyzer-header">
-            <h1><i class="fas fa-check-circle"></i> Miner Vs Dashboard</h1>
-            <p>Validasi kesesuaian IP MinerPlus dengan Location ID Machine List</p>
-        </div>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-        <div class="form-container">
-            <div class="info">
+    <main class="hub-main validator-main">
+        <div class="hub-container">
+            <section class="hub-top validator-top">
                 <div>
-                    <strong>VALIDASI DATA MINERPLUS & MACHINE LIST</strong>
-                    <ul style="margin-top: 5px; margin-left: 20px;">
-                        <li>Upload file MinerPlus (device list)</li>
-                        <li>Upload file Machine List (machinelist)</li>
-                        <li>Masukkan IP yang belum di delete</li>
-                    </ul>
+                    <div class="hub-kicker">COMP / Tools</div>
+                    <h1 class="hub-title">IP Validator</h1>
+                    <p class="hub-desc">Validasi kesesuaian IP MinerPlus dengan Location ID dari Machine List.</p>
                 </div>
-                <div style="margin-top: 10px;">
-                    <strong>Master Data Status:</strong> <span id="masterDataStatus">Loading...</span>
-                </div>
-            </div>
+                <button class="validator-menu-toggle" id="menuToggle" type="button" aria-label="Toggle menu">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </section>
 
-            <div class="form-row">
-                <!-- Upload MinerPlus -->
-                <div class="form-group">
-                    <label for="minerPlusFile"><i class="fas fa-file-excel" style="color: #217346;"></i> Upload File
-                        MinerPlus:</label>
-                    <input type="file" id="minerPlusFile" accept=".xls,.xlsx" />
-                    <div id="minerPlusFileError" class="error"></div>
+            <section class="hub-hero validator-hero">
+                <div>
+                    <strong>Miner vs Dashboard</strong>
+                    <p>Upload dua sumber data, tambahkan IP manual bila diperlukan, lalu bandingkan hasil validasinya.</p>
+                </div>
+                <div class="validator-hero-icon"><i class="fas fa-location-dot"></i></div>
+            </section>
+
+            <section class="hub-card validator-card">
+                <div class="validator-card-heading">
+                    <div>
+                        <h2>Input Data</h2>
+                        <p>Lengkapi file MinerPlus, Machine List, dan IP manual sebelum validasi.</p>
+                    </div>
+                    <div class="master-status">Master Data: <span id="masterDataStatus">Loading...</span></div>
                 </div>
 
-                <!-- Upload Machine List -->
-                <div class="form-group">
-                    <label for="machineListFile"><i class="fas fa-file-excel" style="color: #217346;"></i> Upload File
-                        Machine List:</label>
-                    <input type="file" id="machineListFile" accept=".xls,.xlsx" />
-                    <div id="machineListFileError" class="error"></div>
-                </div>
-            </div>
+                <div class="validator-upload-grid">
+                    <div class="upload-panel">
+                        <label for="minerPlusFile"><i class="fas fa-file-excel"></i> Upload File MinerPlus</label>
+                        <input type="file" id="minerPlusFile" accept=".xls,.xlsx">
+                        <div id="minerPlusFileError" class="error"></div>
+                    </div>
 
-            <!-- Textbox IP Manual -->
-            <div class="form-group">
-                <label for="manualIpInput"><i class="fas fa-keyboard"></i> Masukkan IP yang belum di delete (satu
-                    per baris):</label>
-                <textarea id="manualIpInput" placeholder="Contoh:
+                    <div class="upload-panel">
+                        <label for="machineListFile"><i class="fas fa-file-excel"></i> Upload File Machine List</label>
+                        <input type="file" id="machineListFile" accept=".xls,.xlsx">
+                        <div id="machineListFileError" class="error"></div>
+                    </div>
+                </div>
+
+                <div class="manual-panel">
+                    <label for="manualIpInput"><i class="fas fa-keyboard"></i> IP yang belum di-delete</label>
+                    <textarea id="manualIpInput" placeholder="Satu IP per baris. Contoh:
 10.1.1.25
 10.1.1.26"></textarea>
-                <div id="manualIpError" class="error"></div>
-            </div>
+                    <div id="manualIpError" class="error"></div>
+                </div>
 
-            <button id="validateBtn"><i class="fas fa-check-double"></i> Validasi</button>
+                <div class="validator-actions">
+                    <div class="validator-info">
+                        <strong>Yang dibandingkan</strong>
+                        <span>IP MinerPlus ↔ IP yang dipetakan dari Location ID Machine List.</span>
+                    </div>
+                    <button id="validateBtn" type="button"><i class="fas fa-check-double"></i> Validasi</button>
+                </div>
 
-            <div id="result" class="result" style="display: none;"></div>
+                <div id="result" class="result" style="display:none"></div>
+                <div id="warning" class="warning" style="display:none"></div>
+            </section>
 
-            <div id="warning" class="warning" style="display: none;"></div>
+            <section id="outputSection" class="hub-card validator-card" style="display:none">
+                <div class="validator-card-heading output-heading">
+                    <div>
+                        <h2>Validation Output</h2>
+                        <p>Gunakan filter untuk meninjau seluruh hasil atau hanya data TRUE/FALSE.</p>
+                    </div>
+                </div>
 
-            <div id="outputSection" style="display: none;">
-                <h3>Filter Output:</h3>
                 <div class="filter-controls">
-                    <button id="filterAll" class="filter-btn active">Semua</button>
-                    <button id="filterTrue" class="filter-btn">TRUE</button>
-                    <button id="filterFalse" class="filter-btn">FALSE</button>
+                    <button id="filterAll" class="filter-btn active" type="button">Semua</button>
+                    <button id="filterTrue" class="filter-btn" type="button">TRUE</button>
+                    <button id="filterFalse" class="filter-btn" type="button">FALSE</button>
                 </div>
 
                 <div class="summary">
-                    <strong>Ringkasan Validasi:</strong>
+                    <strong>Ringkasan Validasi</strong>
                     <span id="summaryText"></span>
                 </div>
 
                 <div class="detailed-results">
-                    <h3 style="padding: 1.25rem 1.5rem 0.5rem; margin-bottom: 0;">Detail Selisih Data:</h3>
-                    <div id="detailedResults" style="padding: 1.25rem 1.5rem;"></div>
+                    <div class="table-heading">Detail Selisih Data</div>
+                    <div id="detailedResults"></div>
                 </div>
-            </div>
+            </section>
         </div>
-    </div>
+    </main>
+</div>
 
-    <!-- Footer -->
-    <div class="footer-bottom">
-        
-    </div>
-
-    <!-- XLSX Library & Mappings -->
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.17.0/dist/xlsx.full.min.js"></script>
-    <script src="master-data.js"></script>
-    <script src="script.js"></script>
-    <script src="iplocationvalidator.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.17.0/dist/xlsx.full.min.js"></script>
+<script src="master-data.js"></script>
+<script src="script.js"></script>
+<script src="iplocationvalidator.js"></script>
 </body>
-
 </html>
