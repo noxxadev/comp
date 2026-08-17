@@ -6,6 +6,7 @@
   <title>Excel Analyzer - DataAnalyzer</title>
   <link rel="stylesheet" href="excel-analyzer.css">
   <link rel="stylesheet" href="index.css">
+  <link rel="stylesheet" href="excel-analyzer-ui.css">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 </head>
@@ -107,20 +108,17 @@
         </div>
 
         <div class="header-right">
-          <!-- Search Bar -->
           <div class="search-wrapper">
             <i class="fas fa-search search-icon"></i>
             <input type="text" class="search-input" placeholder="Search transactions, accounts...">
             <kbd class="search-shortcut"><span>⌘</span>K</kbd>
           </div>
 
-          <!-- Primary Button -->
           <a href="index.html" class="btn-primary">
             <i class="fas fa-arrow-left"></i>
             Back to Dashboard
           </a>
 
-          <!-- Avatar -->
           <div class="avatar-wrapper">
             <div class="avatar">A</div>
           </div>
@@ -185,7 +183,6 @@
 
   <!-- XLSX Library -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.17.0/dist/xlsx.full.min.js"></script>
-
   <script src="analyzer-script.js"></script>
   <script src="script.js"></script>
 </body>
