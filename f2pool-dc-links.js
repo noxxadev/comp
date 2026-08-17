@@ -1,0 +1,122 @@
+// ===== F2POOL DC LINKS DATA =====
+// Sumber: DAILY REPORT MONITORING - Link F2pool
+// Dipakai oleh fitur Auto Grab F2Pool (auto download CSV per DC).
+// Total: 101 entri DC (termasuk kasus khusus DC C1 -> gbe5mwc1).
+
+// Base URL F2Pool (account hash sama untuk semua DC).
+window.f2poolBaseUrl = 'https://www.f2pool.com/mining-user/ef545dab01a655a671817b7224e92f26';
+
+// Parameter export workers. Disisipkan setelah ?user_name=<user>.
+// URL final = f2poolBaseUrl + '?user_name=' + user + f2poolExportParams
+window.f2poolExportParams = '&action=export_workers&tagOnly=0&length=1000000&tzone=-7';
+
+// Daftar DC: { dc = label tampil di dropdown, user = nilai user_name }
+window.f2poolDCLinks = [
+    { dc: 'DC A1', user: 'gbegba1' },
+    { dc: 'DC A2', user: 'gbegba2' },
+    { dc: 'DC A3', user: 'gbegba3' },
+    { dc: 'DC A4', user: 'gbegba4' },
+    { dc: 'DC A5', user: 'gbeaba5' },
+    { dc: 'DC A5A', user: 'gbeaba5a' },
+    { dc: 'DC A6', user: 'gbeaba6' },
+    { dc: 'DC A6A', user: 'gbeaba6a' },
+    { dc: 'DC A7', user: 'gbeaba7' },
+    { dc: 'DC A7A', user: 'gbeaba7a' },
+    { dc: 'DC A8', user: 'gbeaba8' },
+    { dc: 'DC A9', user: 'gbeaba9' },
+    { dc: 'DC A10', user: 'gbeaba10' },
+    { dc: 'DC A11 A', user: 'gbegba11a' },
+    { dc: 'DC A11 B', user: 'gbegba11b' },
+    { dc: 'DC A12 A', user: 'gbegba12a' },
+    { dc: 'DC A12 B', user: 'gbegba12b' },
+    { dc: 'DC A13 A', user: 'gbegba13a' },
+    { dc: 'DC A13 B', user: 'gbegba13b' },
+    { dc: 'DC A14 A', user: 'gbegba14a' },
+    { dc: 'DC A14 B', user: 'gbegba14b' },
+
+    { dc: 'DC B5', user: 'gbeabb5' },
+    { dc: 'DC B6', user: 'gbeabb6' },
+    { dc: 'DC B7', user: 'gbeabb7' },
+    { dc: 'DC B1', user: 'gbeabb1' },
+    { dc: 'DC B8', user: 'gbeabb8' },
+    { dc: 'DC B9', user: 'gbeabb9' },
+    { dc: 'DC B10', user: 'gbeabb10' },
+    { dc: 'DC B11 A', user: 'gbegbb11a' },
+    { dc: 'DC B11 B', user: 'gbegbb11b' },
+    { dc: 'DC B12A', user: 'gbegbb12a' },
+    { dc: 'DC B12 B', user: 'gbegbb12b' },
+    { dc: 'DC B13 A', user: 'gbegbb13a' },
+    { dc: 'DC B13 B', user: 'gbegbb13b' },
+    { dc: 'DC B14 A', user: 'gbegbb14a' },
+    { dc: 'DC B14 B', user: 'gbegbb14b' },
+
+    { dc: 'DC C1', user: 'gbe5mwc1' },   // kasus khusus (prefix berbeda)
+    { dc: 'DC C5', user: 'gbeabc5' },
+    { dc: 'DC C5A', user: 'gbeabc5a' },
+    { dc: 'DC C6', user: 'gbeabc6' },
+    { dc: 'DC C6A', user: 'gbeabc6a' },
+    { dc: 'DC C7', user: 'gbeabc7' },
+    { dc: 'DC C8', user: 'gbeabc8' },
+    { dc: 'DC C9', user: 'gbeabc9' },
+    { dc: 'DC C10', user: 'gbeabc10' },
+    { dc: 'DC C11A', user: 'gbeabc11a' },
+    { dc: 'DC C11B', user: 'gbeabc11b' },
+    { dc: 'DC C12A', user: 'gbeabc12a' },
+    { dc: 'DC C12B', user: 'gbeabc12b' },
+    { dc: 'DC C13A', user: 'gbeabc13a' },
+    { dc: 'DC C13B', user: 'gbeabc13b' },
+    { dc: 'DC C14A', user: 'gbeabc14a' },
+    { dc: 'DC C14B', user: 'gbeabc14b' },
+
+    { dc: 'DC D1', user: 'gbeabd1' },
+    { dc: 'DC D2', user: 'gbeabd2' },
+    { dc: 'DC D3', user: 'gbeabd3' },
+    { dc: 'DC D4', user: 'gbeabd4' },
+    { dc: 'DC D5', user: 'gbeabd5' },
+    { dc: 'DC D5A', user: 'gbeabd5a' },
+    { dc: 'DC D6', user: 'gbeabd6' },
+    { dc: 'DC D6A', user: 'gbeabd6a' },
+    { dc: 'DC D7', user: 'gbeabd7' },
+    { dc: 'DC D8', user: 'gbeabd8' },
+    { dc: 'DC D9', user: 'gbeabd9' },
+    { dc: 'DC D10', user: 'gbeabd10' },
+    { dc: 'DC D11A', user: 'gbeabd11a' },
+    { dc: 'DC D11B', user: 'gbeabd11b' },
+    { dc: 'DC D12A', user: 'gbeabd12a' },
+    { dc: 'DC D12B', user: 'gbeabd12b' },
+    { dc: 'DC D13A', user: 'gbeabd13a' },
+    { dc: 'DC D13B', user: 'gbeabd13b' },
+    { dc: 'DC D14A', user: 'gbeabd14a' },
+    { dc: 'DC D14B', user: 'gbeabd14b' },
+
+    { dc: 'DC E1', user: 'gbeabe1' },
+    { dc: 'DC E2', user: 'gbeabe2' },
+    { dc: 'DC E3', user: 'gbeabe3' },
+    { dc: 'DC E4', user: 'gbeabe4' },
+    { dc: 'DC E5', user: 'gbeabe5' },
+    { dc: 'DC E6', user: 'gbeabe6' },
+    { dc: 'DC E7', user: 'gbeabe7' },
+    { dc: 'DC E8', user: 'gbeabe8' },
+    { dc: 'DC E9', user: 'gbeabe9' },
+    { dc: 'DC E10', user: 'gbeabe10' },
+    { dc: 'DC E11A', user: 'gbeabe11a' },
+    { dc: 'DC E11B', user: 'gbeabe11b' },
+    { dc: 'DC E12A', user: 'gbeabe12a' },
+    { dc: 'DC E12B', user: 'gbeabe12b' },
+    { dc: 'DC E13A', user: 'gbeabe13a' },
+    { dc: 'DC E13B', user: 'gbeabe13b' },
+    { dc: 'DC E14A', user: 'gbeabe14a' },
+    { dc: 'DC E14B', user: 'gbeabe14b' },
+
+    { dc: 'DC F5', user: 'gbeabf5' },
+    { dc: 'DC F6', user: 'gbeabf6' },
+    { dc: 'DC F7', user: 'gbeabf7' },
+    { dc: 'DC F8', user: 'gbeabf8' },
+    { dc: 'DC F9', user: 'gbeabf9' },
+    { dc: 'DC F10', user: 'gbeabf10' },
+
+    { dc: 'DC E1A', user: 'gbeabe1a' },
+    { dc: 'DC E2A', user: 'gbeabe2a' },
+    { dc: 'DC E3A', user: 'gbeabe3a' },
+    { dc: 'DC E4A', user: 'gbeabe4a' }
+];

@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Excel Analyzer - DataAnalyzer</title>
+  <link rel="stylesheet" href="excel-analyzer.css">
+  <link rel="stylesheet" href="index.css">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- Ambient Background Glows -->
+  <div class="ambient-glow glow-top-left"></div>
+  <div class="ambient-glow glow-bottom-right"></div>
+
+  <!-- Grain Texture Overlay -->
+  <div class="grain-overlay"></div>
+
+  <div class="dashboard-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-inner">
+        <!-- Logo Area -->
+        <div class="sidebar-logo">
+          <div class="logo-box">DS</div>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="sidebar-nav">
+          <a href="index.html" class="nav-item" data-tooltip="Dashboard">
+            <i class="fas fa-tachometer-alt"></i>
+            <span>Dashboard</span>
+          </a>
+          <a href="excel-analyzer.html" class="nav-item active" data-tooltip="Sub Account">
+            <i class="fas fa-file-excel"></i>
+            <span>Sub Account</span>
+          </a>
+          <a href="offline-analyzer.html" class="nav-item" data-tooltip="Offline">
+            <i class="fas fa-database"></i>
+            <span>Offline</span>
+          </a>
+          <a href="iplocationvalidator.html" class="nav-item" data-tooltip="Miner vs Dashboard">
+            <i class="fas fa-check-circle"></i>
+            <span>Miner vs Dashboard</span>
+          </a>
+          <a href="data-matcher.html" class="nav-item" data-tooltip="F2pool vs Dashboard">
+            <i class="fas fa-link"></i>
+            <span>F2pool vs Dashboard</span>
+          </a>
+          <a href="bulk-compare.html" class="nav-item" data-tooltip="Bulk Compare">
+            <i class="fas fa-balance-scale"></i>
+            <span>Bulk Compare</span>
+          </a>
+          <a href="crm-leads.html" class="nav-item" data-tooltip="CRM Leads">
+            <i class="fas fa-users"></i>
+            <span>CRM Leads</span>
+          </a>
+          <a href="delivery-note.html" class="nav-item" data-tooltip="Delivery Note">
+            <i class="fas fa-truck"></i>
+            <span>Delivery Note</span>
+          </a>
+        </nav>
+
+        <!-- Wallet Card (floating) -->
+        <div class="wallet-card">
+          <div class="wallet-header">
+            <span class="wallet-label">Total Balance</span>
+            <span class="wallet-badge">LIVE</span>
+          </div>
+          <div class="wallet-amount">$127,450.00</div>
+          <div class="wallet-change positive">
+            <i class="fas fa-arrow-up"></i>
+            <span>+12.4% this month</span>
+          </div>
+          <div class="wallet-ring">
+            <svg class="usage-ring" viewBox="0 0 120 120">
+              <circle class="ring-bg" cx="60" cy="60" r="46" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="16"></circle>
+              <circle class="ring-segment" cx="60" cy="60" r="46" fill="none" stroke="#3b82f6" stroke-width="16" stroke-linecap="round" stroke-dasharray="180 289" stroke-dashoffset="0" transform="rotate(-90 60 60)"></circle>
+              <circle class="ring-segment" cx="60" cy="60" r="46" fill="none" stroke="#10b981" stroke-width="16" stroke-linecap="round" stroke-dasharray="95 289" stroke-dashoffset="-180" transform="rotate(-90 60 60)"></circle>
+              <circle class="ring-segment" cx="60" cy="60" r="46" fill="none" stroke="#f59e0b" stroke-width="16" stroke-linecap="round" stroke-dasharray="14 289" stroke-dashoffset="-275" transform="rotate(-90 60 60)"></circle>
+              <circle class="ring-segment" cx="60" cy="60" r="46" fill="none" stroke="#64748b" stroke-width="16" stroke-linecap="round" stroke-dasharray="289 289" stroke-dashoffset="-289" transform="rotate(-90 60 60)"></circle>
+            </svg>
+            <div class="ring-center">
+              <span class="ring-value">78%</span>
+              <span class="ring-label">Usage</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Mobile Sidebar Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Top Header -->
+      <header class="top-header">
+        <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu">
+          <i class="fas fa-bars"></i>
+        </button>
+
+        <div class="header-left">
+          <h1 class="page-title">Excel Analyzer</h1>
+          <p class="page-subtitle">Unggah file Excel untuk memeriksa kesesuaian antara Logical Zone dan Sub-account</p>
+        </div>
+
+        <div class="header-right">
+          <!-- Search Bar -->
+          <div class="search-wrapper">
+            <i class="fas fa-search search-icon"></i>
+            <input type="text" class="search-input" placeholder="Search transactions, accounts...">
+            <kbd class="search-shortcut"><span>⌘</span>K</kbd>
+          </div>
+
+          <!-- Primary Button -->
+          <a href="index.html" class="btn-primary">
+            <i class="fas fa-arrow-left"></i>
+            Back to Dashboard
+          </a>
+
+          <!-- Avatar -->
+          <div class="avatar-wrapper">
+            <div class="avatar">A</div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Dashboard Content -->
+      <div class="dashboard-content">
+        <!-- File Upload Section -->
+        <section class="upload-section">
+          <div class="glass-card glass-strong upload-card">
+            <div class="file-upload-area" id="fileUploadArea">
+              <div class="upload-icon">
+                <i class="fas fa-cloud-upload-alt"></i>
+              </div>
+              <h3>Seret file Excel ke sini atau klik untuk memilih</h3>
+              <p>Format yang didukung: .xls, .xlsx</p>
+              <span class="upload-btn">Pilih File Excel</span>
+              <input type="file" id="excelFile" class="file-input" accept=".xls,.xlsx"/>
+            </div>
+          </div>
+        </section>
+
+        <!-- Loading -->
+        <div id="loading" class="loading-container">
+          <div class="loading-spinner"></div>
+          <p>Memproses file, harap tunggu...</p>
+        </div>
+
+        <!-- Controls -->
+        <div id="controls" class="controls-panel glass-card">
+          <div class="filter-section">
+            <div class="filter-group">
+              <label for="filter"><i class="fas fa-filter"></i> Filter Hasil:</label>
+              <select id="filter">
+                <option value="all">Semua Data</option>
+                <option value="true">Hanya TRUE</option>
+                <option value="false">Hanya FALSE</option>
+              </select>
+            </div>
+
+            <div class="checkbox-group" id="checkbox-controls">
+              <div class="checkbox-item">
+                <input type="checkbox" id="hideOnline" />
+                <label for="hideOnline"><i class="fas fa-eye-slash"></i> Sembunyikan 'online'</label>
+              </div>
+              <div class="checkbox-item">
+                <input type="checkbox" id="hideOffline" />
+                <label for="hideOffline"><i class="fas fa-eye-slash"></i> Sembunyikan 'offline'</label>
+              </div>
+            </div>
+          </div>
+
+          <div id="counts" class="results-count"></div>
+        </div>
+
+        <!-- Output -->
+        <div id="output" class="output-container glass-card"></div>
+      </div>
+    </main>
+  </div>
+
+  <!-- XLSX Library -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.17.0/dist/xlsx.full.min.js"></script>
+
+  <script src="analyzer-script.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
