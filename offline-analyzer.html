@@ -6,7 +6,7 @@
   <title>Offline — COMP Tools</title>
   <link rel="icon" href="/favicon.ico" type="image/x-icon">
   <link rel="stylesheet" href="index-hub.css">
-  <link rel="stylesheet" href="offline-analyzer.css">
+  <link rel="stylesheet" href="offline-analyzer-ui.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body>
@@ -14,12 +14,8 @@
   <aside class="hub-sidebar offline-sidebar" id="sidebar">
     <div class="hub-logo">
       <div class="hub-mark">CP</div>
-      <div>
-        <div class="hub-brand">COMP Tools</div>
-        <div class="hub-subbrand">Data &amp; comparison suite</div>
-      </div>
+      <div><div class="hub-brand">COMP Tools</div><div class="hub-subbrand">Data &amp; comparison suite</div></div>
     </div>
-
     <nav class="hub-nav" aria-label="Tool navigation">
       <a href="index.html"><i class="fas fa-grid-2"></i><span>Tools Hub</span></a>
       <a href="excel-analyzer.html"><i class="fas fa-file-excel"></i><span>Sub Account</span></a>
@@ -29,149 +25,42 @@
       <a href="bulk-compare.html"><i class="fas fa-scale-balanced"></i><span>Bulk Compare</span></a>
       <a href="theme-preview.html"><i class="fas fa-palette"></i><span>Theme Preview</span></a>
     </nav>
-
-    <div class="hub-meta">
-      <strong>OFFLINE</strong>
-      <span>Offline Analyzer</span>
-    </div>
+    <div class="hub-meta"><strong>OFFLINE</strong><span>Offline Analyzer</span></div>
   </aside>
-
   <div class="sidebar-overlay" id="sidebarOverlay"></div>
-
   <main class="hub-main offline-main">
     <div class="hub-container">
       <section class="hub-top offline-top">
-        <div>
-          <div class="hub-kicker">COMP / Tools</div>
-          <h1 class="hub-title">Offline</h1>
-          <p class="hub-desc">Analisis data offline dari MinerPlus dengan filter IP per Line.</p>
-        </div>
-        <button class="offline-menu-toggle" id="menuToggle" type="button" aria-label="Toggle menu">
-          <i class="fas fa-bars"></i>
-        </button>
+        <div><div class="hub-kicker">COMP / Tools</div><h1 class="hub-title">Offline</h1><p class="hub-desc">Analisis data offline dari MinerPlus dengan filter IP per Line.</p></div>
+        <button class="offline-menu-toggle" id="menuToggle" type="button" aria-label="Toggle menu"><i class="fas fa-bars"></i></button>
       </section>
-
       <section class="hub-hero offline-hero">
-        <div>
-          <strong>Offline Analyzer</strong>
-          <p>Masukkan daftar IP offline, upload data Excel, lalu lihat hasil berdasarkan Line dan status analisis.</p>
-        </div>
+        <div><strong>Offline Analyzer</strong><p>Masukkan daftar IP offline, upload data Excel, lalu lihat hasil berdasarkan Line dan status analisis.</p></div>
         <div class="offline-hero-icon"><i class="fas fa-database"></i></div>
       </section>
-
       <section class="hub-card offline-card input-card">
-        <div class="offline-card-heading">
-          <div>
-            <h2>Input Data</h2>
-            <p>Lengkapi dua langkah berikut untuk menjalankan analisis.</p>
-          </div>
-        </div>
-
+        <div class="offline-card-heading"><div><h2>Input Data</h2><p>Lengkapi dua langkah berikut untuk menjalankan analisis.</p></div></div>
         <div class="offline-section">
-          <div class="step-header">
-            <span class="step-number">1</span>
-            <div>
-              <h3>Masukkan IP Offline</h3>
-              <p>Daftar IP offline, satu IP per baris.</p>
-            </div>
-          </div>
-          <div class="input-group">
-            <label for="offlineIpInput"><i class="fas fa-server"></i> Daftar IP Offline</label>
-            <textarea id="offlineIpInput" placeholder="Contoh:
-10.64.2.15
-10.69.3.106"></textarea>
-            <small>Masukkan IP offline yang ingin dicek status lokasinya.</small>
-          </div>
+          <div class="step-header"><span class="step-number">1</span><div><h3>Masukkan IP Offline</h3><p>Daftar IP offline, satu IP per baris.</p></div></div>
+          <div class="input-group"><label for="offlineIpInput"><i class="fas fa-server"></i> Daftar IP Offline</label><textarea id="offlineIpInput" placeholder="Contoh:\n10.64.2.15\n10.69.3.106"></textarea><small>Masukkan IP offline yang ingin dicek status lokasinya.</small></div>
         </div>
-
         <div class="offline-divider"></div>
-
         <div class="offline-section">
-          <div class="step-header">
-            <span class="step-number">2</span>
-            <div>
-              <h3>Upload Data Excel</h3>
-              <p>Upload file MinerPlus/Dashboard yang memiliki kolom <code>location_id</code>.</p>
-            </div>
-          </div>
-
-          <div class="compact-upload-area" id="fileUploadArea">
-            <div class="upload-content">
-              <i class="fas fa-cloud-arrow-up"></i>
-              <div class="upload-text-wrapper">
-                <h4>Klik untuk memilih file atau seret ke sini</h4>
-                <p>Format .xls, .xlsx</p>
-              </div>
-            </div>
-            <input type="file" id="excelFile" class="file-input" accept=".xls,.xlsx">
-          </div>
+          <div class="step-header"><span class="step-number">2</span><div><h3>Upload Data Excel</h3><p>Upload file MinerPlus/Dashboard yang memiliki kolom <code>location_id</code>.</p></div></div>
+          <div class="compact-upload-area" id="fileUploadArea"><div class="upload-content"><i class="fas fa-cloud-arrow-up"></i><div class="upload-text-wrapper"><h4>Klik untuk memilih file atau seret ke sini</h4><p>Format .xls, .xlsx</p></div></div><input type="file" id="excelFile" class="file-input" accept=".xls,.xlsx"></div>
         </div>
       </section>
-
-      <div id="loading" class="loading-container">
-        <div class="loading-spinner"></div>
-        <p>Memproses data, harap tunggu...</p>
-      </div>
-
+      <div id="loading" class="loading-container"><div class="loading-spinner"></div><p>Memproses data, harap tunggu...</p></div>
       <section id="controls" class="hub-card offline-card controls-panel">
-        <div class="offline-card-heading controls-heading">
-          <div>
-            <h2>Analysis Controls</h2>
-            <p>Pilih Line atau tab hasil yang ingin ditampilkan.</p>
-          </div>
-          <div class="total-input-badge"><i class="fas fa-list"></i> Total Input: <strong id="totalCount">0</strong> IP</div>
-        </div>
-
-        <div class="line-filter-buttons" id="lineFilterButtons">
-          <button type="button" class="line-filter-btn" data-line="A">Line A</button>
-          <button type="button" class="line-filter-btn" data-line="B">Line B</button>
-          <button type="button" class="line-filter-btn" data-line="C">Line C</button>
-          <button type="button" class="line-filter-btn" data-line="D">Line D</button>
-          <button type="button" class="line-filter-btn" data-line="E">Line E</button>
-          <button type="button" class="line-filter-btn" data-line="F">Line F</button>
-        </div>
-
-        <div class="analyzer-tabs">
-          <button type="button" class="tab-btn active" data-tab="harus-cek" id="tabHarusCek">
-            <i class="fas fa-exclamation-triangle"></i> Harus Cek: <strong id="harusCekCount">0</strong>
-          </button>
-          <button type="button" class="tab-btn" data-tab="sudah-turun" id="tabSudahTurun">
-            <i class="fas fa-check-circle"></i> Sudah Turun: <strong id="sudahTurunCount">0</strong>
-          </button>
-          <button type="button" class="tab-btn" data-tab="dhcp" id="tabDhcp">
-            <i class="fas fa-question-circle"></i> DHCP: <strong id="dhcpCount">0</strong>
-          </button>
-        </div>
-
-        <div class="export-action">
-          <div class="marquee-container">
-            <p class="marquee-text">Export hasil Sudah Turun dan DHCP ke halaman Miner vs Dashboard.</p>
-          </div>
-          <button id="exportToValidatorBtn" type="button">
-            <i class="fas fa-external-link-alt"></i> Export IP
-          </button>
-        </div>
+        <div class="offline-card-heading controls-heading"><div><h2>Analysis Controls</h2><p>Pilih Line atau tab hasil yang ingin ditampilkan.</p></div><div class="total-input-badge"><i class="fas fa-list"></i> Total Input: <strong id="totalCount">0</strong> IP</div></div>
+        <div class="line-filter-buttons" id="lineFilterButtons"><button type="button" class="line-filter-btn" data-line="A">Line A</button><button type="button" class="line-filter-btn" data-line="B">Line B</button><button type="button" class="line-filter-btn" data-line="C">Line C</button><button type="button" class="line-filter-btn" data-line="D">Line D</button><button type="button" class="line-filter-btn" data-line="E">Line E</button><button type="button" class="line-filter-btn" data-line="F">Line F</button></div>
+        <div class="analyzer-tabs"><button type="button" class="tab-btn active" data-tab="harus-cek" id="tabHarusCek"><i class="fas fa-exclamation-triangle"></i> Harus Cek: <strong id="harusCekCount">0</strong></button><button type="button" class="tab-btn" data-tab="sudah-turun" id="tabSudahTurun"><i class="fas fa-check-circle"></i> Sudah Turun: <strong id="sudahTurunCount">0</strong></button><button type="button" class="tab-btn" data-tab="dhcp" id="tabDhcp"><i class="fas fa-question-circle"></i> DHCP: <strong id="dhcpCount">0</strong></button></div>
+        <div class="export-action"><div class="marquee-container"><p class="marquee-text">Export hasil Sudah Turun dan DHCP ke halaman Miner vs Dashboard.</p></div><button id="exportToValidatorBtn" type="button"><i class="fas fa-external-link-alt"></i> Export IP</button></div>
       </section>
-
-      <section id="output" class="hub-card offline-card output-card">
-        <div class="offline-card-heading">
-          <div>
-            <h2>Analysis Results</h2>
-            <p>Hasil analisis akan muncul di area ini.</p>
-          </div>
-        </div>
-        <div class="output-container tab-panel-container">
-          <div class="empty-state">
-            <i class="fas fa-database"></i>
-            <h3>Belum Ada Data</h3>
-            <p>Masukkan IP Offline di Langkah 1 dan upload berkas Excel di Langkah 2 untuk memulai analisis.</p>
-          </div>
-        </div>
-      </section>
+      <section id="output" class="hub-card offline-card output-card"><div class="offline-card-heading"><div><h2>Analysis Results</h2><p>Hasil analisis akan muncul di area ini.</p></div></div><div class="output-container tab-panel-container"><div class="empty-state"><i class="fas fa-database"></i><h3>Belum Ada Data</h3><p>Masukkan IP Offline di Langkah 1 dan upload berkas Excel di Langkah 2 untuk memulai analisis.</p></div></div></section>
     </div>
   </main>
 </div>
-
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.17.0/dist/xlsx.full.min.js"></script>
 <script src="master-data.js"></script>
 <script src="offline-analyzer-script.js"></script>
