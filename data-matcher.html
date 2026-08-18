@@ -7,6 +7,7 @@
     <link rel="icon" href="/favicon.ico" type="image/x-icon">
     <link rel="stylesheet" href="index-hub.css">
     <link rel="stylesheet" href="data-matcher-ui.css">
+    <link rel="stylesheet" href="theme-toggle.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
 </head>
 <body>
@@ -69,7 +70,6 @@
                         <div class="matcher-source-icon"><i class="fas fa-water"></i></div>
                         <h3>F2Pool Data</h3>
                         <p>Upload CSV F2Pool (btc-workers) atau download otomatis berdasarkan DC.</p>
-
                         <select id="dcSelect" class="dc-select">
                             <option value="">— Pilih DC —</option>
                         </select>
@@ -77,12 +77,8 @@
                             <i class="fas fa-download"></i> Download CSV
                         </button>
                         <span id="dcStatus" class="dc-status">Belum ada download</span>
-
                         <div class="dc-divider">atau upload file yang sudah di-download</div>
-
-                        <label class="file-label" for="f2poolFile">
-                            <i class="fas fa-cloud-arrow-up"></i> Pilih File CSV
-                        </label>
+                        <label class="file-label" for="f2poolFile"><i class="fas fa-cloud-arrow-up"></i> Pilih File CSV</label>
                         <span class="file-name" id="f2poolName">Belum ada file dipilih</span>
                         <input type="file" id="f2poolFile" accept=".csv">
                     </div>
@@ -96,13 +92,9 @@
                                 <p>Upload file Machinelist yang akan dibandingkan.</p>
                             </div>
                         </div>
-
                         <div class="machinelist-upload-area" id="machinelistUploadArea">
                             <div class="machinelist-upload-icon"><i class="fas fa-cloud-arrow-up"></i></div>
-                            <div class="machinelist-upload-text">
-                                <strong>Klik untuk memilih file atau seret ke sini</strong>
-                                <span>Format .csv, .xlsx</span>
-                            </div>
+                            <div class="machinelist-upload-text"><strong>Klik untuk memilih file atau seret ke sini</strong><span>Format .csv, .xlsx</span></div>
                             <input type="file" id="machinelistFile" accept=".csv,.xlsx">
                         </div>
                         <span class="file-name" id="machinelistName">Belum ada file dipilih</span>
@@ -111,57 +103,30 @@
             </section>
 
             <section class="hub-card matcher-card action-card">
-                <div class="action-info">
-                    <strong>Ready to compare?</strong>
-                    <span>Jalankan verifikasi setelah kedua sumber data tersedia.</span>
-                </div>
-                <div class="button-group">
-                    <button id="matchBtn" class="btn btn-primary" disabled type="button">
-                        <i class="fas fa-check-double"></i> Mulai Verifikasi
-                    </button>
-                    <button id="clearBtn" class="btn btn-secondary" type="button">
-                        <i class="fas fa-rotate-right"></i> Reset
-                    </button>
-                </div>
+                <div class="action-info"><strong>Ready to compare?</strong><span>Jalankan verifikasi setelah kedua sumber data tersedia.</span></div>
+                <div class="button-group"><button id="matchBtn" class="btn btn-primary" disabled type="button"><i class="fas fa-check-double"></i> Mulai Verifikasi</button><button id="clearBtn" class="btn btn-secondary" type="button"><i class="fas fa-rotate-right"></i> Reset</button></div>
             </section>
 
             <section class="hub-card matcher-card results-section" id="resultsSection">
-                <div class="matcher-card-heading results-heading">
-                    <div>
-                        <h2>Analysis Results</h2>
-                        <p>Ringkasan statistik, filter, dan detail hasil pencocokan.</p>
-                    </div>
-                </div>
-
+                <div class="matcher-card-heading results-heading"><div><h2>Analysis Results</h2><p>Ringkasan statistik, filter, dan detail hasil pencocokan.</p></div></div>
                 <div class="stats-grid" id="stats"></div>
                 <div class="filter-section" id="filterSection"></div>
-
                 <div class="table-wrap">
                     <table class="results-table" id="resultsTable" style="display:none;">
-                        <thead>
-                            <tr>
-                                <th class="sortable" data-column="locationId">Location ID <span class="sort-indicator"></span></th>
-                                <th class="sortable" data-column="worker">Worker (F2Pool) <span class="sort-indicator"></span></th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
+                        <thead><tr><th class="sortable" data-column="locationId">Location ID <span class="sort-indicator"></span></th><th class="sortable" data-column="worker">Worker (F2Pool) <span class="sort-indicator"></span></th><th>Status</th></tr></thead>
                         <tbody id="resultsBody"></tbody>
                     </table>
                 </div>
-
-                <div id="noData" class="no-data">
-                    <i class="fas fa-inbox"></i>
-                    <p>Tidak ada hasil untuk filter ini</p>
-                </div>
+                <div id="noData" class="no-data"><i class="fas fa-inbox"></i><p>Tidak ada hasil untuk filter ini</p></div>
             </section>
         </div>
     </main>
 </div>
-
 <script src="https://cdn.sheetjs.com/xlsx-0.18.5/package/dist/xlsx.full.min.js"></script>
 <script src="master-data.js"></script>
 <script src="f2pool-dc-links.js"></script>
 <script src="data-matcher.js"></script>
 <script src="script.js"></script>
+<script src="theme-toggle.js"></script>
 </body>
 </html>
