@@ -3,124 +3,156 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pool vs Dashboard</title>
+    <title>Pool vs Dashboard — COMP Tools</title>
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="index-hub.css">
     <link rel="stylesheet" href="data-matcher.css">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
 </head>
 <body>
-    <!-- Navigation -->
-    <nav class="analyzer-nav">
-        <div class="nav-container">
-            <a href="index.html" class="back-button">
-                <i class="fas fa-arrow-left"></i>
-                Kembali ke Beranda
-            </a>
-            
-            <div class="nav-actions">
-                <a href="bulk-compare.html" class="nav-link" style="background: var(--phosphor); color: var(--dark); box-shadow: 0 0 12px var(--phosphor-glow);">
-                    <i class="fas fa-layer-group"></i>
-                    Bulk Compare
-                </a>
-                <a href="index.html" class="nav-link">
-                    <i class="fas fa-home"></i>
-                    Beranda
-                </a>
+<div class="hub-shell matcher-shell">
+    <aside class="hub-sidebar matcher-sidebar" id="sidebar">
+        <div class="hub-logo">
+            <div class="hub-mark">CP</div>
+            <div>
+                <div class="hub-brand">COMP Tools</div>
+                <div class="hub-subbrand">Data &amp; comparison suite</div>
             </div>
         </div>
-    </nav>
+        <nav class="hub-nav" aria-label="Tool navigation">
+            <a href="index.html"><i class="fas fa-grid-2"></i><span>Tools Hub</span></a>
+            <a href="excel-analyzer.html"><i class="fas fa-file-excel"></i><span>Sub Account</span></a>
+            <a href="offline-analyzer.html"><i class="fas fa-database"></i><span>Offline</span></a>
+            <a href="iplocationvalidator.html"><i class="fas fa-location-dot"></i><span>IP Validator</span></a>
+            <a class="active" href="data-matcher.html"><i class="fas fa-link"></i><span>Pool vs Dashboard</span></a>
+            <a href="bulk-compare.html"><i class="fas fa-scale-balanced"></i><span>Bulk Compare</span></a>
+            <a href="theme-preview.html"><i class="fas fa-palette"></i><span>Theme Preview</span></a>
+        </nav>
+        <div class="hub-meta"><strong>POOL VS DASHBOARD</strong><span>F2Pool Machinelist Matcher</span></div>
+    </aside>
 
-    <div class="analyzer-container">
-        <!-- Header -->
-        <div class="analyzer-header">
-            <h1><i class="fas fa-link"></i> F2Pool vs Machinelist Matcher</h1>
-            <p>Verifikasi machinelist dengan data f2pool</p>
-        </div>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-        <!-- Message Alert -->
-        <div id="message" class="message"></div>
-
-        <!-- Upload Section -->
-        <div class="upload-section">
-            <div class="upload-box">
-                <h3><i class="fas fa-water"></i> F2Pool Data</h3>
-                <p>Upload file CSV F2Pool (btc-workers)</p>
-
-                <!-- added: Auto Grab F2Pool (auto download per DC) -->
-                <select id="dcSelect" class="dc-select">
-                    <option value="">— Pilih DC —</option>
-                </select>
-                <button id="dcDownloadBtn" class="dc-download-btn" disabled>
-                    <i class="fas fa-download"></i> Download CSV
+    <main class="hub-main matcher-main">
+        <div class="hub-container">
+            <section class="hub-top matcher-top">
+                <div>
+                    <div class="hub-kicker">COMP / Tools</div>
+                    <h1 class="hub-title">Pool vs Dashboard</h1>
+                    <p class="hub-desc">Verifikasi machinelist dengan data F2Pool dan tinjau hasil pencocokan worker.</p>
+                </div>
+                <button class="matcher-menu-toggle" id="menuToggle" type="button" aria-label="Toggle menu">
+                    <i class="fas fa-bars"></i>
                 </button>
-                <span id="dcStatus" class="dc-status">Belum ada download</span>
+            </section>
 
-                <div class="dc-divider">— upload file yang di download —</div>
+            <section class="hub-hero matcher-hero">
+                <div>
+                    <strong>F2Pool vs Machinelist Matcher</strong>
+                    <p>Upload data F2Pool dan Machinelist, atau gunakan Auto Grab per DC, lalu jalankan verifikasi.</p>
+                </div>
+                <div class="matcher-hero-icon"><i class="fas fa-link"></i></div>
+            </section>
 
-                <label class="file-label" for="f2poolFile">
-                    <i class="fas fa-cloud-upload-alt"></i> Pilih File CSV
-                </label>
-                <span class="file-name" id="f2poolName">Belum ada file dipilih</span>
-                <input type="file" id="f2poolFile" accept=".csv" />
-            </div>
+            <div id="message" class="message"></div>
 
-            <div class="upload-box">
-                <h3><i class="fas fa-database"></i> Machinelist Data</h3>
-                <p>Upload file CSV atau Excel Machinelist</p>
-                <label class="file-label" for="machinelistFile">
-                    <i class="fas fa-cloud-upload-alt"></i> Pilih File
-                </label>
-                <span class="file-name" id="machinelistName">Belum ada file dipilih</span>
-                <input type="file" id="machinelistFile" accept=".csv,.xlsx" />
-            </div>
+            <section class="hub-card matcher-card upload-section">
+                <div class="matcher-card-heading">
+                    <div>
+                        <h2>Input Data</h2>
+                        <p>Siapkan dua sumber data yang akan dibandingkan.</p>
+                    </div>
+                </div>
+
+                <div class="matcher-upload-grid">
+                    <div class="upload-box">
+                        <div class="matcher-source-icon"><i class="fas fa-water"></i></div>
+                        <h3>F2Pool Data</h3>
+                        <p>Upload CSV F2Pool (btc-workers) atau download otomatis berdasarkan DC.</p>
+
+                        <select id="dcSelect" class="dc-select">
+                            <option value="">— Pilih DC —</option>
+                        </select>
+                        <button id="dcDownloadBtn" class="dc-download-btn" disabled type="button">
+                            <i class="fas fa-download"></i> Download CSV
+                        </button>
+                        <span id="dcStatus" class="dc-status">Belum ada download</span>
+
+                        <div class="dc-divider">atau upload file yang sudah di-download</div>
+
+                        <label class="file-label" for="f2poolFile">
+                            <i class="fas fa-cloud-arrow-up"></i> Pilih File CSV
+                        </label>
+                        <span class="file-name" id="f2poolName">Belum ada file dipilih</span>
+                        <input type="file" id="f2poolFile" accept=".csv">
+                    </div>
+
+                    <div class="upload-box">
+                        <div class="matcher-source-icon"><i class="fas fa-database"></i></div>
+                        <h3>Machinelist Data</h3>
+                        <p>Upload file CSV atau Excel Machinelist.</p>
+
+                        <label class="file-label" for="machinelistFile">
+                            <i class="fas fa-cloud-arrow-up"></i> Pilih File
+                        </label>
+                        <span class="file-name" id="machinelistName">Belum ada file dipilih</span>
+                        <input type="file" id="machinelistFile" accept=".csv,.xlsx">
+                    </div>
+                </div>
+            </section>
+
+            <section class="hub-card matcher-card action-card">
+                <div class="action-info">
+                    <strong>Ready to compare?</strong>
+                    <span>Jalankan verifikasi setelah kedua sumber data tersedia.</span>
+                </div>
+                <div class="button-group">
+                    <button id="matchBtn" class="btn btn-primary" disabled type="button">
+                        <i class="fas fa-check-double"></i> Mulai Verifikasi
+                    </button>
+                    <button id="clearBtn" class="btn btn-secondary" type="button">
+                        <i class="fas fa-rotate-right"></i> Reset
+                    </button>
+                </div>
+            </section>
+
+            <section class="hub-card matcher-card results-section" id="resultsSection">
+                <div class="matcher-card-heading results-heading">
+                    <div>
+                        <h2>Analysis Results</h2>
+                        <p>Ringkasan statistik, filter, dan detail hasil pencocokan.</p>
+                    </div>
+                </div>
+
+                <div class="stats-grid" id="stats"></div>
+                <div class="filter-section" id="filterSection"></div>
+
+                <div class="table-wrap">
+                    <table class="results-table" id="resultsTable" style="display:none;">
+                        <thead>
+                            <tr>
+                                <th class="sortable" data-column="locationId">Location ID <span class="sort-indicator"></span></th>
+                                <th class="sortable" data-column="worker">Worker (F2Pool) <span class="sort-indicator"></span></th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="resultsBody"></tbody>
+                    </table>
+                </div>
+
+                <div id="noData" class="no-data">
+                    <i class="fas fa-inbox"></i>
+                    <p>Tidak ada hasil untuk filter ini</p>
+                </div>
+            </section>
         </div>
+    </main>
+</div>
 
-        <!-- Action Buttons -->
-        <div class="button-group">
-            <button id="matchBtn" class="btn btn-primary" disabled>
-                <i class="fas fa-check-double"></i> Mulai Verifikasi
-            </button>
-            <button id="clearBtn" class="btn btn-secondary">
-                <i class="fas fa-redo"></i> Reset
-            </button>
-        </div>
-
-        <!-- Results Section -->
-        <div class="results-section" id="resultsSection">
-            <!-- Stats -->
-            <div class="stats-grid" id="stats"></div>
-
-            <!-- Filter Buttons -->
-            <div class="filter-section" id="filterSection"></div>
-
-            <!-- Results Table -->
-            <table class="results-table" id="resultsTable" style="display: none;">
-                <thead>
-                    <tr>
-                        <th class="sortable" data-column="locationId">Location ID <span class="sort-indicator"></span></th>
-                        <th class="sortable" data-column="worker">Worker (F2Pool) <span class="sort-indicator"></span></th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody id="resultsBody"></tbody>
-            </table>
-
-            <div id="noData" class="no-data">
-                <i class="fas fa-inbox" style="font-size: 3rem; opacity: 0.3;"></i>
-                <p>Tidak ada hasil untuk filter ini</p>
-            </div>
-        </div>
-    </div>
-
-    <!-- Load XLSX library for Excel support -->
-    <script src="https://cdn.sheetjs.com/xlsx-0.18.5/package/dist/xlsx.full.min.js"></script>
-    
-    <!-- Load Master Data for IP logic -->
-    <script src="master-data.js"></script>
-
-    <!-- Load F2Pool DC Links for Auto Grab feature -->
-    <script src="f2pool-dc-links.js"></script>
-
-    <!-- Load Data Matcher logic -->
-    <script src="data-matcher.js"></script>
+<script src="https://cdn.sheetjs.com/xlsx-0.18.5/package/dist/xlsx.full.min.js"></script>
+<script src="master-data.js"></script>
+<script src="f2pool-dc-links.js"></script>
+<script src="data-matcher.js"></script>
+<script src="script.js"></script>
 </body>
 </html>
