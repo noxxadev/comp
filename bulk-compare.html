@@ -1,160 +1,214 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bulk Compare - Pool vs Dashboard</title>
-    <link rel="stylesheet" href="data-matcher.css">
-    <link rel="stylesheet" href="bulk-compare.css">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bulk Compare — COMP Tools</title>
+  <link rel="icon" href="/favicon.ico" type="image/x-icon">
+  <link rel="stylesheet" href="index-hub.css">
+  <link rel="stylesheet" href="bulk-compare-ui.css">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
 </head>
 <body>
-    <!-- Navigation -->
-    <nav class="analyzer-nav">
-        <div class="nav-container">
-            <a href="data-matcher.html" class="back-button">
-                <i class="fas fa-arrow-left"></i>
-                Kembali ke Single Compare
-            </a>
-
-            <div class="nav-actions">
-                <a href="index.html" class="nav-link">
-                    <i class="fas fa-home"></i>
-                    Beranda
-                </a>
-            </div>
-        </div>
-    </nav>
-
-    <div class="analyzer-container">
-        <!-- Header -->
-        <div class="analyzer-header">
-            <h1><i class="fas fa-layer-group"></i> Bulk Compare Multi-DC</h1>
-            <p>Download, merge, dan verifikasi beberapa DC F2Pool sekaligus dalam satu proses</p>
-        </div>
-
-        <!-- Message Alert -->
-        <div id="message" class="message"></div>
-
-        <!-- STEP 1: Pilih DC -->
-        <div class="bulk-step">
-            <div class="bulk-step-header">
-                <span class="step-number">1</span>
-                <h3><i class="fas fa-check-square"></i> Pilih DC F2Pool</h3>
-            </div>
-
-            <div class="dc-toolbar">
-                <input type="text" id="dcSearch" class="dc-search" placeholder="Cari DC... (mis. A1, B5)">
-                <div class="dc-group-buttons">
-                    <span class="group-label">Pilih Grup:</span>
-                    <button class="btn-group" data-group="all">Semua</button>
-                    <button class="btn-group" data-group="A">DC A</button>
-                    <button class="btn-group" data-group="B">DC B</button>
-                    <button class="btn-group" data-group="C">DC C</button>
-                    <button class="btn-group" data-group="D">DC D</button>
-                    <button class="btn-group" data-group="E">DC E</button>
-                    <button class="btn-group" data-group="F">DC F</button>
-                    <button class="btn-group btn-clear" data-group="">Bersihkan</button>
-                </div>
-            </div>
-
-            <div class="dc-checkbox-grid" id="dcCheckboxGrid"></div>
-
-            <div class="dc-action-row">
-                <span class="dc-selected-count" id="dcSelectedCount">0 DC dipilih</span>
-                <button id="dcDownloadBtn" class="btn btn-primary bulk-download-btn" disabled>
-                    <i class="fas fa-download"></i> Download Selected
-                </button>
-            </div>
-
-            <div class="dc-progress-wrapper" id="dcProgressWrapper" style="display: none;">
-                <div class="dc-progress-bar"><div class="dc-progress-fill" id="dcProgressFill"></div></div>
-                <span class="dc-progress-text" id="dcProgressText">0 / 0</span>
-            </div>
-        </div>
-
-        <!-- STEP 2: Upload -->
-        <div class="bulk-step">
-            <div class="bulk-step-header">
-                <span class="step-number">2</span>
-                <h3><i class="fas fa-cloud-upload-alt"></i> Upload Data</h3>
-            </div>
-
-            <div class="upload-section">
-                <div class="upload-box">
-                    <h3><i class="fas fa-water"></i> F2Pool CSV (Multi)</h3>
-                    <p>Blok &amp; upload semua file CSV hasil download. Akan otomatis di-merge.</p>
-                    <label class="file-label" for="f2poolFiles">
-                        <i class="fas fa-cloud-upload-alt"></i> Pilih Beberapa File CSV
-                    </label>
-                    <span class="file-name" id="f2poolName">Belum ada file dipilih</span>
-                    <input type="file" id="f2poolFiles" accept=".csv" multiple />
-                </div>
-
-                <div class="upload-box">
-                    <h3><i class="fas fa-database"></i> Machinelist Data</h3>
-                    <p>Upload 1 file CSV atau Excel Machinelist (bisa berisi multiple DC).</p>
-                    <label class="file-label" for="machinelistFile">
-                        <i class="fas fa-cloud-upload-alt"></i> Pilih File
-                    </label>
-                    <span class="file-name" id="machinelistName">Belum ada file dipilih</span>
-                    <input type="file" id="machinelistFile" accept=".csv,.xlsx" />
-                </div>
-            </div>
-        </div>
-
-        <!-- Action Buttons -->
-        <div class="button-group">
-            <button id="matchBtn" class="btn btn-primary" disabled>
-                <i class="fas fa-check-double"></i> Mulai Verifikasi Bulk
-            </button>
-            <button id="clearBtn" class="btn btn-secondary">
-                <i class="fas fa-redo"></i> Reset
-            </button>
-        </div>
-
-        <!-- Results Section -->
-        <div class="results-section" id="resultsSection">
-            <!-- Stats -->
-            <div class="stats-grid" id="stats"></div>
-
-            <!-- Per-DC Summary (added: bulk breakdown) -->
-            <div id="dcSummarySection" class="dc-summary-section" style="display: none;">
-                <h4 class="dc-summary-title"><i class="fas fa-th-large"></i> Breakdown per DC</h4>
-                <div class="dc-summary-grid" id="dcSummaryGrid"></div>
-            </div>
-
-            <!-- Filter Buttons -->
-            <div class="filter-section" id="filterSection"></div>
-
-            <!-- Results Table -->
-            <table class="results-table" id="resultsTable" style="display: none;">
-                <thead>
-                    <tr>
-                        <th class="sortable" data-column="dc">DC <span class="sort-indicator"></span></th>
-                        <th class="sortable" data-column="ip">IP <span class="sort-indicator"></span></th>
-                    </tr>
-                </thead>
-                <tbody id="resultsBody"></tbody>
-            </table>
-
-            <div id="noData" class="no-data">
-                <i class="fas fa-inbox" style="font-size: 3rem; opacity: 0.3;"></i>
-                <p>Tidak ada hasil untuk filter ini</p>
-            </div>
-        </div>
+<div class="hub-shell bulk-shell">
+  <aside class="hub-sidebar bulk-sidebar" id="sidebar">
+    <div class="hub-logo">
+      <div class="hub-mark">CP</div>
+      <div>
+        <div class="hub-brand">COMP Tools</div>
+        <div class="hub-subbrand">Data &amp; comparison suite</div>
+      </div>
     </div>
+    <nav class="hub-nav" aria-label="Tool navigation">
+      <a href="index.html"><i class="fas fa-grid-2"></i><span>Tools Hub</span></a>
+      <a href="excel-analyzer.html"><i class="fas fa-file-excel"></i><span>Sub Account</span></a>
+      <a href="offline-analyzer.html"><i class="fas fa-database"></i><span>Offline</span></a>
+      <a href="iplocationvalidator.html"><i class="fas fa-location-dot"></i><span>IP Validator</span></a>
+      <a href="data-matcher.html"><i class="fas fa-link"></i><span>Pool vs Dashboard</span></a>
+      <a class="active" href="bulk-compare.html"><i class="fas fa-scale-balanced"></i><span>Bulk Compare</span></a>
+      <a href="theme-preview.html"><i class="fas fa-palette"></i><span>Theme Preview</span></a>
+    </nav>
+    <div class="hub-meta"><strong>BULK COMPARE</strong><span>Multi-DC F2Pool matcher</span></div>
+  </aside>
 
-    <!-- Load XLSX library for Excel support -->
-    <script src="https://cdn.sheetjs.com/xlsx-0.18.5/package/dist/xlsx.full.min.js"></script>
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-    <!-- Load Master Data for IP logic -->
-    <script src="master-data.js"></script>
+  <main class="hub-main bulk-main">
+    <div class="hub-container">
+      <section class="hub-top bulk-top">
+        <div>
+          <div class="hub-kicker">COMP / Tools</div>
+          <h1 class="hub-title">Bulk Compare</h1>
+          <p class="hub-desc">Download, merge, dan verifikasi beberapa DC F2Pool sekaligus dalam satu workspace.</p>
+        </div>
+        <button class="bulk-menu-toggle" id="menuToggle" type="button" aria-label="Toggle menu">
+          <i class="fas fa-bars"></i>
+        </button>
+      </section>
 
-    <!-- Load F2Pool DC Links for download URLs -->
-    <script src="f2pool-dc-links.js"></script>
+      <section class="hub-hero bulk-hero">
+        <div>
+          <strong>Bulk Compare Multi-DC</strong>
+          <p>Pilih beberapa DC F2Pool, download datanya, upload hasil download dan Machinelist, lalu jalankan verifikasi bulk.</p>
+        </div>
+        <div class="bulk-hero-icon"><i class="fas fa-layer-group"></i></div>
+      </section>
 
-    <!-- Load Bulk Compare logic -->
-    <script src="bulk-compare.js"></script>
+      <div id="message" class="message"></div>
+
+      <section class="hub-card bulk-card">
+        <div class="bulk-card-heading">
+          <div class="step-header">
+            <span class="step-number">1</span>
+            <div class="step-title">
+              <h3><i class="fas fa-check-square"></i> Pilih DC F2Pool</h3>
+              <p>Pilih semua DC atau gunakan grup dan pencarian untuk mempersempit pilihan.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="dc-toolbar">
+          <input type="text" id="dcSearch" class="dc-search" placeholder="Cari DC... (mis. A1, B5)">
+          <div class="dc-group-buttons">
+            <span class="group-label">Pilih Grup</span>
+            <button type="button" class="btn-group" data-group="all">Semua</button>
+            <button type="button" class="btn-group" data-group="A">DC A</button>
+            <button type="button" class="btn-group" data-group="B">DC B</button>
+            <button type="button" class="btn-group" data-group="C">DC C</button>
+            <button type="button" class="btn-group" data-group="D">DC D</button>
+            <button type="button" class="btn-group" data-group="E">DC E</button>
+            <button type="button" class="btn-group" data-group="F">DC F</button>
+            <button type="button" class="btn-group btn-clear" data-group="">Bersihkan</button>
+          </div>
+        </div>
+
+        <div class="dc-checkbox-grid" id="dcCheckboxGrid"></div>
+
+        <div class="dc-action-row">
+          <span class="dc-selected-count" id="dcSelectedCount"><strong>0</strong> DC dipilih</span>
+          <button id="dcDownloadBtn" class="btn btn-primary bulk-download-btn" disabled type="button">
+            <i class="fas fa-download"></i> Download Selected
+          </button>
+        </div>
+
+        <div class="dc-progress-wrapper" id="dcProgressWrapper" style="display:none;">
+          <div class="dc-progress-bar"><div class="dc-progress-fill" id="dcProgressFill"></div></div>
+          <span class="dc-progress-text" id="dcProgressText">0 / 0</span>
+        </div>
+      </section>
+
+      <section class="hub-card bulk-card">
+        <div class="bulk-card-heading">
+          <div class="step-header">
+            <span class="step-number">2</span>
+            <div class="step-title">
+              <h3><i class="fas fa-cloud-upload-alt"></i> Upload Data</h3>
+              <p>Upload semua CSV F2Pool hasil download dan satu file Machinelist.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="bulk-upload-grid">
+          <div class="upload-panel">
+            <div class="step-header">
+              <span class="step-number">A</span>
+              <div class="step-title">
+                <h3>F2Pool CSV</h3>
+                <p>Multiple file CSV akan otomatis digabung.</p>
+              </div>
+            </div>
+            <div class="compact-upload-area">
+              <div class="upload-content">
+                <i class="fas fa-file-csv"></i>
+                <div class="upload-text-wrapper">
+                  <h4>Klik untuk memilih file atau seret ke sini</h4>
+                  <p>Format .csv · bisa pilih beberapa file</p>
+                </div>
+              </div>
+              <input type="file" id="f2poolFiles" class="file-input" accept=".csv" multiple>
+            </div>
+            <span class="file-name" id="f2poolName">Belum ada file dipilih</span>
+          </div>
+
+          <div class="upload-panel">
+            <div class="step-header">
+              <span class="step-number">B</span>
+              <div class="step-title">
+                <h3>Machinelist Data</h3>
+                <p>Satu file CSV atau Excel, bisa berisi multiple DC.</p>
+              </div>
+            </div>
+            <div class="compact-upload-area">
+              <div class="upload-content">
+                <i class="fas fa-database"></i>
+                <div class="upload-text-wrapper">
+                  <h4>Klik untuk memilih file atau seret ke sini</h4>
+                  <p>Format .csv, .xlsx</p>
+                </div>
+              </div>
+              <input type="file" id="machinelistFile" class="file-input" accept=".csv,.xlsx">
+            </div>
+            <span class="file-name" id="machinelistName">Belum ada file dipilih</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="hub-card bulk-card action-card">
+        <div class="action-info">
+          <strong>Ready to compare?</strong>
+          <span>Jalankan verifikasi setelah data bulk tersedia.</span>
+        </div>
+        <div class="button-group">
+          <button id="matchBtn" class="btn btn-primary" disabled type="button">
+            <i class="fas fa-check-double"></i> Mulai Verifikasi Bulk
+          </button>
+          <button id="clearBtn" class="btn btn-secondary" type="button">
+            <i class="fas fa-rotate-right"></i> Reset
+          </button>
+        </div>
+      </section>
+
+      <section class="hub-card bulk-card results-section" id="resultsSection">
+        <div class="bulk-card-heading results-heading">
+          <div>
+            <h2>Analysis Results</h2>
+            <p>Statistik, breakdown per DC, filter, dan detail hasil bulk.</p>
+          </div>
+        </div>
+
+        <div class="stats-grid" id="stats"></div>
+
+        <div id="dcSummarySection" class="dc-summary-section" style="display:none;">
+          <h4 class="dc-summary-title"><i class="fas fa-th-large"></i> Breakdown per DC</h4>
+          <div class="dc-summary-grid" id="dcSummaryGrid"></div>
+        </div>
+
+        <div class="filter-section" id="filterSection"></div>
+
+        <div class="table-wrap">
+          <table class="results-table" id="resultsTable" style="display:none;">
+            <thead>
+              <tr>
+                <th class="sortable" data-column="dc">DC <span class="sort-indicator"></span></th>
+                <th class="sortable" data-column="ip">IP <span class="sort-indicator"></span></th>
+              </tr>
+            </thead>
+            <tbody id="resultsBody"></tbody>
+          </table>
+        </div>
+
+        <div id="noData" class="no-data">
+          <i class="fas fa-inbox"></i>
+          <p>Tidak ada hasil untuk filter ini</p>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<script src="https://cdn.sheetjs.com/xlsx-0.18.5/package/dist/xlsx.full.min.js"></script>
+<script src="master-data.js"></script>
+<script src="f2pool-dc-links.js"></script>
+<script src="bulk-compare.js"></script>
 </body>
 </html>
