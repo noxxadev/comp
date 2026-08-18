@@ -87,16 +87,25 @@
                         <input type="file" id="f2poolFile" accept=".csv">
                     </div>
 
-                    <div class="upload-box">
+                    <div class="upload-box machinelist-box">
                         <div class="matcher-source-icon"><i class="fas fa-database"></i></div>
-                        <h3>Machinelist Data</h3>
-                        <p>Upload file CSV atau Excel Machinelist.</p>
+                        <div class="machinelist-step-header">
+                            <span class="machinelist-step-number">2</span>
+                            <div>
+                                <h3>Upload Data Excel</h3>
+                                <p>Upload file Machinelist yang akan dibandingkan.</p>
+                            </div>
+                        </div>
 
-                        <label class="file-label" for="machinelistFile">
-                            <i class="fas fa-cloud-arrow-up"></i> Pilih File
-                        </label>
+                        <div class="machinelist-upload-area" id="machinelistUploadArea">
+                            <div class="machinelist-upload-icon"><i class="fas fa-cloud-arrow-up"></i></div>
+                            <div class="machinelist-upload-text">
+                                <strong>Klik untuk memilih file atau seret ke sini</strong>
+                                <span>Format .csv, .xlsx</span>
+                            </div>
+                            <input type="file" id="machinelistFile" accept=".csv,.xlsx">
+                        </div>
                         <span class="file-name" id="machinelistName">Belum ada file dipilih</span>
-                        <input type="file" id="machinelistFile" accept=".csv,.xlsx">
                     </div>
                 </div>
             </section>
