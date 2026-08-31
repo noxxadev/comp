@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IP Repeat Analyzer — COMP Tools</title>
+  <link rel="icon" href="/favicon.ico" type="image/x-icon">
+  <link rel="stylesheet" href="index-hub.css">
+  <link rel="stylesheet" href="ip-repeat-analyzer.css">
+  <link rel="stylesheet" href="theme-toggle.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+<div class="hub-shell repeat-shell">
+  <aside class="hub-sidebar repeat-sidebar" id="sidebar">
+    <div class="hub-logo">
+      <div class="hub-mark">CP</div>
+      <div><div class="hub-brand">COMP Tools</div><div class="hub-subbrand">Data &amp; comparison suite</div></div>
+    </div>
+    <nav class="hub-nav" aria-label="Tool navigation">
+      <a href="index.html"><i class="fas fa-grid-2"></i><span>Tools Hub</span></a>
+      <a href="excel-analyzer.html"><i class="fas fa-file-excel"></i><span>Sub Account</span></a>
+      <a href="offline-analyzer.html"><i class="fas fa-database"></i><span>Offline</span></a>
+      <a href="iplocationvalidator.html"><i class="fas fa-location-dot"></i><span>IP Validator</span></a>
+      <a href="data-matcher.html"><i class="fas fa-link"></i><span>Pool vs Dashboard</span></a>
+      <a href="bulk-compare.html"><i class="fas fa-scale-balanced"></i><span>Bulk Compare</span></a>
+      <a class="active" href="ip-repeat-analyzer.html"><i class="fas fa-repeat"></i><span>IP Repeat</span></a>
+      <a href="theme-preview.html"><i class="fas fa-palette"></i><span>Theme Preview</span></a>
+    </nav>
+    <div class="hub-meta"><strong>IP REPEAT</strong><span>MinerPlus IP repeat analyzer</span></div>
+  </aside>
+
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <main class="hub-main repeat-main">
+    <div class="hub-container">
+      <section class="hub-top repeat-top">
+        <div>
+          <div class="hub-kicker">COMP / Tools</div>
+          <h1 class="hub-title">IP Repeat Analyzer</h1>
+          <p class="hub-desc">Hitung kemunculan IP dari file MinerPlus dan cocokkan dengan Master Data DC.</p>
+        </div>
+        <button class="repeat-menu-toggle" id="menuToggle" type="button" aria-label="Toggle menu"><i class="fas fa-bars"></i></button>
+      </section>
+
+      <section class="hub-hero repeat-hero">
+        <div>
+          <strong>IP Repeat Analysis</strong>
+          <p>Upload satu file Excel. Sistem otomatis mencari kolom <b>IP</b>, menggabungkan IP yang sama, lalu memberi nama DC berdasarkan <code>master-data.js</code>.</p>
+        </div>
+        <div class="repeat-hero-icon"><i class="fas fa-repeat"></i></div>
+      </section>
+
+      <section class="hub-card repeat-card input-card">
+        <div class="repeat-card-heading">
+          <div>
+            <h2>Upload Data</h2>
+            <p>File .xls atau .xlsx hasil export MinerPlus. Kolom lain tidak diproses.</p>
+          </div>
+          <div class="master-status">Master Data: <span id="masterDataStatus">Loading...</span></div>
+        </div>
+
+        <div class="repeat-upload-area" id="fileUploadArea">
+          <input type="file" id="excelFile" accept=".xls,.xlsx" aria-label="Upload file Excel">
+          <div class="repeat-upload-content">
+            <div class="repeat-upload-icon"><i class="fas fa-file-excel"></i></div>
+            <div>
+              <h3>Drop file Excel di sini</h3>
+              <p>atau klik untuk memilih file • .xls / .xlsx</p>
+              <span id="fileName">Belum ada file</span>
+            </div>
+          </div>
+        </div>
+
+        <div id="uploadError" class="repeat-message error-message" role="alert"></div>
+
+        <div class="repeat-actions">
+          <div class="repeat-info"><i class="fas fa-circle-info"></i><span>Spasi di dalam nilai IP diabaikan saat pencocokan.</span></div>
+          <button id="processBtn" class="repeat-primary-btn" type="button" disabled><i class="fas fa-play"></i> Proses Data</button>
+        </div>
+      </section>
+
+      <div id="loading" class="repeat-loading" aria-live="polite">
+        <div class="loading-spinner"></div>
+        <p>Memproses data Excel...</p>
+      </div>
+
+      <section id="resultsSection" class="hub-card repeat-card results-card" hidden>
+        <div class="repeat-card-heading results-heading">
+          <div>
+            <h2>Analysis Results</h2>
+            <p id="resultSummary">Hasil pengolahan IP.</p>
+          </div>
+          <button id="exportBtn" class="repeat-export-btn" type="button"><i class="fas fa-file-export"></i> Export .xlsx</button>
+        </div>
+
+        <div class="repeat-controls">
+          <div class="repeat-search">
+            <i class="fas fa-search"></i>
+            <input id="searchInput" type="search" placeholder="Cari IP atau Nama DC..." autocomplete="off">
+          </div>
+          <button id="sortBtn" class="repeat-sort-btn" type="button" data-order="desc">
+            <i class="fas fa-arrow-down-wide-short"></i><span>Repeat Terbanyak</span>
+          </button>
+        </div>
+
+        <div class="repeat-table-wrap">
+          <table class="repeat-table">
+            <thead>
+              <tr>
+                <th>No</th>
+                <th>IP</th>
+                <th>Repeat Zero</th>
+                <th>Nama DC</th>
+              </tr>
+            </thead>
+            <tbody id="resultsBody"></tbody>
+          </table>
+          <div id="emptyResults" class="repeat-empty" hidden>
+            <i class="fas fa-magnifying-glass"></i>
+            <h3>Tidak ada hasil</h3>
+            <p>IP atau Nama DC yang dicari tidak ditemukan.</p>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.17.0/dist/xlsx.full.min.js"></script>
+<script src="master-data.js"></script>
+<script src="ip-repeat-analyzer.js"></script>
+<script src="theme-toggle.js"></script>
+</body>
+</html>
