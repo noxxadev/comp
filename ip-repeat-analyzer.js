@@ -54,6 +54,15 @@
     return -1;
   }
 
+  function getZoneFromMasterName(name) {
+    if (!name) return '-';
+
+    // Master Data menggunakan format lokasi seperti GBE.A1.A.1.1.
+    // Zona adalah huruf pertama setelah "GBE.".
+    const match = String(name).trim().match(/^GBE\.([A-Z])/i);
+    return match ? `Line ${match[1].toUpperCase()}` : '-';
+  }
+
   function showError(message) {
     uploadError.textContent = message;
     uploadError.classList.add('visible');
@@ -126,7 +135,11 @@
       name.className = row.isMaster ? 'name-cell' : 'name-cell not-master';
       name.textContent = row.name;
 
-      tr.append(no, ip, repeat, name);
+      const zone = document.createElement('td');
+      zone.className = row.isMaster && row.zone !== '-' ? 'zone-cell' : 'zone-cell not-master';
+      zone.textContent = row.zone;
+
+      tr.append(no, ip, repeat, name, zone);
       fragment.appendChild(tr);
     });
 
@@ -192,7 +205,8 @@
           ip,
           repeat,
           name: masterName || 'Bukan IP DC',
-          isMaster: Boolean(masterName)
+          isMaster: Boolean(masterName),
+          zone: getZoneFromMasterName(masterName)
         };
       });
 
@@ -228,7 +242,8 @@
         No: index + 1,
         IP: row.ip,
         'Repeat Zero': row.repeat,
-        'Nama DC': row.name
+        'Nama DC': row.name,
+        Zona: row.zone
       }));
 
     const worksheet = XLSX.utils.json_to_sheet(exportRows);
@@ -236,7 +251,8 @@
       { wch: 7 },
       { wch: 18 },
       { wch: 16 },
-      { wch: 24 }
+      { wch: 24 },
+      { wch: 12 }
     ];
 
     const workbook = XLSX.utils.book_new();
