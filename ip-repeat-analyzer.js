@@ -8,7 +8,8 @@
     sortDesc: true,
     zoneFilter: 'all',
     sourceColumn: '',
-    selectedIps: new Set()
+    selectedIps: new Set(),
+    engineerId: ''
   };
 
   const $ = (id) => document.getElementById(id);
@@ -34,6 +35,9 @@
   const selectedCount = $('selectedCount');
   const selectAllBtn = $('selectAllBtn');
   const clearSelectionBtn = $('clearSelectionBtn');
+  const engineerSelect = $('engineerSelect');
+
+  const ENGINEER_STORAGE_KEY = 'comp.selectedEngineerId';
 
   function normalizeIp(value) {
     if (value === null || value === undefined) return '';
@@ -93,6 +97,25 @@
     fileName.textContent = file.name;
     processBtn.disabled = false;
     uploadArea.classList.add('has-file');
+  }
+
+  function loadEngineerCatalog() {
+    const catalog = Array.isArray(window.engineerData) ? window.engineerData : [];
+    engineerSelect.innerHTML = '<option value="">Pilih engineer</option>';
+
+    catalog.forEach(engineer => {
+      if (!engineer?.id || !engineer?.displayName) return;
+      const option = document.createElement('option');
+      option.value = engineer.id;
+      option.textContent = engineer.displayName;
+      engineerSelect.appendChild(option);
+    });
+
+    const storedId = window.localStorage?.getItem(ENGINEER_STORAGE_KEY) || '';
+    if (catalog.some(engineer => engineer?.id === storedId)) {
+      state.engineerId = storedId;
+      engineerSelect.value = storedId;
+    }
   }
 
   function updateSelectionUi() {
@@ -362,6 +385,15 @@
     render();
   });
 
+  engineerSelect?.addEventListener('change', () => {
+    state.engineerId = engineerSelect.value;
+    if (state.engineerId) {
+      window.localStorage?.setItem(ENGINEER_STORAGE_KEY, state.engineerId);
+    } else {
+      window.localStorage?.removeItem(ENGINEER_STORAGE_KEY);
+    }
+  });
+
   exportBtn.addEventListener('click', exportResults);
 
   menuToggle?.addEventListener('click', () => {
@@ -385,5 +417,6 @@
     ? `${Object.keys(window.masterData).length.toLocaleString('id-ID')} IP`
     : 'Tidak tersedia';
 
+  loadEngineerCatalog();
   updateSelectionUi();
 })();
