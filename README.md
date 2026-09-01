@@ -77,7 +77,7 @@ Status: COMPLETED
 - Phase 3 marked COMPLETED.
 
 ## Phase 4 — Engineer Identity
-Status: IN PROGRESS
+Status: COMPLETED
 - Initial identity method: engineer dropdown, not password login.
 - Engineer records use stable internal IDs.
 - Display name is separate from the ID.
@@ -93,12 +93,14 @@ Status: IN PROGRESS
 - No password login, Supabase write, work-item creation, or IP locking is introduced in Phase 4.
 - Affected files: `engineer-data.js`, `ip-repeat-analyzer.html`, `ip-repeat-analyzer.js`, `ip-repeat-analyzer.css`.
 
-### Phase 4 validation status
-- Code-level verification completed for engineer catalog loading, stable IDs, dropdown wiring, localStorage persistence, and separation from IP/selection logic.
-- Live browser validation remains pending.
+### Phase 4 validation — 2026-09-01
+- User verified the Engineer dropdown and confirmed it works in the browser.
+- Confirmed engineer selection is restored after reload using the browser's localStorage.
+- Confirmed the selected engineer does not alter existing IP analysis or selection behavior.
+- Phase 4 marked COMPLETED.
 
 ## Phase 5 — Work Tracking
-Status: PLANNED
+Status: IN PROGRESS
 
 Minimum work data:
 - IP
@@ -117,6 +119,24 @@ Initial statuses:
 - Skipped
 
 IP is never locked; multiple engineers may work on the same IP.
+
+### Phase 5 implementation — 2026-09-01
+- Added a dedicated `work-tracking.js` module for local work-item storage.
+- Added Work Tracking panel to the IP Repeat results area.
+- Work Tracking operates on the currently selected IP set from Phase 3.
+- Saving a work update requires a selected engineer and at least one selected IP.
+- A single save can apply to multiple selected IPs.
+- Each work item stores IP, Nama DC, Zona, Repeat Zero, Engineer ID, Status, Timestamp and Note.
+- Current work items are persisted in browser `localStorage` under `comp.workItems.v1`.
+- Existing work items keep their previous status/note when appropriate; each explicit save updates Engineer ID, Status, Timestamp and Note for the selected IPs.
+- No work history/event log is introduced yet; that belongs to Phase 6.
+- No Supabase/database write is introduced; that belongs to Phase 7.
+- No IP locking is introduced.
+- Affected files: `work-tracking.js`, `ip-repeat-analyzer.html`, `ip-repeat-analyzer.js`, `ip-repeat-analyzer.css`.
+
+### Phase 5 validation status
+- Code-level verification completed for selected-IP targeting, engineer requirement, status selection, timestamp creation, note capture and local persistence.
+- Live browser validation remains pending.
 
 ## Phase 6 — Work History
 Status: PLANNED
@@ -208,13 +228,21 @@ Future Shift Report can use work history for:
 - User completed live browser validation and confirmed the implementation is correct.
 - Phase 3 marked COMPLETED.
 
-## 2026-09-01 — Phase 4 implementation
+## 2026-09-01 — Phase 4 implementation and validation
 - Implemented local engineer identity catalog with stable IDs `ENG-001`–`ENG-005`.
 - Added Engineer dropdown to the results header.
 - Added state-based engineer selection and browser persistence using `localStorage`.
 - Preserved existing analyzer and selection logic.
-- No database or authentication workflow added.
-- Phase 4 remains IN PROGRESS pending live browser validation.
+- User verified the feature in the browser and confirmed it works.
+- Phase 4 marked COMPLETED.
+
+## 2026-09-01 — Phase 5 implementation
+- Added local Work Tracking storage module.
+- Added Work Tracking panel for selected IPs.
+- Added multi-IP work updates with Engineer ID, Status, Timestamp and Note.
+- Persisted latest work-item state in browser `localStorage`.
+- Kept work history and Supabase out of this phase as planned.
+- Phase 5 remains IN PROGRESS pending live browser validation.
 
 # Current Status
 
@@ -224,8 +252,8 @@ Future Shift Report can use work history for:
 | Phase 1 — IP Repeat Analyzer | DONE |
 | Phase 2 — Filtering & Sorting | DONE — live browser validation confirmed by user |
 | Phase 3 — Engineer Selection | DONE — live browser validation confirmed by user |
-| Phase 4 — Engineer Identity | IN PROGRESS — implementation complete, live browser validation pending |
-| Phase 5 — Work Tracking | PLANNED |
+| Phase 4 — Engineer Identity | DONE — live browser validation confirmed by user |
+| Phase 5 — Work Tracking | IN PROGRESS — implementation complete, live browser validation pending |
 | Phase 6 — Work History | PLANNED |
 | Phase 7 — Supabase / Multi-user | PLANNED |
 | Phase 8 — Work Export | PLANNED |
