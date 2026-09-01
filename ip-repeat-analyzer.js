@@ -6,6 +6,7 @@
     rows: [],
     filteredRows: [],
     sortDesc: true,
+    zoneFilter: 'all',
     sourceColumn: ''
   };
 
@@ -22,6 +23,7 @@
   const emptyResults = $('emptyResults');
   const searchInput = $('searchInput');
   const sortBtn = $('sortBtn');
+  const zoneFilter = $('zoneFilter');
   const exportBtn = $('exportBtn');
   const resultSummary = $('resultSummary');
   const masterDataStatus = $('masterDataStatus');
@@ -95,10 +97,14 @@
   function render() {
     const query = searchInput.value.trim().toLowerCase();
 
-    state.filteredRows = state.rows.filter(row =>
-      row.ip.toLowerCase().includes(query) ||
-      row.name.toLowerCase().includes(query)
-    );
+    state.filteredRows = state.rows.filter(row => {
+      const matchesQuery =
+        row.ip.toLowerCase().includes(query) ||
+        row.name.toLowerCase().includes(query);
+      const matchesZone =
+        state.zoneFilter === 'all' || row.zone === state.zoneFilter;
+      return matchesQuery && matchesZone;
+    });
 
     state.filteredRows.sort((a, b) => {
       const repeatDiff = b.repeat - a.repeat;
@@ -215,6 +221,8 @@
 
       resultsSection.hidden = false;
       searchInput.value = '';
+      if (zoneFilter) zoneFilter.value = 'all';
+      state.zoneFilter = 'all';
       state.sortDesc = true;
       sortBtn.dataset.order = 'desc';
       sortBtn.innerHTML = '<i class="fas fa-arrow-down-wide-short"></i><span>Repeat Terbanyak</span>';
@@ -284,6 +292,11 @@
 
   processBtn.addEventListener('click', processFile);
   searchInput.addEventListener('input', render);
+
+  zoneFilter?.addEventListener('change', () => {
+    state.zoneFilter = zoneFilter.value;
+    render();
+  });
 
   sortBtn.addEventListener('click', () => {
     state.sortDesc = !state.sortDesc;
