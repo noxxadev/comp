@@ -6,7 +6,7 @@
   <title>IP Repeat Analyzer — COMP Tools</title>
   <link rel="icon" href="/favicon.ico" type="image/x-icon">
   <link rel="stylesheet" href="index-hub.css">
-  <link rel="stylesheet" href="ip-repeat-analyzer.css?v=20260901-5">
+  <link rel="stylesheet" href="ip-repeat-analyzer.css?v=20260901-6">
   <link rel="stylesheet" href="theme-toggle.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
@@ -91,6 +91,12 @@
             <h2>Analysis Results</h2>
             <p id="resultSummary">Hasil pengolahan IP.</p>
           </div>
+          <div class="repeat-identity-control">
+            <label for="engineerSelect">Engineer</label>
+            <select id="engineerSelect" aria-label="Pilih engineer">
+              <option value="">Pilih engineer</option>
+            </select>
+          </div>
           <button id="exportBtn" class="repeat-export-btn" type="button"><i class="fas fa-file-export"></i> Export .xlsx</button>
         </div>
 
@@ -154,7 +160,8 @@
 
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.17.0/dist/xlsx.full.min.js"></script>
 <script src="master-data.js?v=20260831-4"></script>
-<script src="ip-repeat-analyzer.js?v=20260901-5"></script>
+<script src="engineer-data.js?v=20260901-1"></script>
+<script src="ip-repeat-analyzer.js?v=20260901-6"></script>
 <script src="ip-repeat-zone.js?v=20260831-4"></script>
 <script src="theme-toggle.js"></script>
 </body>
