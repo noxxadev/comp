@@ -318,7 +318,7 @@
     }
   }
 
-  function saveWorkForSelected() {
+  async function saveWorkForSelected() {
     if (!state.selectedIps.size) {
       showWorkMessage('Pilih minimal satu IP terlebih dahulu.', true);
       return;
@@ -336,11 +336,10 @@
     }
 
     const selectedRows = state.rows.filter(row => state.selectedIps.has(row.ip));
-    const items = workApi.loadWorkItems();
+    const items = {};
     const timestamp = new Date().toISOString();
 
     selectedRows.forEach(row => {
-      const existing = items[row.ip] || {};
       items[row.ip] = {
         ip: row.ip,
         name: row.name,
@@ -351,18 +350,23 @@
         timestamp,
         note: workNote.value.trim()
       };
-
-      if (existing.status && workStatus.value === 'Belum Dikerjakan' && !workNote.value.trim()) {
-        items[row.ip].note = existing.note || '';
-      }
     });
 
     try {
-      workApi.saveWorkItems(items);
-      showWorkMessage(`${selectedRows.length.toLocaleString('id-ID')} IP berhasil disimpan untuk pekerjaan.`);
+      saveWorkBtn.disabled = true;
+      showWorkMessage('Menyimpan data ke Google Sheets...');
+      const result = await workApi.saveWorkItems(items);
+
+      if (result.saved !== selectedRows.length) {
+        throw new Error(`Google Sheets melaporkan ${result.saved} dari ${selectedRows.length} IP berhasil disimpan.`);
+      }
+
+      showWorkMessage(`${result.saved.toLocaleString('id-ID')} IP berhasil disimpan ke Google Sheets.`);
     } catch (error) {
       console.error(error);
-      showWorkMessage('Gagal menyimpan data pekerjaan di browser.', true);
+      showWorkMessage(error.message || 'Gagal menyimpan data pekerjaan ke Google Sheets.', true);
+    } finally {
+      updateWorkUi();
     }
   }
 
