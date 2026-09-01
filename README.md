@@ -133,19 +133,28 @@ IP is never locked; multiple engineers may work on the same IP.
 - Supabase is removed from the mandatory roadmap; Google Sheets is the selected persistence approach for this project.
 - No IP locking is introduced.
 
+### Phase 5 save confirmation hardening — 2026-09-01
+- Replaced fire-and-forget browser `sendBeacon()` saving with an awaited `fetch()` POST.
+- Frontend now parses the JSON response from Apps Script and checks `ok` before reporting success.
+- Frontend now compares the backend-reported `saved` count with the number of selected IPs.
+- Success message explicitly says the data was saved to Google Sheets.
+- Save failures now surface the Apps Script/network error instead of reporting a false success.
+- Affected files: `work-tracking.js`, `ip-repeat-analyzer.js`, `ip-repeat-analyzer.html`.
+
 ### Google Sheets setup required
 1. Create a Google Spreadsheet for Work Tracking and copy its Spreadsheet ID.
 2. Open Apps Script and copy `google-apps-script/Code.gs` from this repository into the script project.
-3. Replace `PASTE_YOUR_GOOGLE_SHEET_ID_HERE` with the Spreadsheet ID.
+3. Replace `PASTE_YOUR_GOOGLE_SHEET_ID_HERE` with the Spreadsheet ID in the Apps Script project only; keep the repository template placeholder unchanged.
 4. Optionally set a lightweight `REQUEST_KEY` in both `Code.gs` and `google-sheets-config.js`. This is an application-level request filter, not a secret, because the public frontend can expose it.
 5. Deploy the Apps Script as a Web App and use its `/exec` URL.
 6. Put that `/exec` URL in `google-sheets-config.js` under `webAppUrl`.
 7. Test saving one or more selected IPs and verify the `Work Items` sheet.
 
 ### Phase 5 validation status
-- Code-level verification completed for multi-IP payload construction, selected engineer requirement, status/note fields, and Google Sheets endpoint wiring.
-- The repository contains the Apps Script backend template, but it cannot be considered fully operational until the user deploys the script and configures the `/exec` URL.
-- Live end-to-end Google Sheets validation remains pending.
+- Google Apps Script `/exec` endpoint was verified by the user and returned `configured: true` from `doGet()`.
+- User also verified that `doPost` executions reach Apps Script and complete successfully.
+- Frontend save-response handling has now been hardened so the UI waits for and validates the Apps Script JSON result.
+- Live end-to-end confirmation that the saved rows appear in the intended Google Sheet is still pending.
 
 ## Phase 6 — Work History
 Status: PLANNED
@@ -248,6 +257,14 @@ Future Shift Report can use work history for:
 - Removed Supabase from the mandatory roadmap and changed Phase 7 to Google Sheets multi-user hardening.
 - Phase 5 remains IN PROGRESS until the Apps Script is deployed, configured, and verified end-to-end in the browser and Google Sheet.
 
+## 2026-09-01 — Phase 5 save confirmation hardening
+- Confirmed the configured Apps Script `/exec` endpoint returns `configured: true`.
+- Confirmed the user's Apps Script `doPost` execution completes successfully.
+- Replaced `sendBeacon()` with awaited `fetch()` and JSON response validation.
+- Frontend now reports success only when Apps Script confirms the number of saved items.
+- Updated cache-buster for `work-tracking.js`.
+- Phase 5 remains IN PROGRESS pending visible confirmation of rows in Google Sheets.
+
 # Current Status
 
 | Phase | Status |
@@ -257,7 +274,7 @@ Future Shift Report can use work history for:
 | Phase 2 — Filtering & Sorting | DONE — live browser validation confirmed by user |
 | Phase 3 — Engineer Selection | DONE — live browser validation confirmed by user |
 | Phase 4 — Engineer Identity | DONE — live browser validation confirmed by user |
-| Phase 5 — Work Tracking + Google Sheets Persistence | IN PROGRESS — code implemented, Apps Script deployment/configuration and live end-to-end validation pending |
+| Phase 5 — Work Tracking + Google Sheets Persistence | IN PROGRESS — save-response validation implemented; final Google Sheet row verification pending |
 | Phase 6 — Work History | PLANNED |
 | Phase 7 — Multi-user / Google Sheets Hardening | PLANNED |
 | Phase 8 — Work Export | PLANNED |
