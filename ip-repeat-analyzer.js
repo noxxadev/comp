@@ -44,7 +44,7 @@
   }
 
   function findIpColumn(headers) {
-    const normalized = headers.map(header => String(header ?? '').replace(/\s+/g, '').toLowerCase());
+    const normalized = headers.map(header => String(header ?? '').replace(/\uFEFF/g, '').replace(/\s+/g, '').toLowerCase());
     let index = normalized.findIndex(header => header === 'ip');
     if (index !== -1) return index;
 
@@ -198,7 +198,7 @@
 
       state.rows = Array.from(counts, ([ip, repeat]) => {
         const masterName = window.masterData && Object.prototype.hasOwnProperty.call(window.masterData, ip)
-          ? window.masterData[ip]
+          ? String(window.masterData[ip] ?? '').trim()
           : null;
 
         return {
