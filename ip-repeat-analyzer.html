@@ -6,7 +6,7 @@
   <title>IP Repeat Analyzer — COMP Tools</title>
   <link rel="icon" href="/favicon.ico" type="image/x-icon">
   <link rel="stylesheet" href="index-hub.css">
-  <link rel="stylesheet" href="ip-repeat-analyzer.css?v=20260901-6">
+  <link rel="stylesheet" href="ip-repeat-analyzer.css?v=20260901-7">
   <link rel="stylesheet" href="theme-toggle.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
@@ -111,6 +111,34 @@
           </div>
         </div>
 
+        <div class="repeat-work-panel">
+          <div class="repeat-work-heading">
+            <div>
+              <h3>Work Tracking</h3>
+              <p>Terapkan data pekerjaan ke IP yang sedang dipilih.</p>
+            </div>
+            <span id="workTargetCount">0 IP target</span>
+          </div>
+          <div class="repeat-work-grid">
+            <label>
+              <span>Status</span>
+              <select id="workStatus" aria-label="Status pekerjaan">
+                <option value="Belum Dikerjakan">Belum Dikerjakan</option>
+                <option value="In Progress">In Progress</option>
+                <option value="Selesai">Selesai</option>
+                <option value="Problem">Problem</option>
+                <option value="Skipped">Skipped</option>
+              </select>
+            </label>
+            <label>
+              <span>Catatan</span>
+              <input id="workNote" type="text" maxlength="500" placeholder="Catatan pekerjaan..." autocomplete="off">
+            </label>
+            <button id="saveWorkBtn" class="repeat-work-save-btn" type="button" disabled><i class="fas fa-save"></i> Simpan Pekerjaan</button>
+          </div>
+          <div id="workMessage" class="repeat-work-message" role="status"></div>
+        </div>
+
         <div class="repeat-controls">
           <div class="repeat-zone-filter">
             <label for="zoneFilter">Zona</label>
@@ -161,7 +189,8 @@
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.17.0/dist/xlsx.full.min.js"></script>
 <script src="master-data.js?v=20260831-4"></script>
 <script src="engineer-data.js?v=20260901-1"></script>
-<script src="ip-repeat-analyzer.js?v=20260901-6"></script>
+<script src="work-tracking.js?v=20260901-1"></script>
+<script src="ip-repeat-analyzer.js?v=20260901-7"></script>
 <script src="ip-repeat-zone.js?v=20260831-4"></script>
 <script src="theme-toggle.js"></script>
 </body>
