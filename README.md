@@ -67,6 +67,17 @@ No engineer tracking or database workflow is added in this phase.
 - Affected files: `ip-repeat-analyzer.html`, `ip-repeat-analyzer.js`, `ip-repeat-analyzer.css`.
 - Validation performed: code-level verification of filter state, combined search/filter flow, and sorting integration. Live browser validation remains to be performed before Phase 2 is marked DONE.
 
+### Phase 2 validation attempt — 2026-09-01
+- Re-checked the current `ip-repeat-analyzer.html` and `ip-repeat-analyzer.js` implementation on the repository default branch.
+- Confirmed the Zone selector is wired to `state.zoneFilter` and `render()`.
+- Confirmed search and Zone filtering are applied together before sorting.
+- Confirmed result numbering is regenerated from the filtered result set.
+- Confirmed sorting is applied after filtering and supports both descending and ascending Repeat Zero order.
+- Confirmed processing a new Excel file resets search, Zone filter and Repeat Zero sorting state.
+- Confirmed Phase 1 counting, IPv4 validation, master-data mapping and zone derivation are not altered by the Phase 2 filter logic.
+- Live GitHub Pages/browser interaction could not be executed from the current validation environment; therefore this validation pass does **not** mark Phase 2 as DONE.
+- Required final validation remains: open the deployed page in a real browser, process a representative Excel file, and verify Zone filter, search, combined filtering, sorting and numbering visually/behaviorally.
+
 ## Phase 3 — Engineer Selection
 Status: PLANNED
 - Checkbox per result row.
@@ -178,13 +189,20 @@ Future Shift Report can use work history for:
 - Theme label visibility during collapsed state addressed.
 - These are shared UI changes only; application logic remains separate.
 
+## 2026-09-01 — Phase 2 validation attempt
+- Revalidated the Phase 2 implementation at code level.
+- Verified filter/search/sort integration and state reset behavior.
+- No application logic changes were made during this validation.
+- Live browser validation could not be executed in the current environment.
+- Phase 2 remains IN PROGRESS until deployed-page behavior is verified in a real browser.
+
 # Current Status
 
 | Phase | Status |
 |---|---|
 | Phase 0 — Requirement Freeze | DONE |
 | Phase 1 — IP Repeat Analyzer | DONE, with live-table zone verification |
-| Phase 2 — Filtering & Sorting | IN PROGRESS |
+| Phase 2 — Filtering & Sorting | IN PROGRESS — awaiting live browser validation |
 | Phase 3 — Engineer Selection | PLANNED |
 | Phase 4 — Engineer Identity | PLANNED |
 | Phase 5 — Work Tracking | PLANNED |
