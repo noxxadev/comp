@@ -36,6 +36,11 @@
   const selectAllBtn = $('selectAllBtn');
   const clearSelectionBtn = $('clearSelectionBtn');
   const engineerSelect = $('engineerSelect');
+  const workTargetCount = $('workTargetCount');
+  const workStatus = $('workStatus');
+  const workNote = $('workNote');
+  const saveWorkBtn = $('saveWorkBtn');
+  const workMessage = $('workMessage');
 
   const ENGINEER_STORAGE_KEY = 'comp.selectedEngineerId';
 
@@ -118,6 +123,18 @@
     }
   }
 
+  function updateWorkUi() {
+    const targetCount = state.selectedIps.size;
+    workTargetCount.textContent = `${targetCount.toLocaleString('id-ID')} IP target`;
+    saveWorkBtn.disabled = targetCount === 0 || !state.engineerId;
+  }
+
+  function showWorkMessage(message, isError = false) {
+    workMessage.textContent = message;
+    workMessage.classList.toggle('error', isError);
+    workMessage.classList.toggle('visible', Boolean(message));
+  }
+
   function updateSelectionUi() {
     selectedCount.textContent = state.selectedIps.size.toLocaleString('id-ID');
     clearSelectionBtn.disabled = state.selectedIps.size === 0;
@@ -128,6 +145,8 @@
     selectAllBtn.innerHTML = allVisibleSelected
       ? '<i class="fas fa-square-minus"></i><span>Batalkan Semua</span>'
       : '<i class="fas fa-check-double"></i><span>Pilih Semua</span>';
+
+    updateWorkUi();
   }
 
   function toggleSelection(ip, checked) {
@@ -217,6 +236,7 @@
     if (!state.file) return;
 
     clearError();
+    showWorkMessage('');
     loading.classList.add('visible');
     resultsSection.hidden = true;
     processBtn.disabled = true;
@@ -229,8 +249,8 @@
         throw new Error('File Excel tidak memiliki worksheet.');
       }
 
-      let sheet = workbook.Sheets[workbook.SheetNames[0]];
-      let matrix = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '', raw: false });
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      const matrix = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '', raw: false });
 
       let headerRowIndex = -1;
       let ipColumnIndex = -1;
@@ -277,6 +297,7 @@
       });
 
       state.selectedIps.clear();
+      showWorkMessage('');
       resultSummary.textContent =
         `${validIpRows.toLocaleString('id-ID')} data IP valid dari kolom "${state.sourceColumn}" → ${state.rows.length.toLocaleString('id-ID')} IP unik.`;
 
@@ -294,6 +315,54 @@
     } finally {
       loading.classList.remove('visible');
       processBtn.disabled = !state.file;
+    }
+  }
+
+  function saveWorkForSelected() {
+    if (!state.selectedIps.size) {
+      showWorkMessage('Pilih minimal satu IP terlebih dahulu.', true);
+      return;
+    }
+
+    if (!state.engineerId) {
+      showWorkMessage('Pilih engineer terlebih dahulu.', true);
+      return;
+    }
+
+    const workApi = window.CompWorkTracking;
+    if (!workApi) {
+      showWorkMessage('Modul Work Tracking tidak tersedia.', true);
+      return;
+    }
+
+    const selectedRows = state.rows.filter(row => state.selectedIps.has(row.ip));
+    const items = workApi.loadWorkItems();
+    const timestamp = new Date().toISOString();
+
+    selectedRows.forEach(row => {
+      const existing = items[row.ip] || {};
+      items[row.ip] = {
+        ip: row.ip,
+        name: row.name,
+        zone: row.zone,
+        repeat: row.repeat,
+        engineerId: state.engineerId,
+        status: workStatus.value,
+        timestamp,
+        note: workNote.value.trim()
+      };
+
+      if (existing.status && workStatus.value === 'Belum Dikerjakan' && !workNote.value.trim()) {
+        items[row.ip].note = existing.note || '';
+      }
+    });
+
+    try {
+      workApi.saveWorkItems(items);
+      showWorkMessage(`${selectedRows.length.toLocaleString('id-ID')} IP berhasil disimpan untuk pekerjaan.`);
+    } catch (error) {
+      console.error(error);
+      showWorkMessage('Gagal menyimpan data pekerjaan di browser.', true);
     }
   }
 
@@ -329,9 +398,7 @@
     XLSX.writeFile(workbook, 'IP_Repeat_Analysis.xlsx');
   }
 
-  fileInput.addEventListener('change', event => {
-    setFile(event.target.files?.[0]);
-  });
+  fileInput.addEventListener('change', event => setFile(event.target.files?.[0]));
 
   ['dragenter', 'dragover'].forEach(type => {
     uploadArea.addEventListener(type, event => {
@@ -347,9 +414,7 @@
     });
   });
 
-  uploadArea.addEventListener('drop', event => {
-    setFile(event.dataTransfer.files?.[0]);
-  });
+  uploadArea.addEventListener('drop', event => setFile(event.dataTransfer.files?.[0]));
 
   processBtn.addEventListener('click', processFile);
   searchInput.addEventListener('input', render);
@@ -387,12 +452,20 @@
 
   engineerSelect?.addEventListener('change', () => {
     state.engineerId = engineerSelect.value;
+    showWorkMessage('');
+
     if (state.engineerId) {
       window.localStorage?.setItem(ENGINEER_STORAGE_KEY, state.engineerId);
     } else {
       window.localStorage?.removeItem(ENGINEER_STORAGE_KEY);
     }
+
+    updateWorkUi();
   });
+
+  workStatus?.addEventListener('change', () => showWorkMessage(''));
+  workNote?.addEventListener('input', () => showWorkMessage(''));
+  saveWorkBtn?.addEventListener('click', saveWorkForSelected);
 
   exportBtn.addEventListener('click', exportResults);
 
