@@ -79,12 +79,32 @@ No engineer tracking or database workflow is added in this phase.
 - Required final validation remains: open the deployed page in a real browser, process a representative Excel file, and verify Zone filter, search, combined filtering, sorting and numbering visually/behaviorally.
 
 ## Phase 3 — Engineer Selection
-Status: PLANNED
+Status: IN PROGRESS
 - Checkbox per result row.
 - Select all / clear selection.
 - Show selected-IP count.
 - Multiple IP selection.
 - Selection does not lock an IP.
+
+Phase 3 implementation — 2026-09-01:
+- Added a selection checkbox to every IP result row.
+- Added a selected-IP counter.
+- Added `Pilih Semua` / `Batalkan Semua` behavior for the currently visible filtered result set.
+- Added `Clear` to remove all selections.
+- Selection state is stored by IP in a `Set`, so selected IPs persist while search, Zone filtering, and Repeat Zero sorting change the visible rows.
+- Reprocessing a new Excel file clears the prior selection state.
+- The existing IP counting, validation, master-data mapping, Zone derivation, search, filtering and sorting logic remains intact.
+- No IP locking or engineer identity/database workflow is introduced in this phase.
+- Affected files: `ip-repeat-analyzer.html`, `ip-repeat-analyzer.js`, `ip-repeat-analyzer.css`.
+
+Validation:
+- Code review confirms checkbox state is derived from the selected-IP set and restored during every `render()`.
+- Select All applies only to currently visible filtered rows; previously selected non-visible IPs remain selected.
+- Clear removes the full selection set.
+- Result numbering remains generated from `state.filteredRows`, so selection does not affect numbering.
+- Processing a new file explicitly clears selections before rendering new results.
+- The selection feature does not write to storage or a database.
+- Live browser validation remains pending, consistent with the Phase 2 deployment-validation limitation.
 
 ## Phase 4 — Engineer Identity
 Status: PLANNED
@@ -196,6 +216,15 @@ Future Shift Report can use work history for:
 - Live browser validation could not be executed in the current environment.
 - Phase 2 remains IN PROGRESS until deployed-page behavior is verified in a real browser.
 
+## 2026-09-01 — Phase 3 implementation
+- Created isolated branch `phase-3-engineer-selection` from `main`.
+- Added per-row IP selection using a `Set` keyed by normalized IP.
+- Added selected counter, Select All/Cancel All, and Clear controls.
+- Preserved selection through render/filter/search/sort operations.
+- Cleared selection when a new Excel file is processed.
+- Updated only the IP Repeat HTML/JS/CSS and this roadmap.
+- Phase 3 remains IN PROGRESS pending live browser validation.
+
 # Current Status
 
 | Phase | Status |
@@ -203,7 +232,7 @@ Future Shift Report can use work history for:
 | Phase 0 — Requirement Freeze | DONE |
 | Phase 1 — IP Repeat Analyzer | DONE, with live-table zone verification |
 | Phase 2 — Filtering & Sorting | IN PROGRESS — awaiting live browser validation |
-| Phase 3 — Engineer Selection | PLANNED |
+| Phase 3 — Engineer Selection | IN PROGRESS — implementation complete, live browser validation pending |
 | Phase 4 — Engineer Identity | PLANNED |
 | Phase 5 — Work Tracking | PLANNED |
 | Phase 6 — Work History | PLANNED |
