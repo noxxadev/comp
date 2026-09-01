@@ -8,12 +8,10 @@
   }
 
   function loadWorkItems() {
-    // The Google Sheet is the source of truth. The current Phase 5 UI only
-    // needs an empty object so the existing save flow can build the payload.
     return {};
   }
 
-  function saveWorkItems(items) {
+  async function saveWorkItems(items) {
     const config = getConfig();
     const url = String(config.webAppUrl || '').trim();
 
@@ -27,22 +25,38 @@
       items
     };
 
-    // sendBeacon avoids exposing Google credentials in the public GitHub page
-    // and can POST cross-origin data without requiring the page to read the
-    // response. The UI therefore reports that the request was queued, while
-    // Google Sheets remains the source of truth.
-    if (!navigator.sendBeacon) {
-      throw new Error('Browser tidak mendukung pengiriman data ke Google Sheets.');
+    let response;
+    try {
+      response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+        body: JSON.stringify(payload)
+      });
+    } catch (error) {
+      throw new Error(`Gagal terhubung ke Google Sheets: ${error.message || 'network error'}`);
     }
 
-    const body = new Blob([JSON.stringify(payload)], { type: 'text/plain;charset=UTF-8' });
-    const queued = navigator.sendBeacon(url, body);
-
-    if (!queued) {
-      throw new Error('Data pekerjaan gagal dikirim ke Google Sheets.');
+    const text = await response.text();
+    let result;
+    try {
+      result = JSON.parse(text);
+    } catch (error) {
+      throw new Error(`Google Apps Script mengembalikan response tidak valid (HTTP ${response.status}).`);
     }
 
-    return true;
+    if (!response.ok) {
+      throw new Error(result?.error || `Google Sheets gagal menerima data (HTTP ${response.status}).`);
+    }
+
+    if (!result?.ok) {
+      throw new Error(result?.error || 'Google Apps Script menolak penyimpanan data.');
+    }
+
+    return {
+      ok: true,
+      saved: Number(result.saved || 0),
+      updatedAt: result.updatedAt || null
+    };
   }
 
   function buildWorkItems(rows, engineerId) {
