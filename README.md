@@ -45,7 +45,7 @@ Known maintenance item:
 - Exported Excel contains Zone data, but the live GitHub Pages table has previously shown a case where Zone was not rendered. This remains a Phase 1 UI/runtime verification item.
 
 ## Phase 2 — Filtering & Sorting
-Status: NEXT
+Status: IN PROGRESS
 
 Implement and verify:
 - Filter: All, Line A, Line B, Line C, Line D, Line E, Line F.
@@ -57,6 +57,15 @@ Implement and verify:
 - Phase 1 calculation logic remains unchanged.
 
 No engineer tracking or database workflow is added in this phase.
+
+### Phase 2 implementation — 2026-09-01
+- Added a Zone filter control with All, Line A, Line B, Line C, Line D, Line E and Line F.
+- Zone filtering operates on the already-derived `row.zone` value; IP counting and master-data mapping remain unchanged.
+- Search by IP/Nama DC continues to work together with the Zone filter.
+- Existing Repeat Zero sorting continues to operate on the filtered result set.
+- Resetting/reprocessing an Excel file resets the Zone filter to All.
+- Affected files: `ip-repeat-analyzer.html`, `ip-repeat-analyzer.js`, `ip-repeat-analyzer.css`.
+- Validation performed: code-level verification of filter state, combined search/filter flow, and sorting integration. Live browser validation remains to be performed before Phase 2 is marked DONE.
 
 ## Phase 3 — Engineer Selection
 Status: PLANNED
@@ -175,7 +184,7 @@ Future Shift Report can use work history for:
 |---|---|
 | Phase 0 — Requirement Freeze | DONE |
 | Phase 1 — IP Repeat Analyzer | DONE, with live-table zone verification |
-| Phase 2 — Filtering & Sorting | NEXT |
+| Phase 2 — Filtering & Sorting | IN PROGRESS |
 | Phase 3 — Engineer Selection | PLANNED |
 | Phase 4 — Engineer Identity | PLANNED |
 | Phase 5 — Work Tracking | PLANNED |
