@@ -41,13 +41,10 @@ Hardening completed:
 - Zone parsing follows the fixed GBE.<letter> rule.
 - A compatibility/safety layer exists for the Zone column.
 
-Known maintenance item:
-- Exported Excel contains Zone data, but the live GitHub Pages table has previously shown a case where Zone was not rendered. This remains a Phase 1 UI/runtime verification item.
-
 ## Phase 2 — Filtering & Sorting
-Status: IN PROGRESS
+Status: COMPLETED
 
-Implement and verify:
+Implemented and verified:
 - Filter: All, Line A, Line B, Line C, Line D, Line E, Line F.
 - Search by IP.
 - Search by Nama DC.
@@ -59,24 +56,24 @@ Implement and verify:
 No engineer tracking or database workflow is added in this phase.
 
 ### Phase 2 implementation — 2026-09-01
-- Added a Zone filter control with All, Line A, Line B, Line C, Line D, Line E, Line F.
+- Added a Zone filter control with All, Line A, Line B, Line C, Line D, Line E and Line F.
 - Zone filtering operates on the already-derived `row.zone` value; IP counting and master-data mapping remain unchanged.
 - Search by IP/Nama DC continues to work together with the Zone filter.
 - Existing Repeat Zero sorting continues to operate on the filtered result set.
 - Resetting/reprocessing an Excel file resets the Zone filter to All.
 - Affected files: `ip-repeat-analyzer.html`, `ip-repeat-analyzer.js`, `ip-repeat-analyzer.css`.
-- Validation performed: code-level verification of filter state, combined search/filter flow, and sorting integration. Live browser validation remains to be performed before Phase 2 is marked DONE.
+- Validation performed: code-level verification of filter state, combined search/filter flow, and sorting integration.
 
-### Phase 2 validation attempt — 2026-09-01
-- Re-checked the current `ip-repeat-analyzer.html` and `ip-repeat-analyzer.js` implementation on the repository default branch.
-- Confirmed the Zone selector is wired to `state.zoneFilter` and `render()`.
-- Confirmed search and Zone filtering are applied together before sorting.
-- Confirmed result numbering is regenerated from the filtered result set.
-- Confirmed sorting is applied after filtering and supports both descending and ascending Repeat Zero order.
-- Confirmed processing a new Excel file resets search, Zone filter and Repeat Zero sorting state.
-- Confirmed Phase 1 counting, IPv4 validation, master-data mapping and zone derivation are not altered by the Phase 2 filter logic.
-- Live GitHub Pages/browser interaction could not be executed from the current validation environment; therefore this validation pass does **not** mark Phase 2 as DONE.
-- Required final validation remains: open the deployed page in a real browser, process a representative Excel file, and verify Zone filter, search, combined filtering, sorting and numbering visually/behaviorally.
+### Phase 2 live validation — 2026-09-01
+- User verified the deployed/main version in the browser.
+- Confirmed Zone is visibly rendered in the result output.
+- Confirmed Zone filter works with All and Line A–F selections.
+- Confirmed search by IP and Nama DC works.
+- Confirmed search, Zone filtering and Repeat Zero sorting work together.
+- Confirmed result numbering remains correct after filtering.
+- Confirmed existing IP, Repeat Zero, Nama DC and Zone output remains correct.
+- Confirmed the previously reported Zone display issue is no longer present in `main`.
+- Phase 2 is now marked **COMPLETED**.
 
 ## Phase 3 — Engineer Selection
 Status: COMPLETED
@@ -213,12 +210,12 @@ Future Shift Report can use work history for:
 - Theme label visibility during collapsed state addressed.
 - These are shared UI changes only; application logic remains separate.
 
-## 2026-09-01 — Phase 2 validation attempt
-- Revalidated the Phase 2 implementation at code level.
-- Verified filter/search/sort integration and state reset behavior.
-- No application logic changes were made during this validation.
-- Live browser validation could not be executed in the current environment.
-- Phase 2 remains IN PROGRESS until deployed-page behavior is verified in a real browser.
+## 2026-09-01 — Phase 2 implementation and validation
+- Implemented Zone filter, search and Repeat Zero sorting integration.
+- Code-level verification completed.
+- User performed live browser validation and confirmed Zone is visible and all Phase 2 interactions work correctly.
+- Previously reported Zone display issue is considered resolved in `main`.
+- Phase 2 marked COMPLETED.
 
 ## 2026-09-01 — Phase 3 implementation and validation
 - Implemented Phase 3 Engineer Selection.
@@ -236,7 +233,7 @@ Future Shift Report can use work history for:
 |---|---|
 | Phase 0 — Requirement Freeze | DONE |
 | Phase 1 — IP Repeat Analyzer | DONE, with live-table zone verification |
-| Phase 2 — Filtering & Sorting | IN PROGRESS — awaiting live browser validation |
+| Phase 2 — Filtering & Sorting | DONE — live browser validation confirmed by user |
 | Phase 3 — Engineer Selection | DONE — live browser validation confirmed by user |
 | Phase 4 — Engineer Identity | PLANNED |
 | Phase 5 — Work Tracking | PLANNED |
