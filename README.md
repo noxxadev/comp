@@ -53,17 +53,6 @@ Implemented and verified:
 - Result numbering remains correct after filtering.
 - Phase 1 calculation logic remains unchanged.
 
-No engineer tracking or database workflow is added in this phase.
-
-### Phase 2 implementation — 2026-09-01
-- Added a Zone filter control with All, Line A, Line B, Line C, Line D, Line E and Line F.
-- Zone filtering operates on the already-derived `row.zone` value; IP counting and master-data mapping remain unchanged.
-- Search by IP/Nama DC continues to work together with the Zone filter.
-- Existing Repeat Zero sorting continues to operate on the filtered result set.
-- Resetting/reprocessing an Excel file resets the Zone filter to All.
-- Affected files: `ip-repeat-analyzer.html`, `ip-repeat-analyzer.js`, `ip-repeat-analyzer.css`.
-- Validation performed: code-level verification of filter state, combined search/filter flow, and sorting integration.
-
 ### Phase 2 live validation — 2026-09-01
 - User verified the deployed/main version in the browser.
 - Confirmed Zone is visibly rendered in the result output.
@@ -71,9 +60,8 @@ No engineer tracking or database workflow is added in this phase.
 - Confirmed search by IP and Nama DC works.
 - Confirmed search, Zone filtering and Repeat Zero sorting work together.
 - Confirmed result numbering remains correct after filtering.
-- Confirmed existing IP, Repeat Zero, Nama DC and Zone output remains correct.
 - Confirmed the previously reported Zone display issue is no longer present in `main`.
-- Phase 2 is now marked **COMPLETED**.
+- Phase 2 marked COMPLETED.
 
 ## Phase 3 — Engineer Selection
 Status: COMPLETED
@@ -83,36 +71,31 @@ Status: COMPLETED
 - Multiple IP selection.
 - Selection does not lock an IP.
 
-### Phase 3 implementation — 2026-09-01
-- Added a selection checkbox to every IP result row.
-- Added a selected-IP counter.
-- Added `Pilih Semua` / `Batalkan Semua` behavior for the currently visible filtered result set.
-- Added `Clear` to remove all selections.
-- Selection state is stored by IP in a `Set`, so selected IPs persist while search, Zone filtering, and Repeat Zero sorting change the visible rows.
-- Reprocessing a new Excel file clears the prior selection state.
-- The existing IP counting, validation, master-data mapping, Zone derivation, search, filtering and sorting logic remains intact.
-- No IP locking or engineer identity/database workflow is introduced in this phase.
-- Affected files: `ip-repeat-analyzer.html`, `ip-repeat-analyzer.js`, `ip-repeat-analyzer.css`.
-
 ### Phase 3 validation — 2026-09-01
-- User completed live browser validation of the Phase 3 implementation and confirmed the behavior is correct.
-- Verified per-row checkbox selection.
-- Verified selected-IP counter.
-- Verified Select All / Batalkan Semua behavior.
-- Verified Clear selection.
-- Verified multiple IP selection.
-- Verified selection remains correct when Search, Zone filtering, and Repeat Zero sorting are changed.
-- Verified selection is cleared when a new Excel file is processed.
-- Verified no IP locking was introduced.
-- Verified existing IP, Repeat Zero, Nama DC and Zone output remains correct.
-- Phase 3 is now marked **COMPLETED**.
+- User completed live browser validation and confirmed the behavior is correct.
+- Verified per-row checkbox selection, selected counter, Select All / Batalkan Semua, Clear, multiple selection, persistence across filtering/search/sort, reset on new Excel, and no IP locking.
+- Phase 3 marked COMPLETED.
 
 ## Phase 4 — Engineer Identity
-Status: PLANNED
+Status: IN PROGRESS
 - Initial identity method: engineer dropdown, not password login.
 - Engineer records use stable internal IDs.
 - Display name is separate from the ID.
 - Browser may remember the last selected engineer.
+
+### Phase 4 implementation — 2026-09-01
+- Added `engineer-data.js` containing a local engineer catalog with stable IDs `ENG-001` through `ENG-005`.
+- Current display names are placeholders `Engineer 1` through `Engineer 5`; the IDs are intended to remain stable when real names are assigned.
+- Added Engineer dropdown to the IP Repeat result header.
+- Engineer selection is stored in `state.engineerId` and does not alter IP calculations or selection behavior.
+- Last selected engineer ID is stored in browser `localStorage` under `comp.selectedEngineerId` and restored when the catalog still contains that ID.
+- Clearing the Engineer dropdown removes the stored selection.
+- No password login, Supabase write, work-item creation, or IP locking is introduced in Phase 4.
+- Affected files: `engineer-data.js`, `ip-repeat-analyzer.html`, `ip-repeat-analyzer.js`, `ip-repeat-analyzer.css`.
+
+### Phase 4 validation status
+- Code-level verification completed for engineer catalog loading, stable IDs, dropdown wiring, localStorage persistence, and separation from IP/selection logic.
+- Live browser validation remains pending.
 
 ## Phase 5 — Work Tracking
 Status: PLANNED
@@ -212,14 +195,12 @@ Future Shift Report can use work history for:
 
 ## 2026-09-01 — Phase 2 implementation and validation
 - Implemented Zone filter, search and Repeat Zero sorting integration.
-- Code-level verification completed.
 - User performed live browser validation and confirmed Zone is visible and all Phase 2 interactions work correctly.
 - Previously reported Zone display issue is considered resolved in `main`.
 - Phase 2 marked COMPLETED.
 
 ## 2026-09-01 — Phase 3 implementation and validation
 - Implemented Phase 3 Engineer Selection.
-- Changes were initially isolated in `phase-3-engineer-selection` and then merged into `main`.
 - Added per-row IP selection using a `Set` keyed by normalized IP.
 - Added selected counter, Select All/Cancel All, and Clear controls.
 - Preserved selection through render/filter/search/sort operations.
@@ -227,15 +208,23 @@ Future Shift Report can use work history for:
 - User completed live browser validation and confirmed the implementation is correct.
 - Phase 3 marked COMPLETED.
 
+## 2026-09-01 — Phase 4 implementation
+- Implemented local engineer identity catalog with stable IDs `ENG-001`–`ENG-005`.
+- Added Engineer dropdown to the results header.
+- Added state-based engineer selection and browser persistence using `localStorage`.
+- Preserved existing analyzer and selection logic.
+- No database or authentication workflow added.
+- Phase 4 remains IN PROGRESS pending live browser validation.
+
 # Current Status
 
 | Phase | Status |
 |---|---|
 | Phase 0 — Requirement Freeze | DONE |
-| Phase 1 — IP Repeat Analyzer | DONE, with live-table zone verification |
+| Phase 1 — IP Repeat Analyzer | DONE |
 | Phase 2 — Filtering & Sorting | DONE — live browser validation confirmed by user |
 | Phase 3 — Engineer Selection | DONE — live browser validation confirmed by user |
-| Phase 4 — Engineer Identity | PLANNED |
+| Phase 4 — Engineer Identity | IN PROGRESS — implementation complete, live browser validation pending |
 | Phase 5 — Work Tracking | PLANNED |
 | Phase 6 — Work History | PLANNED |
 | Phase 7 — Supabase / Multi-user | PLANNED |
