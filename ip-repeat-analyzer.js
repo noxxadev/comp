@@ -7,7 +7,8 @@
     filteredRows: [],
     sortDesc: true,
     zoneFilter: 'all',
-    sourceColumn: ''
+    sourceColumn: '',
+    selectedIps: new Set()
   };
 
   const $ = (id) => document.getElementById(id);
@@ -30,6 +31,9 @@
   const menuToggle = $('menuToggle');
   const sidebar = $('sidebar');
   const sidebarOverlay = $('sidebarOverlay');
+  const selectedCount = $('selectedCount');
+  const selectAllBtn = $('selectAllBtn');
+  const clearSelectionBtn = $('clearSelectionBtn');
 
   function normalizeIp(value) {
     if (value === null || value === undefined) return '';
@@ -58,9 +62,6 @@
 
   function getZoneFromMasterName(name) {
     if (!name) return '-';
-
-    // Master Data menggunakan format lokasi seperti GBE.A1.A.1.1.
-    // Zona adalah huruf pertama setelah "GBE.".
     const match = String(name).trim().match(/^GBE\.([A-Z])/i);
     return match ? `Line ${match[1].toUpperCase()}` : '-';
   }
@@ -94,6 +95,27 @@
     uploadArea.classList.add('has-file');
   }
 
+  function updateSelectionUi() {
+    selectedCount.textContent = state.selectedIps.size.toLocaleString('id-ID');
+    clearSelectionBtn.disabled = state.selectedIps.size === 0;
+
+    const visibleIps = state.filteredRows.map(row => row.ip);
+    const allVisibleSelected = visibleIps.length > 0 && visibleIps.every(ip => state.selectedIps.has(ip));
+    selectAllBtn.disabled = visibleIps.length === 0;
+    selectAllBtn.innerHTML = allVisibleSelected
+      ? '<i class="fas fa-square-minus"></i><span>Batalkan Semua</span>'
+      : '<i class="fas fa-check-double"></i><span>Pilih Semua</span>';
+  }
+
+  function toggleSelection(ip, checked) {
+    if (checked) {
+      state.selectedIps.add(ip);
+    } else {
+      state.selectedIps.delete(ip);
+    }
+    updateSelectionUi();
+  }
+
   function render() {
     const query = searchInput.value.trim().toLowerCase();
 
@@ -116,6 +138,7 @@
 
     if (!state.filteredRows.length) {
       emptyResults.hidden = false;
+      updateSelectionUi();
       return;
     }
 
@@ -124,6 +147,20 @@
     const fragment = document.createDocumentFragment();
     state.filteredRows.forEach((row, index) => {
       const tr = document.createElement('tr');
+      if (state.selectedIps.has(row.ip)) tr.classList.add('is-selected');
+
+      const selection = document.createElement('td');
+      selection.className = 'selection-cell';
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.className = 'repeat-row-checkbox';
+      checkbox.checked = state.selectedIps.has(row.ip);
+      checkbox.setAttribute('aria-label', `Pilih IP ${row.ip}`);
+      checkbox.addEventListener('change', event => {
+        toggleSelection(row.ip, event.target.checked);
+        tr.classList.toggle('is-selected', event.target.checked);
+      });
+      selection.appendChild(checkbox);
 
       const no = document.createElement('td');
       no.className = 'col-no';
@@ -145,11 +182,12 @@
       zone.className = row.isMaster && row.zone !== '-' ? 'zone-cell' : 'zone-cell not-master';
       zone.textContent = row.zone;
 
-      tr.append(no, ip, repeat, name, zone);
+      tr.append(selection, no, ip, repeat, name, zone);
       fragment.appendChild(tr);
     });
 
     resultsBody.appendChild(fragment);
+    updateSelectionUi();
   }
 
   async function processFile() {
@@ -174,7 +212,6 @@
       let headerRowIndex = -1;
       let ipColumnIndex = -1;
 
-      // Cari header IP pada beberapa baris pertama untuk menangani worksheet dengan baris pembuka.
       const scanLimit = Math.min(matrix.length, 20);
       for (let i = 0; i < scanLimit; i++) {
         const candidate = findIpColumn(matrix[i] || []);
@@ -216,6 +253,7 @@
         };
       });
 
+      state.selectedIps.clear();
       resultSummary.textContent =
         `${validIpRows.toLocaleString('id-ID')} data IP valid dari kolom "${state.sourceColumn}" → ${state.rows.length.toLocaleString('id-ID')} IP unik.`;
 
@@ -307,6 +345,23 @@
     render();
   });
 
+  selectAllBtn?.addEventListener('click', () => {
+    const visibleIps = state.filteredRows.map(row => row.ip);
+    const allVisibleSelected = visibleIps.length > 0 && visibleIps.every(ip => state.selectedIps.has(ip));
+
+    if (allVisibleSelected) {
+      visibleIps.forEach(ip => state.selectedIps.delete(ip));
+    } else {
+      visibleIps.forEach(ip => state.selectedIps.add(ip));
+    }
+    render();
+  });
+
+  clearSelectionBtn?.addEventListener('click', () => {
+    state.selectedIps.clear();
+    render();
+  });
+
   exportBtn.addEventListener('click', exportResults);
 
   menuToggle?.addEventListener('click', () => {
@@ -329,4 +384,6 @@
   masterDataStatus.textContent = window.masterData && typeof window.masterData === 'object'
     ? `${Object.keys(window.masterData).length.toLocaleString('id-ID')} IP`
     : 'Tidak tersedia';
+
+  updateSelectionUi();
 })();
