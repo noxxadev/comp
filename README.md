@@ -90,7 +90,7 @@ Status: COMPLETED
 - Engineer selection is stored in `state.engineerId` and does not alter IP calculations or selection behavior.
 - Last selected engineer ID is stored in browser `localStorage` under `comp.selectedEngineerId` and restored when the catalog still contains that ID.
 - Clearing the Engineer dropdown removes the stored selection.
-- No password login, Supabase write, work-item creation, or IP locking is introduced in Phase 4.
+- No password login, database write, work-item creation, or IP locking is introduced in Phase 4.
 - Affected files: `engineer-data.js`, `ip-repeat-analyzer.html`, `ip-repeat-analyzer.js`, `ip-repeat-analyzer.css`.
 
 ### Phase 4 validation — 2026-09-01
@@ -99,7 +99,7 @@ Status: COMPLETED
 - Confirmed the selected engineer does not alter existing IP analysis or selection behavior.
 - Phase 4 marked COMPLETED.
 
-## Phase 5 — Work Tracking
+## Phase 5 — Work Tracking + Google Sheets Persistence
 Status: IN PROGRESS
 
 Minimum work data:
@@ -120,45 +120,48 @@ Initial statuses:
 
 IP is never locked; multiple engineers may work on the same IP.
 
-### Phase 5 implementation — 2026-09-01
-- Added a dedicated `work-tracking.js` module for local work-item storage.
-- Added Work Tracking panel to the IP Repeat results area.
-- Work Tracking operates on the currently selected IP set from Phase 3.
-- Saving a work update requires a selected engineer and at least one selected IP.
+### Phase 5 revised architecture — 2026-09-01
+- Google Sheets is the persistent data store for current Work Items.
+- Google Apps Script is used as the web endpoint between GitHub Pages and Google Sheets.
+- No Google OAuth credential or service-account key is placed in the public GitHub Pages JavaScript.
+- `google-sheets-config.js` holds only the deployed Apps Script `/exec` URL and optional request key.
+- `google-apps-script/Code.gs` provides the backend template and creates the `Work Items` sheet/header automatically when needed.
+- Current Work Items schema: IP | Nama DC | Zona | Repeat Zero | Engineer ID | Status | Timestamp | Catatan.
+- Saving selected IPs performs an upsert keyed by IP, so the sheet keeps the latest work state for each IP.
 - A single save can apply to multiple selected IPs.
-- Each work item stores IP, Nama DC, Zona, Repeat Zero, Engineer ID, Status, Timestamp and Note.
-- Current work items are persisted in browser `localStorage` under `comp.workItems.v1`.
-- Existing work items keep their previous status/note when appropriate; each explicit save updates Engineer ID, Status, Timestamp and Note for the selected IPs.
-- No work history/event log is introduced yet; that belongs to Phase 6.
-- No Supabase/database write is introduced; that belongs to Phase 7.
+- Work history/event logging is intentionally postponed to Phase 6.
+- Supabase is removed from the mandatory roadmap; Google Sheets is the selected persistence approach for this project.
 - No IP locking is introduced.
-- Affected files: `work-tracking.js`, `ip-repeat-analyzer.html`, `ip-repeat-analyzer.js`, `ip-repeat-analyzer.css`.
+
+### Google Sheets setup required
+1. Create a Google Spreadsheet for Work Tracking and copy its Spreadsheet ID.
+2. Open Apps Script and copy `google-apps-script/Code.gs` from this repository into the script project.
+3. Replace `PASTE_YOUR_GOOGLE_SHEET_ID_HERE` with the Spreadsheet ID.
+4. Optionally set a lightweight `REQUEST_KEY` in both `Code.gs` and `google-sheets-config.js`. This is an application-level request filter, not a secret, because the public frontend can expose it.
+5. Deploy the Apps Script as a Web App and use its `/exec` URL.
+6. Put that `/exec` URL in `google-sheets-config.js` under `webAppUrl`.
+7. Test saving one or more selected IPs and verify the `Work Items` sheet.
 
 ### Phase 5 validation status
-- Code-level verification completed for selected-IP targeting, engineer requirement, status selection, timestamp creation, note capture and local persistence.
-- Live browser validation remains pending.
+- Code-level verification completed for multi-IP payload construction, selected engineer requirement, status/note fields, and Google Sheets endpoint wiring.
+- The repository contains the Apps Script backend template, but it cannot be considered fully operational until the user deploys the script and configures the `/exec` URL.
+- Live end-to-end Google Sheets validation remains pending.
 
 ## Phase 6 — Work History
 Status: PLANNED
 
 Every meaningful work action/status change is recorded as history. Latest state and historical activity are separate concepts.
 
-## Phase 7 — Supabase / Multi-user
+## Phase 7 — Multi-user / Google Sheets Hardening
 Status: PLANNED
-
-The user has connected the project to Supabase. Before database writes are implemented, the actual repository-side client/configuration must be verified.
-
-Target data:
-- engineers
-- work_items
-- work_history
 
 Target:
 - Approximately 5 simultaneous engineers.
 - Shared persisted work data.
 - No IP locking.
-- Appropriate Row Level Security (RLS).
 - Stable engineer IDs.
+- Access and write behavior appropriate for the intended internal users.
+- Google Sheets remains the persistence layer unless a later requirement justifies a database migration.
 
 ## Phase 8 — Work Export
 Status: PLANNED
@@ -189,6 +192,7 @@ Future Shift Report can use work history for:
 7. Initial engineer identity is dropdown-based.
 8. Statistics are postponed until the core workflow is stable.
 9. Every implementation update must be recorded in this README.
+10. Google Sheets is the selected persistence layer for Work Tracking unless the roadmap is explicitly revised later.
 
 # Detailed Change Log
 
@@ -196,7 +200,6 @@ Future Shift Report can use work history for:
 - Requirement freeze created for IP Repeat Analyzer and Engineer Work Tracking.
 - Phase 0–9 defined.
 - Flexible/non-locking engineer workflow defined.
-- Supabase planned for persisted multi-user work tracking.
 - Zone rule fixed to first letter after GBE.
 
 ## 2026-09-01 — Phase 1 hardening
@@ -236,13 +239,14 @@ Future Shift Report can use work history for:
 - User verified the feature in the browser and confirmed it works.
 - Phase 4 marked COMPLETED.
 
-## 2026-09-01 — Phase 5 implementation
-- Added local Work Tracking storage module.
-- Added Work Tracking panel for selected IPs.
-- Added multi-IP work updates with Engineer ID, Status, Timestamp and Note.
-- Persisted latest work-item state in browser `localStorage`.
-- Kept work history and Supabase out of this phase as planned.
-- Phase 5 remains IN PROGRESS pending live browser validation.
+## 2026-09-01 — Phase 5 persistence revision and implementation
+- Revised Phase 5 to use Google Sheets instead of browser localStorage as the persistent Work Tracking store.
+- Added `google-sheets-config.js` for the Apps Script `/exec` URL and optional request key.
+- Added `google-apps-script/Code.gs` backend template for Work Items upsert.
+- Updated `work-tracking.js` to send Work Items to the configured Apps Script endpoint instead of local browser storage.
+- Updated the Work Tracking description to indicate Google Sheets persistence.
+- Removed Supabase from the mandatory roadmap and changed Phase 7 to Google Sheets multi-user hardening.
+- Phase 5 remains IN PROGRESS until the Apps Script is deployed, configured, and verified end-to-end in the browser and Google Sheet.
 
 # Current Status
 
@@ -253,9 +257,9 @@ Future Shift Report can use work history for:
 | Phase 2 — Filtering & Sorting | DONE — live browser validation confirmed by user |
 | Phase 3 — Engineer Selection | DONE — live browser validation confirmed by user |
 | Phase 4 — Engineer Identity | DONE — live browser validation confirmed by user |
-| Phase 5 — Work Tracking | IN PROGRESS — implementation complete, live browser validation pending |
+| Phase 5 — Work Tracking + Google Sheets Persistence | IN PROGRESS — code implemented, Apps Script deployment/configuration and live end-to-end validation pending |
 | Phase 6 — Work History | PLANNED |
-| Phase 7 — Supabase / Multi-user | PLANNED |
+| Phase 7 — Multi-user / Google Sheets Hardening | PLANNED |
 | Phase 8 — Work Export | PLANNED |
 | Phase 9 — Shift Report Integration | PLANNED |
 
