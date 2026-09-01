@@ -292,6 +292,43 @@
   border-bottom: 1px solid var(--glass-border);
 }
 
+.repeat-zone-filter {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+}
+
+.repeat-zone-filter label {
+  color: var(--slate);
+  font-size: .72rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.repeat-zone-filter select {
+  min-width: 130px;
+  height: 42px;
+  padding: 0 .8rem;
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  background: rgba(255,255,255,.04);
+  color: var(--white);
+  font: 500 .8rem 'Inter', sans-serif;
+  cursor: pointer;
+}
+
+.repeat-zone-filter select:focus {
+  outline: none;
+  border-color: rgba(59,130,246,.55);
+  box-shadow: 0 0 0 3px rgba(59,130,246,.1);
+}
+
+[data-theme="dark"] .repeat-zone-filter select {
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--text);
+}
+
 .repeat-search {
   position: relative;
   flex: 1;
