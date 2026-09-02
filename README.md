@@ -8,6 +8,8 @@ The roadmap is executed phase-by-phase. Completed phases are not changed casuall
 # Roadmap
 
 ## Phase 0 — Requirement Freeze
+Status: DONE
+
 - MinerPlus `.xlsx` is the current analysis input.
 - Auto-detect and normalize the IP column.
 - Validate IPv4 and count occurrences per unique IP.
@@ -19,7 +21,7 @@ The roadmap is executed phase-by-phase. Completed phases are not changed casuall
 ## Phase 1 — IP Repeat Analyzer
 Status: COMPLETED / LOGIC FIXED
 
-Implemented:
+Implemented and hardened:
 - Excel upload and IP column detection.
 - IP normalization/validation and repeat counting.
 - IP → Nama DC mapping.
@@ -27,8 +29,6 @@ Implemented:
 - Unique-IP result table.
 - Repeat Zero sorting.
 - `.xlsx` export.
-
-Hardening:
 - Safer BOM/whitespace header matching.
 - Trimmed master-data values.
 - Fixed `GBE.<letter>` zone parsing.
@@ -112,31 +112,17 @@ Validation completed 2026-09-03:
 - Persistence and upsert behavior passed.
 
 ## Phase 6 — Machine Identity + Work History
-Status: PLANNED
+Status: IN PROGRESS — Phase 6A IMPLEMENTED, LIVE VALIDATION PENDING
 
 ### Primary goal
-Build a reliable machine history based on **Serial Number**, not IP and not `location_id` alone.
+Build reliable machine history based on **Serial Number**, not IP and not `location_id` alone.
 
 ### Identity model
-- **IP** = current/observed network address; may be reused by another machine.
-- **location_id** = physical location/slot; may keep the same value while the machine occupying it changes.
-- **Serial Number** = physical-machine identity and the preferred history key.
+- **IP** = current/observed network address; may later be reused by another machine.
+- **location_id** = physical location/slot; can retain the same value while the installed machine changes.
+- **Serial Number** = physical-machine identity and preferred history key.
 
-### Separate Machine List source
-Machine List is a separate input from the MinerPlus upload and includes, among others:
-- `serial_number`
-- `location_id`
-- `installed_date`
-- `uninstalled_date`
-- `opname_date`
-- rack/row/unit and other location information.
-
-The sample structure confirmed on 2026-09-03 contains these columns and demonstrates that the source can provide both Serial Number and location/time context.
-
-### Critical mapping rule
-`location_id` is a **location/slot identifier**, not a permanent machine identifier.
-
-A location can have this lifecycle:
+A valid lifecycle is:
 
 `location_id → Serial A → machine removed/replaced → Serial B`
 
@@ -144,52 +130,79 @@ or:
 
 `location_id → Serial A → machine removed without replacement → empty/unassigned`
 
-Therefore, mapping must be **time-aware**.
+Therefore, machine resolution for history must be time-aware.
 
-For a work event, the intended resolution is:
+### Separate Machine List source
+Machine List is a separate input from the MinerPlus upload. Confirmed columns in the supplied structure include:
+- `serial_number`
+- `machine_type_name`
+- `hashrate`
+- `type_brand`
+- `status`
+- `install_status`
+- `data_center_parent_name`
+- `data_center_name`
+- `storeroom_name`
+- `rack`
+- `row`
+- `unit_no`
+- `location_id`
+- `power`
+- `power_mode`
+- `warranty_status`
+- `warranty_date`
+- `repair_warranty_status`
+- `repair_warranty`
+- `warranty_period_tollerance`
+- `installed_date`
+- `uninstalled_date`
+- `opname_date`
 
-`Nama DC → relevant location_id → machine occupying that location at event time → Serial Number`
+### Phase 6A — Machine List import / reading / normalization
+Status: IMPLEMENTED — LIVE VALIDATION PENDING
 
-The Machine List's `installed_date` / `uninstalled_date` (or equivalent valid timing data) should be used when determining the historical occupant.
+Purpose:
+- Keep Machine List ingestion separate from MinerPlus analysis.
+- Read `.xls` / `.xlsx` Machine List files.
+- Detect the required Machine List columns without relying on fixed column positions.
+- Normalize `serial_number` text.
+- Normalize `location_id` text to uppercase and trim whitespace.
+- Preserve `installed_date` and `uninstalled_date` values for later time-aware resolution.
+- Ignore fully empty rows.
+- Keep source row information for traceability.
+- Store the normalized dataset locally in the browser under `comp.machineList.v1` so Phase 6B can consume the loaded dataset without changing the existing MinerPlus analyzer logic.
+- Show a preview of the normalized dataset (up to the first 200 records).
+- Allow the stored Machine List dataset to be cleared.
+
+New Phase 6A files:
+- `machine-list.html`
+- `machine-list.css`
+- `machine-list.js`
+
+Phase 6A does **not** yet:
+- Match Machine List to MinerPlus IP rows.
+- Resolve a Serial Number for a work event.
+- Write Serial Number or Work History to Google Sheets.
+- Change Phase 5 Work Items behavior.
+
+### Phase 6B — Time-aware location-to-machine resolution
+Status: PLANNED
+
+Intended flow:
+`Nama DC → relevant location_id → machine occupying the location at event time → Serial Number`
+
+The matching must consider installation/removal timing so historical replacement is handled correctly.
 
 Rules:
-- Never assume the current Serial Number was always the historical Serial Number of that location.
+- Never assume the current Serial Number was always the historical Serial Number of a location.
 - Never carry forward an old Serial Number after a location becomes unassigned.
 - Never guess a Serial Number when the Machine List cannot resolve it.
-- If a match is ambiguous or missing, record the event as unresolved and expose that state to the user.
-- IP remains a historical snapshot/context field and must not be the machine-history key.
+- Ambiguous or missing resolution must remain explicitly unresolved.
+- Reused IP must never merge different machines' histories.
 
-### Source separation
-- MinerPlus remains the source for current IP/repeat analysis.
-- Machine List is used to enrich work records with machine identity.
-- Machine List must not replace or alter existing MinerPlus IP analysis logic.
-- Existing `master-data.js` IP → Nama DC logic remains intact.
+### Phase 6C — Append-only Work History
+Status: PLANNED
 
-### Work data model
-Current Work Items remains the Phase 5 current-state store.
-
-History events should carry:
-- Serial Number (primary machine identity when resolved)
-- IP observed at the event
-- Nama DC / location context
-- Zona
-- Engineer ID
-- Status
-- Timestamp
-- Catatan
-- Resolution/unresolved state as needed
-
-### Save flow
-1. Upload MinerPlus result.
-2. Existing IP analysis and selection operate unchanged.
-3. Selected row provides IP + Nama DC.
-4. Resolve location context from Nama DC.
-5. Resolve the machine occupying that location at the work-event time.
-6. Attach the matching Serial Number when valid.
-7. Update current `Work Items` using existing Phase 5 behavior.
-8. Append a new `Work History` event instead of overwriting historical events.
-
-### Sheets
 `Work Items`
 - Latest operational/current state.
 - Existing Phase 5 IP-keyed upsert remains intact unless explicitly revised later.
@@ -198,27 +211,20 @@ History events should carry:
 - Append-only events.
 - Serial Number is the preferred machine-history identity.
 - IP and location/Nama DC are contextual snapshots.
-- Replacement/removal must produce separate machine histories.
+- Replacement/removal produces separate machine histories.
+- Unresolved machine identity is represented explicitly.
 
-Example:
-- `SN-A | IP-1 | GBE.A01 | In Progress | 2026-09-03 10:00`
-- `SN-A | IP-2 | GBE.A01 | Problem | 2026-09-10 14:00`
-- `SN-B | IP-2 | GBE.A01 | Selesai | 2026-09-11 18:00`
+### Phase 6D — History Viewer
+Status: PLANNED
 
-The same IP or location can therefore appear with different Serial Numbers across time.
-
-### Phase 6 stages
-- **6A** — Machine List import/reading and normalization.
-- **6B** — Time-aware location-to-machine resolution and Serial Number enrichment.
-- **6C** — Append-only `Work History` persistence in Google Sheets.
-- **6D** — History viewer/search by Serial Number with IP, Nama DC/location, Engineer, Status and date as context/filter fields.
+History will be searchable primarily by Serial Number, with IP, Nama DC/location, Engineer, Status and date as context/filter fields.
 
 ### Phase 6 validation requirements
 Before Phase 6 is marked complete:
-- Same location before/after machine replacement resolves to different correct Serial Numbers.
-- Location with machine removed and no replacement becomes unassigned, not the previous Serial Number.
-- Reused IP does not merge different machines' histories.
-- Old machine history remains attached to the old Serial Number after replacement.
+- Same location before/after replacement resolves to the correct different Serial Numbers.
+- A removed machine with no replacement results in an unassigned state.
+- Reused IP does not merge different machines.
+- Old machine history stays attached to the old Serial Number.
 - Missing/ambiguous Machine List resolution is visible and never guessed.
 - Phase 5 current Work Items upsert behavior remains unchanged.
 
@@ -268,6 +274,7 @@ Future Shift Report can use history for:
 10. Machine-to-location resolution must account for replacement/removal over time.
 11. Unresolved identity must never be replaced with a guessed Serial Number.
 12. Every implementation/change must be recorded in this README.
+13. Phase 6A local browser storage is an intermediate Machine List cache only; it is not the final Work Tracking persistence layer.
 
 # Detailed Change Log
 
@@ -322,8 +329,19 @@ Future Shift Report can use history for:
 - Confirmed `location_id` can keep the same value while Serial Number changes after machine replacement.
 - Confirmed a location can become empty/unassigned after machine removal without replacement.
 - Revised Phase 6 so `location_id` is treated as a location/slot, not a permanent machine ID.
-- Revised Serial Number resolution to be time-aware using Machine List occupancy timing where available.
+- Revised Serial Number resolution to be time-aware using Machine List occupancy timing.
 - Added validation rules for replacement, removal, reused IP, ambiguous/missing matches and unresolved history.
+
+## 2026-09-03 — Phase 6A implementation
+- Added `machine-list.html` as a dedicated Machine List ingestion page.
+- Added `machine-list.css` for the Phase 6A UI.
+- Added `machine-list.js` for `.xls/.xlsx` reading, header detection, normalization and dataset preview.
+- Required fields for the Phase 6A parser: `serial_number`, `location_id`, `installed_date`, `uninstalled_date`.
+- Normalized Serial Number and location values and preserved installation/removal date values for future time-aware mapping.
+- Added browser storage key `comp.machineList.v1` as an intermediate local dataset cache for Phase 6B.
+- Added dataset clear control and persistent dataset status.
+- Phase 6A remains IN PROGRESS until a real Machine List file is uploaded and browser-validated.
+- No MinerPlus analyzer logic or Phase 5 Work Items behavior was intentionally modified.
 
 # Current Status
 
@@ -335,7 +353,7 @@ Future Shift Report can use history for:
 | Phase 3 — Engineer Selection | DONE — live validation confirmed |
 | Phase 4 — Engineer Identity | DONE — live validation confirmed |
 | Phase 5 — Work Tracking + Google Sheets Persistence | DONE — end-to-end validation and upsert verified |
-| Phase 6 — Machine Identity + Work History | PLANNED — time-aware Serial Number mapping required |
+| Phase 6 — Machine Identity + Work History | IN PROGRESS — Phase 6A implemented, live validation pending |
 | Phase 7 — Multi-user / Google Sheets Hardening | PLANNED |
 | Phase 8 — Work Export | PLANNED |
 | Phase 9 — Shift Report Integration | PLANNED |
