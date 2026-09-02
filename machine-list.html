@@ -47,8 +47,8 @@
 
       <section class="hub-hero repeat-hero">
         <div>
-          <strong>Phase 6A — Machine List Import</strong>
-          <p>Data ini terpisah dari file MinerPlus. Phase 6A hanya membaca dan menormalisasi Machine List; pencocokan berbasis waktu dilakukan pada Phase 6B.</p>
+          <strong>Phase 6 — Machine Identity</strong>
+          <p>Machine List tetap terpisah dari file MinerPlus. Phase 6A membaca data, sedangkan Phase 6B menentukan mesin yang menempati suatu Location ID pada waktu event.</p>
         </div>
         <div class="repeat-hero-icon"><i class="fas fa-server"></i></div>
       </section>
@@ -90,6 +90,29 @@
       <section class="hub-card machine-list-card">
         <div class="machine-list-heading">
           <div>
+            <h2>Phase 6B — Time-aware Resolution Test</h2>
+            <p>Masukkan Location ID dan waktu event. Resolver akan mencari tepat satu mesin yang aktif pada lokasi tersebut saat event.</p>
+          </div>
+        </div>
+        <div class="machine-list-resolver-form">
+          <label>
+            <span>Location ID</span>
+            <input id="resolverLocationId" type="text" placeholder="Contoh: GBE.A5.C.9.2" autocomplete="off">
+          </label>
+          <label>
+            <span>Event Timestamp</span>
+            <input id="resolverTimestamp" type="datetime-local" step="1">
+          </label>
+          <button id="resolverTestBtn" class="repeat-primary-btn" type="button"><i class="fas fa-magnifying-glass"></i> Resolve Machine</button>
+        </div>
+        <div id="resolverResult" class="machine-list-resolver-result" aria-live="polite">
+          Belum ada resolusi.
+        </div>
+      </section>
+
+      <section class="hub-card machine-list-card">
+        <div class="machine-list-heading">
+          <div>
             <h2>Normalized Dataset</h2>
             <p id="machineListSummary">Belum ada Machine List yang dimuat.</p>
           </div>
@@ -120,6 +143,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.17.0/dist/xlsx.full.min.js"></script>
 <script src="machine-list.js?v=20260903-1"></script>
+<script src="machine-resolver.js?v=20260903-1"></script>
 <script src="theme-toggle.js"></script>
 <script>
   const menuToggle = document.getElementById('menuToggle');
@@ -134,6 +158,32 @@
     sidebarOverlay?.classList.toggle('visible');
   });
   sidebarOverlay?.addEventListener('click', closeSidebar);
+
+  const resolverLocationId = document.getElementById('resolverLocationId');
+  const resolverTimestamp = document.getElementById('resolverTimestamp');
+  const resolverTestBtn = document.getElementById('resolverTestBtn');
+  const resolverResult = document.getElementById('resolverResult');
+
+  resolverTestBtn?.addEventListener('click', () => {
+    if (!window.CompMachineResolver) {
+      resolverResult.textContent = 'Resolver tidak tersedia.';
+      return;
+    }
+
+    const result = window.CompMachineResolver.resolve(
+      resolverLocationId.value,
+      resolverTimestamp.value
+    );
+
+    if (result.status === 'resolved') {
+      const machine = result.matches[0];
+      resolverResult.innerHTML = `<strong>RESOLVED</strong><br>Serial Number: <b>${machine.serialNumber}</b><br>Location ID: ${machine.locationId}<br>Installed: ${machine.installedDate}<br>Uninstalled: ${machine.uninstalledDate || '—'}`;
+    } else if (result.status === 'ambiguous') {
+      resolverResult.innerHTML = `<strong>AMBIGUOUS</strong><br>${result.message}<br>${result.matches.length} machine cocok.`;
+    } else {
+      resolverResult.innerHTML = `<strong>UNRESOLVED</strong><br>${result.message}`;
+    }
+  });
 </script>
 </body>
 </html>
