@@ -53,8 +53,7 @@
   }
 
   function normalizeDateValue(value) {
-    const text = normalizeText(value);
-    return text;
+    return normalizeText(value);
   }
 
   function findHeaderIndex(headers, aliases) {
@@ -136,10 +135,10 @@
       throw new Error('Worksheet Machine List kosong.');
     }
 
-    let headerRowIndex = -1;
     let indexes = null;
-
+    let headerRowIndex = -1;
     const scanLimit = Math.min(matrix.length, 30);
+
     for (let i = 0; i < scanLimit; i++) {
       const headers = matrix[i] || [];
       const serialNumber = findHeaderIndex(headers, REQUIRED_HEADERS.serialNumber);
@@ -196,7 +195,9 @@
   }
 
   function updateStorageStatus() {
-    if (!state.records.length) {
+    const hasData = state.records.length > 0;
+    clearBtn.disabled = !hasData;
+    if (!hasData) {
       storageStatus.textContent = 'Belum ada data tersimpan';
       return;
     }
