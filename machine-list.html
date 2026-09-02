@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Machine List — COMP Tools</title>
+  <link rel="icon" href="/favicon.ico" type="image/x-icon">
+  <link rel="stylesheet" href="index-hub.css">
+  <link rel="stylesheet" href="ip-repeat-analyzer.css?v=20260901-7">
+  <link rel="stylesheet" href="machine-list.css?v=20260903-1">
+  <link rel="stylesheet" href="theme-toggle.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+<div class="hub-shell repeat-shell">
+  <aside class="hub-sidebar repeat-sidebar" id="sidebar">
+    <div class="hub-logo">
+      <div class="hub-mark">CP</div>
+      <div><div class="hub-brand">COMP Tools</div><div class="hub-subbrand">Data &amp; comparison suite</div></div>
+    </div>
+    <nav class="hub-nav" aria-label="Tool navigation">
+      <a href="index.html"><i class="fas fa-grid-2"></i><span>Tools Hub</span></a>
+      <a href="excel-analyzer.html"><i class="fas fa-file-excel"></i><span>Sub Account</span></a>
+      <a href="offline-analyzer.html"><i class="fas fa-database"></i><span>Offline</span></a>
+      <a href="iplocationvalidator.html"><i class="fas fa-location-dot"></i><span>IP Validator</span></a>
+      <a href="data-matcher.html"><i class="fas fa-link"></i><span>Pool vs Dashboard</span></a>
+      <a href="bulk-compare.html"><i class="fas fa-scale-balanced"></i><span>Bulk Compare</span></a>
+      <a href="ip-repeat-analyzer.html"><i class="fas fa-repeat"></i><span>IP Repeat</span></a>
+      <a class="active" href="machine-list.html"><i class="fas fa-server"></i><span>Machine List</span></a>
+      <a href="theme-preview.html"><i class="fas fa-palette"></i><span>Theme Preview</span></a>
+    </nav>
+    <div class="hub-meta"><strong>MACHINE LIST</strong><span>Machine identity source</span></div>
+  </aside>
+
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <main class="hub-main machine-list-main">
+    <div class="hub-container">
+      <section class="hub-top repeat-top">
+        <div>
+          <div class="hub-kicker">COMP / Tools</div>
+          <h1 class="hub-title">Machine List</h1>
+          <p class="hub-desc">Import data mesin untuk menyiapkan identitas Serial Number dan riwayat lokasi.</p>
+        </div>
+        <button class="repeat-menu-toggle" id="menuToggle" type="button" aria-label="Toggle menu"><i class="fas fa-bars"></i></button>
+      </section>
+
+      <section class="hub-hero repeat-hero">
+        <div>
+          <strong>Phase 6A — Machine List Import</strong>
+          <p>Data ini terpisah dari file MinerPlus. Phase 6A hanya membaca dan menormalisasi Machine List; pencocokan berbasis waktu dilakukan pada Phase 6B.</p>
+        </div>
+        <div class="repeat-hero-icon"><i class="fas fa-server"></i></div>
+      </section>
+
+      <section class="hub-card machine-list-card">
+        <div class="machine-list-heading">
+          <div>
+            <h2>Upload Machine List</h2>
+            <p>File .xls atau .xlsx dengan kolom serial_number, location_id, installed_date, dan uninstalled_date.</p>
+          </div>
+          <div class="machine-list-status">Status: <span id="machineListStorageStatus">Belum ada data tersimpan</span></div>
+        </div>
+
+        <div class="machine-list-upload" id="machineListUploadArea">
+          <input type="file" id="machineListFile" accept=".xls,.xlsx" aria-label="Upload Machine List">
+          <div class="machine-list-upload-content">
+            <div class="machine-list-upload-icon"><i class="fas fa-server"></i></div>
+            <div>
+              <h3>Drop Machine List di sini</h3>
+              <p>atau klik untuk memilih file • .xls / .xlsx</p>
+              <span id="machineListFileName">Belum ada file</span>
+            </div>
+          </div>
+        </div>
+
+        <div id="machineListError" class="machine-list-message machine-list-error" role="alert"></div>
+
+        <div class="machine-list-actions">
+          <button id="machineListClearBtn" class="machine-list-clear-btn" type="button" disabled><i class="fas fa-trash"></i> Hapus Dataset</button>
+          <button id="machineListProcessBtn" class="repeat-primary-btn" type="button" disabled><i class="fas fa-upload"></i> Baca Machine List</button>
+        </div>
+      </section>
+
+      <div id="machineListLoading" class="machine-list-loading" aria-live="polite">
+        <div class="loading-spinner"></div>
+        <p>Membaca Machine List...</p>
+      </div>
+
+      <section class="hub-card machine-list-card">
+        <div class="machine-list-heading">
+          <div>
+            <h2>Normalized Dataset</h2>
+            <p id="machineListSummary">Belum ada Machine List yang dimuat.</p>
+          </div>
+        </div>
+        <div class="machine-list-table-wrap">
+          <table class="machine-list-table">
+            <thead>
+              <tr>
+                <th>No</th>
+                <th>Serial Number</th>
+                <th>Location ID</th>
+                <th>Installed Date</th>
+                <th>Uninstalled Date</th>
+              </tr>
+            </thead>
+            <tbody id="machineListBody"></tbody>
+          </table>
+          <div id="machineListEmpty" class="machine-list-empty" hidden>
+            <i class="fas fa-server"></i>
+            <h3>Belum ada dataset</h3>
+            <p>Upload dan proses Machine List untuk melihat data yang sudah dinormalisasi.</p>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.17.0/dist/xlsx.full.min.js"></script>
+<script src="machine-list.js?v=20260903-1"></script>
+<script src="theme-toggle.js"></script>
+<script>
+  const menuToggle = document.getElementById('menuToggle');
+  const sidebar = document.getElementById('sidebar');
+  const sidebarOverlay = document.getElementById('sidebarOverlay');
+  function closeSidebar() {
+    sidebar?.classList.remove('mobile-open');
+    sidebarOverlay?.classList.remove('visible');
+  }
+  menuToggle?.addEventListener('click', () => {
+    sidebar?.classList.toggle('mobile-open');
+    sidebarOverlay?.classList.toggle('visible');
+  });
+  sidebarOverlay?.addEventListener('click', closeSidebar);
+</script>
+</body>
+</html>
