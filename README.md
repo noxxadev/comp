@@ -100,7 +100,7 @@ Status: COMPLETED
 - Phase 4 marked COMPLETED.
 
 ## Phase 5 — Work Tracking + Google Sheets Persistence
-Status: IN PROGRESS
+Status: COMPLETED
 
 Minimum work data:
 - IP
@@ -141,20 +141,20 @@ IP is never locked; multiple engineers may work on the same IP.
 - Save failures now surface the Apps Script/network error instead of reporting a false success.
 - Affected files: `work-tracking.js`, `ip-repeat-analyzer.js`, `ip-repeat-analyzer.html`.
 
-### Google Sheets setup required
+### Google Sheets setup
 1. Create a Google Spreadsheet for Work Tracking and copy its Spreadsheet ID.
-2. Open Apps Script and copy `google-apps-script/Code.gs` from this repository into the script project.
+2. Copy `google-apps-script/Code.gs` into the Apps Script project.
 3. Replace `PASTE_YOUR_GOOGLE_SHEET_ID_HERE` with the Spreadsheet ID in the Apps Script project only; keep the repository template placeholder unchanged.
-4. Optionally set a lightweight `REQUEST_KEY` in both `Code.gs` and `google-sheets-config.js`. This is an application-level request filter, not a secret, because the public frontend can expose it.
-5. Deploy the Apps Script as a Web App and use its `/exec` URL.
-6. Put that `/exec` URL in `google-sheets-config.js` under `webAppUrl`.
-7. Test saving one or more selected IPs and verify the `Work Items` sheet.
+4. Deploy the Apps Script as a Web App and use its `/exec` URL.
+5. Put that `/exec` URL in `google-sheets-config.js` under `webAppUrl`.
 
-### Phase 5 validation status
-- Google Apps Script `/exec` endpoint was verified by the user and returned `configured: true` from `doGet()`.
-- User also verified that `doPost` executions reach Apps Script and complete successfully.
-- Frontend save-response handling has now been hardened so the UI waits for and validates the Apps Script JSON result.
-- Live end-to-end confirmation that the saved rows appear in the intended Google Sheet is still pending.
+### Phase 5 validation — 2026-09-03
+- User verified the deployed Apps Script `/exec` endpoint returns `configured: true`.
+- User verified `doPost` executions complete successfully.
+- User verified Work Items are created in the `Work Tracking` spreadsheet under the `Work Items` tab.
+- User verified a work item update changes the existing IP row instead of creating a duplicate.
+- User verified the resulting data is persisted correctly.
+- Phase 5 marked COMPLETED.
 
 ## Phase 6 — Work History
 Status: PLANNED
@@ -255,7 +255,6 @@ Future Shift Report can use work history for:
 - Updated `work-tracking.js` to send Work Items to the configured Apps Script endpoint instead of local browser storage.
 - Updated the Work Tracking description to indicate Google Sheets persistence.
 - Removed Supabase from the mandatory roadmap and changed Phase 7 to Google Sheets multi-user hardening.
-- Phase 5 remains IN PROGRESS until the Apps Script is deployed, configured, and verified end-to-end in the browser and Google Sheet.
 
 ## 2026-09-01 — Phase 5 save confirmation hardening
 - Confirmed the configured Apps Script `/exec` endpoint returns `configured: true`.
@@ -263,7 +262,12 @@ Future Shift Report can use work history for:
 - Replaced `sendBeacon()` with awaited `fetch()` and JSON response validation.
 - Frontend now reports success only when Apps Script confirms the number of saved items.
 - Updated cache-buster for `work-tracking.js`.
-- Phase 5 remains IN PROGRESS pending visible confirmation of rows in Google Sheets.
+
+## 2026-09-03 — Phase 5 final validation and completion
+- User confirmed data appears in the `Work Items` tab of the `Work Tracking` spreadsheet.
+- User confirmed updating an existing IP does not create a duplicate row.
+- Google Sheets persistence and upsert behavior marked PASS.
+- Phase 5 marked COMPLETED.
 
 # Current Status
 
@@ -274,7 +278,7 @@ Future Shift Report can use work history for:
 | Phase 2 — Filtering & Sorting | DONE — live browser validation confirmed by user |
 | Phase 3 — Engineer Selection | DONE — live browser validation confirmed by user |
 | Phase 4 — Engineer Identity | DONE — live browser validation confirmed by user |
-| Phase 5 — Work Tracking + Google Sheets Persistence | IN PROGRESS — save-response validation implemented; final Google Sheet row verification pending |
+| Phase 5 — Work Tracking + Google Sheets Persistence | DONE — live end-to-end validation and upsert verification confirmed by user |
 | Phase 6 — Work History | PLANNED |
 | Phase 7 — Multi-user / Google Sheets Hardening | PLANNED |
 | Phase 8 — Work Export | PLANNED |
