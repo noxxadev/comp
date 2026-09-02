@@ -1,115 +1,87 @@
 # COMP — Roadmap & Change Log
 
 ## Purpose
-Fixed roadmap for the IP Repeat Analyzer and Engineer Work Tracking project in this repository.
+Fixed roadmap for the IP Repeat Analyzer and Engineer Work Tracking project.
 
-The roadmap is executed phase-by-phase. Completed phases are not changed casually; fixes are recorded in the change log. Existing tool logic must not be modified unless explicitly agreed.
+The roadmap is executed phase-by-phase. Completed phases are not changed casually; fixes and new requirements are recorded in the change log. Existing application logic must not be modified unless explicitly agreed.
 
 # Roadmap
 
 ## Phase 0 — Requirement Freeze
-- Input: MinerPlus result data in .xlsx; .xls may also be accepted where supported.
-- Excel may contain many columns; only the IP column is processed.
-- Automatically detect the IP column.
-- Normalize whitespace so equivalent IP addresses are counted as the same IP.
-- Use existing master-data.js for IP → Nama DC.
-- Missing IP: Nama DC = Bukan IP DC; Zona = -.
-- Zone rule: first letter after GBE. determines the line: A→Line A, B→Line B, C→Line C, D→Line D, E→Line E, F→Line F.
+- MinerPlus `.xlsx` is the current analysis input.
+- Auto-detect and normalize the IP column.
+- Validate IPv4 and count occurrences per unique IP.
+- Use `master-data.js` for IP → Nama DC.
+- Missing IP mapping: `Bukan IP DC`, Zona `-`.
+- Zone rule: first letter after `GBE.` determines Line A–F.
 - Core output: No | IP | Repeat Zero | Nama DC | Zona.
-- Default sorting: Repeat Zero descending.
-- Statistics are postponed until the core workflow is stable.
 
 ## Phase 1 — IP Repeat Analyzer
 Status: COMPLETED / LOGIC FIXED
 
-Features:
-1. Upload Excel.
-2. Auto-detect IP column.
-3. Normalize IP whitespace.
-4. Validate IPv4.
-5. Count occurrences of each unique IP.
-6. Match IP against master-data.js.
-7. Show Bukan IP DC for unmapped IPs.
-8. Derive Line A–F from the master-data name.
-9. Show one row per unique IP.
-10. Sort by Repeat Zero.
-11. Export analysis to .xlsx.
+Implemented:
+- Excel upload and IP column detection.
+- IP normalization/validation and repeat counting.
+- IP → Nama DC mapping.
+- Zone derivation.
+- Unique-IP result table.
+- Repeat Zero sorting.
+- `.xlsx` export.
 
-Hardening completed:
-- Header matching handles BOM and whitespace more safely.
-- Master-data values are trimmed before use.
-- Zone parsing follows the fixed GBE.<letter> rule.
-- A compatibility/safety layer exists for the Zone column.
+Hardening:
+- Safer BOM/whitespace header matching.
+- Trimmed master-data values.
+- Fixed `GBE.<letter>` zone parsing.
+- Zone compatibility/safety layer.
 
 ## Phase 2 — Filtering & Sorting
 Status: COMPLETED
 
-Implemented and verified:
-- Filter: All, Line A, Line B, Line C, Line D, Line E, Line F.
-- Search by IP.
-- Search by Nama DC.
+Implemented and live-validated:
+- All / Line A–F filters.
+- Search by IP and Nama DC.
 - Repeat Zero sorting.
-- Search, filtering and sorting work together.
-- Result numbering remains correct after filtering.
-- Phase 1 calculation logic remains unchanged.
-
-### Phase 2 live validation — 2026-09-01
-- User verified the deployed/main version in the browser.
-- Confirmed Zone is visibly rendered in the result output.
-- Confirmed Zone filter works with All and Line A–F selections.
-- Confirmed search by IP and Nama DC works.
-- Confirmed search, Zone filtering and Repeat Zero sorting work together.
-- Confirmed result numbering remains correct after filtering.
-- Confirmed the previously reported Zone display issue is no longer present in `main`.
-- Phase 2 marked COMPLETED.
+- Combined search/filter/sort.
+- Correct numbering after filtering.
+- Phase 1 calculation logic preserved.
 
 ## Phase 3 — Engineer Selection
 Status: COMPLETED
-- Checkbox per result row.
-- Select all / clear selection.
-- Show selected-IP count.
-- Multiple IP selection.
-- Selection does not lock an IP.
 
-### Phase 3 validation — 2026-09-01
-- User completed live browser validation and confirmed the behavior is correct.
-- Verified per-row checkbox selection, selected counter, Select All/Batalkan Semua, Clear, multiple selection, persistence across filtering/search/sort, reset on new Excel, and no IP locking.
-- Phase 3 marked COMPLETED.
+Implemented and live-validated:
+- Per-row selection checkbox.
+- Select All / Batalkan Semua / Clear.
+- Selected-IP counter.
+- Multiple selection.
+- Selection persists across filtering/search/sort.
+- Selection resets on new Excel.
+- No IP locking.
 
 ## Phase 4 — Engineer Identity
 Status: COMPLETED
-- Initial identity method: engineer dropdown, not password login.
-- Engineer records use stable internal IDs.
-- Display name is separate from the ID.
-- Browser may remember the last selected engineer.
 
-### Phase 4 implementation — 2026-09-01
-- Added `engineer-data.js` containing a local engineer catalog with stable IDs `ENG-001` through `ENG-005`.
-- Current display names are placeholders `Engineer 1` through `Engineer 5`; the IDs are intended to remain stable when real names are assigned.
-- Added Engineer dropdown to the IP Repeat result header.
-- Engineer selection is stored in `state.engineerId` and does not alter IP calculations or selection behavior.
-- Last selected engineer ID is stored in browser `localStorage` under `comp.selectedEngineerId` and restored when the catalog still contains that ID.
-- Clearing the Engineer dropdown removes the stored selection.
-- No password login, database write, work-item creation, or IP locking is introduced in Phase 4.
-- Affected files: `engineer-data.js`, `ip-repeat-analyzer.html`, `ip-repeat-analyzer.js`, `ip-repeat-analyzer.css`.
+Implemented and live-validated:
+- Dropdown-based engineer identity.
+- Stable engineer IDs `ENG-001`–`ENG-005`.
+- Display name separated from internal ID.
+- Browser persistence through `localStorage` key `comp.selectedEngineerId`.
+- Engineer selection does not alter analyzer logic.
+- No password login or IP locking.
 
-### Phase 4 validation — 2026-09-01
-- User verified the Engineer dropdown and confirmed it works in the browser.
-- Confirmed engineer selection is restored after reload using the browser's localStorage.
-- Confirmed the selected engineer does not alter existing IP analysis or selection behavior.
-- Phase 4 marked COMPLETED.
+Affected files include `engineer-data.js`, `ip-repeat-analyzer.html`, `ip-repeat-analyzer.js`, and `ip-repeat-analyzer.css`.
 
 ## Phase 5 — Work Tracking + Google Sheets Persistence
 Status: COMPLETED
 
-Minimum work data:
+Current Work Items data:
 - IP
 - Nama DC
 - Zona
+- Repeat Zero
 - Engineer ID
 - Status
 - Timestamp
-- Note
+- Catatan
 
 Initial statuses:
 - Belum Dikerjakan
@@ -118,118 +90,137 @@ Initial statuses:
 - Problem
 - Skipped
 
-IP is never locked; multiple engineers may work on the same IP.
+Architecture:
+- GitHub Pages frontend → Google Apps Script Web App → Google Sheets.
+- `google-sheets-config.js` contains only the deployed `/exec` URL and optional request key.
+- `google-apps-script/Code.gs` is the backend template.
+- `Work Items` is the current-state sheet.
+- Save performs an upsert keyed by IP.
+- IP is never locked.
+- Supabase is not part of the mandatory architecture.
 
-### Phase 5 revised architecture — 2026-09-01
-- Google Sheets is the persistent data store for current Work Items.
-- Google Apps Script is used as the web endpoint between GitHub Pages and Google Sheets.
-- No Google OAuth credential or service-account key is placed in the public GitHub Pages JavaScript.
-- `google-sheets-config.js` holds only the deployed Apps Script `/exec` URL and optional request key.
-- `google-apps-script/Code.gs` provides the backend template and creates the `Work Items` sheet/header automatically when needed.
-- Current Work Items schema: IP | Nama DC | Zona | Repeat Zero | Engineer ID | Status | Timestamp | Catatan.
-- Saving selected IPs performs an upsert keyed by IP, so the sheet keeps the latest work state for each IP.
-- A single save can apply to multiple selected IPs.
-- Work history/event logging is intentionally postponed to Phase 6.
-- Supabase is removed from the mandatory roadmap; Google Sheets is the selected persistence approach for this project.
-- No IP locking is introduced.
+Save confirmation hardening:
+- Replaced fire-and-forget `sendBeacon()` with awaited `fetch()`.
+- Frontend validates Apps Script JSON response and `ok`.
+- Frontend checks backend `saved` count before reporting success.
 
-### Phase 5 save confirmation hardening — 2026-09-01
-- Replaced fire-and-forget browser `sendBeacon()` saving with an awaited `fetch()` POST.
-- Frontend now parses the JSON response from Apps Script and checks `ok` before reporting success.
-- Frontend now compares the backend-reported `saved` count with the number of selected IPs.
-- Success message explicitly says the data was saved to Google Sheets.
-- Save failures now surface the Apps Script/network error instead of reporting a false success.
-- Affected files: `work-tracking.js`, `ip-repeat-analyzer.js`, `ip-repeat-analyzer.html`.
-
-### Google Sheets setup
-1. Create a Google Spreadsheet for Work Tracking and copy its Spreadsheet ID.
-2. Copy `google-apps-script/Code.gs` into the Apps Script project.
-3. Replace `PASTE_YOUR_GOOGLE_SHEET_ID_HERE` with the Spreadsheet ID in the Apps Script project only; keep the repository template placeholder unchanged.
-4. Deploy the Apps Script as a Web App and use its `/exec` URL.
-5. Put that `/exec` URL in `google-sheets-config.js` under `webAppUrl`.
-
-### Phase 5 validation — 2026-09-03
-- User verified the deployed Apps Script `/exec` endpoint returns `configured: true`.
-- User verified `doPost` executions complete successfully.
-- User verified Work Items are created in the `Work Tracking` spreadsheet under the `Work Items` tab.
-- User verified a work item update changes the existing IP row instead of creating a duplicate.
-- User verified the resulting data is persisted correctly.
-- Phase 5 marked COMPLETED.
+Validation completed 2026-09-03:
+- Apps Script `/exec` returned `configured: true`.
+- `doPost` completed successfully.
+- Data appeared in `Work Tracking` → `Work Items`.
+- Updating an existing IP changed the existing row and did not create a duplicate.
+- Persistence and upsert behavior passed.
 
 ## Phase 6 — Machine Identity + Work History
 Status: PLANNED
 
 ### Primary goal
-Introduce a stable machine identity using **Serial Number** so historical work follows the physical machine, not the current IP address.
+Build a reliable machine history based on **Serial Number**, not IP and not `location_id` alone.
 
-### Why Serial Number is required
-- IP is operationally useful for the current MinerPlus/monitoring result, but it is not a stable machine identity.
-- An IP may later be assigned to a different machine after a failure/replacement.
-- Therefore, Work History must not use IP as its long-term identity key.
-- Serial Number is the preferred historical identity for a physical machine.
+### Identity model
+- **IP** = current/observed network address; may be reused by another machine.
+- **location_id** = physical location/slot; may keep the same value while the machine occupying it changes.
+- **Serial Number** = physical-machine identity and the preferred history key.
 
-### New external source: Machine List
-A separate Machine List file contains the machine Serial Number and a `location_id` field.
+### Separate Machine List source
+Machine List is a separate input from the MinerPlus upload and includes, among others:
+- `serial_number`
+- `location_id`
+- `installed_date`
+- `uninstalled_date`
+- `opname_date`
+- rack/row/unit and other location information.
 
-Planned mapping rule:
-- `location_id` from Machine List is matched against `Nama DC` recorded in Work Tracking.
-- The matched Machine List record supplies the machine Serial Number used by Work History.
-- The MinerPlus upload remains the source of the current IP/repeat information.
-- The Machine List is a separate source and must not replace the existing MinerPlus input logic.
+The sample structure confirmed on 2026-09-03 contains these columns and demonstrates that the source can provide both Serial Number and location/time context.
 
-### Important mapping validation rule
-Before implementation is considered complete, verify whether `location_id → Nama DC` uniquely identifies one machine/Serial Number.
-- If one Nama DC can contain multiple machines/serial numbers, an additional machine-level discriminator is required; matching only by Nama DC would be ambiguous and must not be silently accepted.
-- If one Nama DC maps uniquely to one Serial Number, the mapping can be deterministic.
-- The exact Machine List column names and value format will be confirmed from a real sample file before coding.
+### Critical mapping rule
+`location_id` is a **location/slot identifier**, not a permanent machine identifier.
 
-### Planned data model
-Keep the current Phase 5 Work Items behavior intact, but extend the architecture so a work record can carry machine identity information:
-- IP — current/observed network address
-- Nama DC — operational location name
-- Zona — current line/zone
-- Serial Number — stable machine identity when matched
+A location can have this lifecycle:
+
+`location_id → Serial A → machine removed/replaced → Serial B`
+
+or:
+
+`location_id → Serial A → machine removed without replacement → empty/unassigned`
+
+Therefore, mapping must be **time-aware**.
+
+For a work event, the intended resolution is:
+
+`Nama DC → relevant location_id → machine occupying that location at event time → Serial Number`
+
+The Machine List's `installed_date` / `uninstalled_date` (or equivalent valid timing data) should be used when determining the historical occupant.
+
+Rules:
+- Never assume the current Serial Number was always the historical Serial Number of that location.
+- Never carry forward an old Serial Number after a location becomes unassigned.
+- Never guess a Serial Number when the Machine List cannot resolve it.
+- If a match is ambiguous or missing, record the event as unresolved and expose that state to the user.
+- IP remains a historical snapshot/context field and must not be the machine-history key.
+
+### Source separation
+- MinerPlus remains the source for current IP/repeat analysis.
+- Machine List is used to enrich work records with machine identity.
+- Machine List must not replace or alter existing MinerPlus IP analysis logic.
+- Existing `master-data.js` IP → Nama DC logic remains intact.
+
+### Work data model
+Current Work Items remains the Phase 5 current-state store.
+
+History events should carry:
+- Serial Number (primary machine identity when resolved)
+- IP observed at the event
+- Nama DC / location context
+- Zona
 - Engineer ID
 - Status
 - Timestamp
 - Catatan
+- Resolution/unresolved state as needed
 
-History should use Serial Number as its primary machine identity. IP and Nama DC remain useful snapshots/context fields.
-
-### Planned save flow
-1. User uploads the current MinerPlus result.
-2. Existing IP analysis and selection continue unchanged.
+### Save flow
+1. Upload MinerPlus result.
+2. Existing IP analysis and selection operate unchanged.
 3. Selected row provides IP + Nama DC.
-4. Machine List is consulted using `Nama DC ↔ location_id`.
-5. Matching Serial Number is attached to the work event.
-6. Current Work Items continues to represent the latest operational state.
-7. A Work History record is appended as a historical event rather than overwriting the previous event.
+4. Resolve location context from Nama DC.
+5. Resolve the machine occupying that location at the work-event time.
+6. Attach the matching Serial Number when valid.
+7. Update current `Work Items` using existing Phase 5 behavior.
+8. Append a new `Work History` event instead of overwriting historical events.
 
-### Planned history structure
-Separate current state from history:
-
+### Sheets
 `Work Items`
-- Latest state for the current work item.
+- Latest operational/current state.
+- Existing Phase 5 IP-keyed upsert remains intact unless explicitly revised later.
 
 `Work History`
-- Append-only historical events.
-- Primary machine identity: Serial Number.
-- Context fields: IP, Nama DC, Zona, Engineer ID, Status, Timestamp, Catatan.
+- Append-only events.
+- Serial Number is the preferred machine-history identity.
+- IP and location/Nama DC are contextual snapshots.
+- Replacement/removal must produce separate machine histories.
 
-Example concept:
-- Serial A123 | IP 10.10.20.15 | Nama DC GBE.A01 | ENG-001 | In Progress | 2026-09-03 10:00
-- Serial A123 | IP 10.10.20.25 | Nama DC GBE.A01 | ENG-002 | Problem | 2026-09-03 14:00
-- Serial A123 | IP 10.10.20.30 | Nama DC GBE.A01 | ENG-001 | Selesai | 2026-09-03 18:00
+Example:
+- `SN-A | IP-1 | GBE.A01 | In Progress | 2026-09-03 10:00`
+- `SN-A | IP-2 | GBE.A01 | Problem | 2026-09-10 14:00`
+- `SN-B | IP-2 | GBE.A01 | Selesai | 2026-09-11 18:00`
 
-The same physical machine therefore keeps one history even when its IP changes.
+The same IP or location can therefore appear with different Serial Numbers across time.
 
 ### Phase 6 stages
-- Phase 6A — Machine List import/reading and `location_id ↔ Nama DC` matching.
-- Phase 6B — Serial Number enrichment of selected work records.
-- Phase 6C — Append-only Work History in Google Sheets.
-- Phase 6D — History viewer by Serial Number, with IP/Nama DC/Engineer/Status/date as filters or context.
+- **6A** — Machine List import/reading and normalization.
+- **6B** — Time-aware location-to-machine resolution and Serial Number enrichment.
+- **6C** — Append-only `Work History` persistence in Google Sheets.
+- **6D** — History viewer/search by Serial Number with IP, Nama DC/location, Engineer, Status and date as context/filter fields.
 
-No Phase 5 completion status is changed by this planned extension.
+### Phase 6 validation requirements
+Before Phase 6 is marked complete:
+- Same location before/after machine replacement resolves to different correct Serial Numbers.
+- Location with machine removed and no replacement becomes unassigned, not the previous Serial Number.
+- Reused IP does not merge different machines' histories.
+- Old machine history remains attached to the old Serial Number after replacement.
+- Missing/ambiguous Machine List resolution is visible and never guessed.
+- Phase 5 current Work Items upsert behavior remains unchanged.
 
 ## Phase 7 — Multi-user / Google Sheets Hardening
 Status: PLANNED
@@ -239,120 +230,100 @@ Target:
 - Shared persisted work data.
 - No IP locking.
 - Stable engineer IDs.
-- Access and write behavior appropriate for the intended internal users.
-- Google Sheets remains the persistence layer unless a later requirement justifies a database migration.
-
-Serial Number becomes the historical machine identity after Phase 6 is completed.
+- Appropriate internal-user access/write behavior.
+- Google Sheets remains the persistence layer unless explicitly revised.
+- Serial Number is the historical machine identity after Phase 6.
 
 ## Phase 8 — Work Export
 Status: PLANNED
 
 Analysis export:
-No | IP | Repeat Zero | Nama DC | Zona
+`No | IP | Repeat Zero | Nama DC | Zona`
 
 Work export:
-No | IP | Serial Number | Repeat Zero | Nama DC | Zona | Engineer | Status | Waktu | Catatan
+`No | IP | Serial Number | Repeat Zero | Nama DC | Zona | Engineer | Status | Waktu | Catatan`
 
 ## Phase 9 — Shift Report Integration
 Status: PLANNED
 
-Future Shift Report can use work history for:
+Future Shift Report can use history for:
 - Machine/Serial Number worked per shift.
-- IP observed during the work event.
+- IP observed during the event.
+- Location/Nama DC at the event time.
 - Completed / In Progress / Problem counts.
 - Work by Line A–F.
 - Work by engineer.
 - Outstanding machines/work items.
 
 # Fixed Architecture Rules
-1. IP Repeat has its own HTML, JS and CSS files.
-2. Existing tools retain their application logic.
-3. Shared UI changes must not alter tool logic.
-4. New requirements are added to this roadmap before implementation.
-5. Each phase is tested before moving to the next.
-6. No IP locking.
-7. Initial engineer identity is dropdown-based.
-8. Statistics are postponed until the core workflow is stable.
-9. Every implementation update must be recorded in this README.
-10. Google Sheets is the selected persistence layer for Work Tracking unless the roadmap is explicitly revised later.
-11. IP is an operational attribute, not the long-term identity of a physical machine.
-12. Serial Number is the preferred machine identity for Work History once a valid Machine List mapping exists.
-13. Machine List is a separate input source from the MinerPlus upload.
-14. `location_id ↔ Nama DC` matching must be validated for uniqueness before Serial Number mapping is treated as authoritative.
+1. Existing application logic must remain unchanged unless explicitly agreed.
+2. Each phase is tested before moving to the next.
+3. No IP locking.
+4. Engineer identity is initially dropdown-based.
+5. Google Sheets is the selected Work Tracking persistence layer unless explicitly revised.
+6. IP is an operational attribute, not a permanent physical-machine identity.
+7. `location_id` identifies a location/slot, not a permanent machine.
+8. Serial Number is the preferred identity for physical-machine history.
+9. Machine List is a separate source from MinerPlus input.
+10. Machine-to-location resolution must account for replacement/removal over time.
+11. Unresolved identity must never be replaced with a guessed Serial Number.
+12. Every implementation/change must be recorded in this README.
 
 # Detailed Change Log
 
 ## 2026-09-01 — Roadmap established
-- Requirement freeze created for IP Repeat Analyzer and Engineer Work Tracking.
-- Phase 0–9 defined.
-- Flexible/non-locking engineer workflow defined.
-- Zone rule fixed to first letter after GBE.
+- Requirement freeze and Phase 0–9 roadmap created.
+- Non-locking engineer workflow defined.
+- Zone rule fixed to `GBE.<letter>`.
 
 ## 2026-09-01 — Phase 1 hardening
 - Improved Excel header normalization.
-- Improved master-data value normalization.
+- Improved master-data normalization.
 - Preserved unique-IP counting and mapping behavior.
 - Confirmed zone derivation rule.
-- No existing tool logic intentionally changed.
 
 ## 2026-09-01 — Sidebar maintenance
-- Added IP Repeat navigation where applicable.
-- Desktop sidebar auto-collapse/hover-expand behavior introduced.
-- Sidebar icon sizing and spacing refined.
-- Theme label visibility during collapsed state addressed.
-- These are shared UI changes only; application logic remains separate.
+- Shared sidebar navigation/hover/icon/theme UI refinements.
+- No application logic intentionally changed.
 
 ## 2026-09-01 — Phase 2 implementation and validation
-- Implemented Zone filter, search and Repeat Zero sorting integration.
-- User performed live browser validation and confirmed Zone is visible and all Phase 2 interactions work correctly.
-- Previously reported Zone display issue is considered resolved in `main`.
+- Added Zone filter, search and Repeat Zero sorting integration.
+- User live-validated Zone display, filters, search, sorting and numbering.
 - Phase 2 marked COMPLETED.
 
 ## 2026-09-01 — Phase 3 implementation and validation
-- Implemented Phase 3 Engineer Selection.
-- Added per-row IP selection using a `Set` keyed by normalized IP.
-- Added selected counter, Select All/Cancel All, and Clear controls.
-- Preserved selection through render/filter/search/sort operations.
-- Cleared selection when a new Excel file is processed.
-- User completed live browser validation and confirmed the implementation is correct.
-- Phase 3 marked COMPLETED.
+- Added per-row selection, Select All/Cancel All, Clear and selected counter.
+- Preserved selection across filtering/search/sort.
+- User live-validated behavior and Phase 3 marked COMPLETED.
 
 ## 2026-09-01 — Phase 4 implementation and validation
-- Implemented local engineer identity catalog with stable IDs `ENG-001`–`ENG-005`.
-- Added Engineer dropdown to the results header.
-- Added state-based engineer selection and browser persistence using `localStorage`.
-- Preserved existing analyzer and selection logic.
-- User verified the feature in the browser and confirmed it works.
+- Added stable engineer IDs and dropdown-based identity.
+- Added browser persistence for selected engineer.
+- User live-validated behavior and Phase 4 marked COMPLETED.
 
 ## 2026-09-01 — Phase 5 persistence revision and implementation
-- Revised Phase 5 to use Google Sheets instead of browser localStorage as the persistent Work Tracking store.
-- Added `google-sheets-config.js` for the Apps Script `/exec` URL and optional request key.
-- Added `google-apps-script/Code.gs` backend template for Work Items upsert.
-- Updated `work-tracking.js` to send Work Items to the configured Apps Script endpoint instead of local browser storage.
-- Updated the Work Tracking description to indicate Google Sheets persistence.
-- Removed Supabase from the mandatory roadmap and changed Phase 7 to Google Sheets multi-user hardening.
+- Changed persistent Work Tracking storage from browser localStorage to Google Sheets via Google Apps Script.
+- Added `google-sheets-config.js` and backend `google-apps-script/Code.gs`.
+- Implemented IP-keyed Work Items upsert.
+- Removed Supabase from the mandatory roadmap.
 
 ## 2026-09-01 — Phase 5 save confirmation hardening
-- Confirmed the configured Apps Script `/exec` endpoint returns `configured: true`.
-- Confirmed the user's Apps Script `doPost` execution completes successfully.
-- Replaced `sendBeacon()` with awaited `fetch()` and JSON response validation.
-- Frontend now reports success only when Apps Script confirms the number of saved items.
-- Updated cache-buster for `work-tracking.js`.
+- Replaced `sendBeacon()` with awaited `fetch()`.
+- Added backend JSON/`ok` validation and saved-count verification.
 
 ## 2026-09-03 — Phase 5 final validation and completion
-- User confirmed data appears in the `Work Items` tab of the `Work Tracking` spreadsheet.
-- User confirmed updating an existing IP does not create a duplicate row.
-- Google Sheets persistence and upsert behavior marked PASS.
+- User verified Apps Script configuration and successful `doPost` execution.
+- User verified `Work Items` persistence.
+- User verified updates do not create duplicate IP rows.
 - Phase 5 marked COMPLETED.
 
-## 2026-09-03 — Serial Number requirement added to roadmap
-- Added a separate Machine List source as the authoritative source for machine Serial Number.
-- Defined `location_id ↔ Nama DC` as the planned bridge between Machine List and Work Tracking.
-- Explicitly separated current IP identity from stable physical-machine identity.
-- Changed the Phase 6 concept from IP-only work history to Serial Number-based machine history.
-- Added a uniqueness validation rule so ambiguous `Nama DC → Serial Number` mappings are not silently accepted.
-- Split Phase 6 into 6A Machine List mapping, 6B Serial Number enrichment, 6C append-only Work History, and 6D History viewer.
-- Kept Phase 5 unchanged/completed; Serial Number enrichment is introduced through Phase 6.
+## 2026-09-03 — Serial Number / Machine List requirement clarified
+- Added Machine List as a separate source for machine identity.
+- Confirmed `location_id` can keep the same value while Serial Number changes after machine replacement.
+- Confirmed a location can become empty/unassigned after machine removal without replacement.
+- Revised Phase 6 so `location_id` is treated as a location/slot, not a permanent machine ID.
+- Revised Serial Number resolution to be time-aware using Machine List occupancy timing where available.
+- Added validation rules for replacement, removal, reused IP, ambiguous/missing matches and unresolved history.
 
 # Current Status
 
@@ -360,13 +331,13 @@ Future Shift Report can use work history for:
 |---|---|
 | Phase 0 — Requirement Freeze | DONE |
 | Phase 1 — IP Repeat Analyzer | DONE |
-| Phase 2 — Filtering & Sorting | DONE — live browser validation confirmed by user |
-| Phase 3 — Engineer Selection | DONE — live browser validation confirmed by user |
-| Phase 4 — Engineer Identity | DONE — live browser validation confirmed by user |
-| Phase 5 — Work Tracking + Google Sheets Persistence | DONE — live end-to-end validation and upsert verification confirmed by user |
-| Phase 6 — Machine Identity + Work History | PLANNED — Serial Number identity introduced; mapping details pending real Machine List sample |
+| Phase 2 — Filtering & Sorting | DONE — live validation confirmed |
+| Phase 3 — Engineer Selection | DONE — live validation confirmed |
+| Phase 4 — Engineer Identity | DONE — live validation confirmed |
+| Phase 5 — Work Tracking + Google Sheets Persistence | DONE — end-to-end validation and upsert verified |
+| Phase 6 — Machine Identity + Work History | PLANNED — time-aware Serial Number mapping required |
 | Phase 7 — Multi-user / Google Sheets Hardening | PLANNED |
 | Phase 8 — Work Export | PLANNED |
 | Phase 9 — Shift Report Integration | PLANNED |
 
-Rule: before declaring a phase complete, record the phase, exact changes, reason, affected files, validation result, and remaining issues here.
+Rule: before declaring a phase complete, record the exact changes, affected files, validation result and remaining issues here.
