@@ -73,7 +73,7 @@ Status: COMPLETED
 
 ### Phase 3 validation — 2026-09-01
 - User completed live browser validation and confirmed the behavior is correct.
-- Verified per-row checkbox selection, selected counter, Select All / Batalkan Semua, Clear, multiple selection, persistence across filtering/search/sort, reset on new Excel, and no IP locking.
+- Verified per-row checkbox selection, selected counter, Select All/Batalkan Semua, Clear, multiple selection, persistence across filtering/search/sort, reset on new Excel, and no IP locking.
 - Phase 3 marked COMPLETED.
 
 ## Phase 4 — Engineer Identity
@@ -156,10 +156,80 @@ IP is never locked; multiple engineers may work on the same IP.
 - User verified the resulting data is persisted correctly.
 - Phase 5 marked COMPLETED.
 
-## Phase 6 — Work History
+## Phase 6 — Machine Identity + Work History
 Status: PLANNED
 
-Every meaningful work action/status change is recorded as history. Latest state and historical activity are separate concepts.
+### Primary goal
+Introduce a stable machine identity using **Serial Number** so historical work follows the physical machine, not the current IP address.
+
+### Why Serial Number is required
+- IP is operationally useful for the current MinerPlus/monitoring result, but it is not a stable machine identity.
+- An IP may later be assigned to a different machine after a failure/replacement.
+- Therefore, Work History must not use IP as its long-term identity key.
+- Serial Number is the preferred historical identity for a physical machine.
+
+### New external source: Machine List
+A separate Machine List file contains the machine Serial Number and a `location_id` field.
+
+Planned mapping rule:
+- `location_id` from Machine List is matched against `Nama DC` recorded in Work Tracking.
+- The matched Machine List record supplies the machine Serial Number used by Work History.
+- The MinerPlus upload remains the source of the current IP/repeat information.
+- The Machine List is a separate source and must not replace the existing MinerPlus input logic.
+
+### Important mapping validation rule
+Before implementation is considered complete, verify whether `location_id → Nama DC` uniquely identifies one machine/Serial Number.
+- If one Nama DC can contain multiple machines/serial numbers, an additional machine-level discriminator is required; matching only by Nama DC would be ambiguous and must not be silently accepted.
+- If one Nama DC maps uniquely to one Serial Number, the mapping can be deterministic.
+- The exact Machine List column names and value format will be confirmed from a real sample file before coding.
+
+### Planned data model
+Keep the current Phase 5 Work Items behavior intact, but extend the architecture so a work record can carry machine identity information:
+- IP — current/observed network address
+- Nama DC — operational location name
+- Zona — current line/zone
+- Serial Number — stable machine identity when matched
+- Engineer ID
+- Status
+- Timestamp
+- Catatan
+
+History should use Serial Number as its primary machine identity. IP and Nama DC remain useful snapshots/context fields.
+
+### Planned save flow
+1. User uploads the current MinerPlus result.
+2. Existing IP analysis and selection continue unchanged.
+3. Selected row provides IP + Nama DC.
+4. Machine List is consulted using `Nama DC ↔ location_id`.
+5. Matching Serial Number is attached to the work event.
+6. Current Work Items continues to represent the latest operational state.
+7. A Work History record is appended as a historical event rather than overwriting the previous event.
+
+### Planned history structure
+Separate current state from history:
+
+`Work Items`
+- Latest state for the current work item.
+
+`Work History`
+- Append-only historical events.
+- Primary machine identity: Serial Number.
+- Context fields: IP, Nama DC, Zona, Engineer ID, Status, Timestamp, Catatan.
+
+Example concept:
+- Serial A123 | IP 10.10.20.15 | Nama DC GBE.A01 | ENG-001 | In Progress | 2026-09-03 10:00
+- Serial A123 | IP 10.10.20.25 | Nama DC GBE.A01 | ENG-002 | Problem | 2026-09-03 14:00
+- Serial A123 | IP 10.10.20.30 | Nama DC GBE.A01 | ENG-001 | Selesai | 2026-09-03 18:00
+
+The same physical machine therefore keeps one history even when its IP changes.
+
+### Phase 6 stages
+- Phase 6A — Machine List import/reading and `location_id ↔ Nama DC` matching.
+- Phase 6B — Serial Number enrichment of selected work records.
+- Phase 6C — Append-only Work History in Google Sheets.
+- Phase 6D — History viewer by Serial Number, with IP/Nama DC/Engineer/Status/date as filters or context.
+
+No Phase 5 completion status is changed by this planned extension.
 
 ## Phase 7 — Multi-user / Google Sheets Hardening
 Status: PLANNED
@@ -172,6 +242,8 @@ Target:
 - Access and write behavior appropriate for the intended internal users.
 - Google Sheets remains the persistence layer unless a later requirement justifies a database migration.
 
+Serial Number becomes the historical machine identity after Phase 6 is completed.
+
 ## Phase 8 — Work Export
 Status: PLANNED
 
@@ -179,17 +251,18 @@ Analysis export:
 No | IP | Repeat Zero | Nama DC | Zona
 
 Work export:
-No | IP | Repeat Zero | Nama DC | Zona | Engineer | Status | Waktu | Catatan
+No | IP | Serial Number | Repeat Zero | Nama DC | Zona | Engineer | Status | Waktu | Catatan
 
 ## Phase 9 — Shift Report Integration
 Status: PLANNED
 
 Future Shift Report can use work history for:
-- IP worked per shift.
+- Machine/Serial Number worked per shift.
+- IP observed during the work event.
 - Completed / In Progress / Problem counts.
 - Work by Line A–F.
 - Work by engineer.
-- Outstanding IPs.
+- Outstanding machines/work items.
 
 # Fixed Architecture Rules
 1. IP Repeat has its own HTML, JS and CSS files.
@@ -202,6 +275,10 @@ Future Shift Report can use work history for:
 8. Statistics are postponed until the core workflow is stable.
 9. Every implementation update must be recorded in this README.
 10. Google Sheets is the selected persistence layer for Work Tracking unless the roadmap is explicitly revised later.
+11. IP is an operational attribute, not the long-term identity of a physical machine.
+12. Serial Number is the preferred machine identity for Work History once a valid Machine List mapping exists.
+13. Machine List is a separate input source from the MinerPlus upload.
+14. `location_id ↔ Nama DC` matching must be validated for uniqueness before Serial Number mapping is treated as authoritative.
 
 # Detailed Change Log
 
@@ -246,7 +323,6 @@ Future Shift Report can use work history for:
 - Added state-based engineer selection and browser persistence using `localStorage`.
 - Preserved existing analyzer and selection logic.
 - User verified the feature in the browser and confirmed it works.
-- Phase 4 marked COMPLETED.
 
 ## 2026-09-01 — Phase 5 persistence revision and implementation
 - Revised Phase 5 to use Google Sheets instead of browser localStorage as the persistent Work Tracking store.
@@ -269,6 +345,15 @@ Future Shift Report can use work history for:
 - Google Sheets persistence and upsert behavior marked PASS.
 - Phase 5 marked COMPLETED.
 
+## 2026-09-03 — Serial Number requirement added to roadmap
+- Added a separate Machine List source as the authoritative source for machine Serial Number.
+- Defined `location_id ↔ Nama DC` as the planned bridge between Machine List and Work Tracking.
+- Explicitly separated current IP identity from stable physical-machine identity.
+- Changed the Phase 6 concept from IP-only work history to Serial Number-based machine history.
+- Added a uniqueness validation rule so ambiguous `Nama DC → Serial Number` mappings are not silently accepted.
+- Split Phase 6 into 6A Machine List mapping, 6B Serial Number enrichment, 6C append-only Work History, and 6D History viewer.
+- Kept Phase 5 unchanged/completed; Serial Number enrichment is introduced through Phase 6.
+
 # Current Status
 
 | Phase | Status |
@@ -279,7 +364,7 @@ Future Shift Report can use work history for:
 | Phase 3 — Engineer Selection | DONE — live browser validation confirmed by user |
 | Phase 4 — Engineer Identity | DONE — live browser validation confirmed by user |
 | Phase 5 — Work Tracking + Google Sheets Persistence | DONE — live end-to-end validation and upsert verification confirmed by user |
-| Phase 6 — Work History | PLANNED |
+| Phase 6 — Machine Identity + Work History | PLANNED — Serial Number identity introduced; mapping details pending real Machine List sample |
 | Phase 7 — Multi-user / Google Sheets Hardening | PLANNED |
 | Phase 8 — Work Export | PLANNED |
 | Phase 9 — Shift Report Integration | PLANNED |
