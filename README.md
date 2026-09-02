@@ -112,7 +112,7 @@ Validation completed 2026-09-03:
 - Persistence and upsert behavior passed.
 
 ## Phase 6 — Machine Identity + Work History
-Status: IN PROGRESS — Phase 6A IMPLEMENTED, LIVE VALIDATION PENDING
+Status: IN PROGRESS — Phase 6A COMPLETED, Phase 6B IMPLEMENTED / LIVE VALIDATION PENDING
 
 ### Primary goal
 Build reliable machine history based on **Serial Number**, not IP and not `location_id` alone.
@@ -158,8 +158,10 @@ Machine List is a separate input from the MinerPlus upload. Confirmed columns in
 - `uninstalled_date`
 - `opname_date`
 
+The supplied Notion representation confirms the normal Machine List structure. A malformed third sample row was identified as an export-data bug; the normal schema is represented by the correctly aligned rows, and the parser must not silently repair or shift malformed data.
+
 ### Phase 6A — Machine List import / reading / normalization
-Status: IMPLEMENTED — LIVE VALIDATION PENDING
+Status: COMPLETED — LIVE VALIDATION CONFIRMED
 
 Purpose:
 - Keep Machine List ingestion separate from MinerPlus analysis.
@@ -179,19 +181,36 @@ New Phase 6A files:
 - `machine-list.css`
 - `machine-list.js`
 
+Live validation completed 2026-09-03:
+- User confirmed `machine-list.html` successfully reads Serial Number, Location ID, Installed Date and Uninstalled Date from the real Machine List file used operationally.
+- Phase 6A is therefore considered complete.
+
 Phase 6A does **not** yet:
-- Match Machine List to MinerPlus IP rows.
-- Resolve a Serial Number for a work event.
-- Write Serial Number or Work History to Google Sheets.
-- Change Phase 5 Work Items behavior.
+- Persist machine history to Google Sheets.
+- Replace the Phase 5 Work Items schema.
+- Merge IP into machine identity.
 
 ### Phase 6B — Time-aware location-to-machine resolution
-Status: PLANNED
+Status: IMPLEMENTED — LIVE VALIDATION PENDING
 
-Intended flow:
-`Nama DC → relevant location_id → machine occupying the location at event time → Serial Number`
+Purpose:
+Resolve the Serial Number occupying a `location_id` at a specific event timestamp without guessing.
 
-The matching must consider installation/removal timing so historical replacement is handled correctly.
+Implemented components:
+- `machine-resolver.js` provides the time-aware resolution engine.
+- `machine-list.html` now contains a Phase 6B resolution test interface.
+- The resolver reads the normalized Machine List dataset from `comp.machineList.v1`.
+- Matching uses exact normalized `location_id` equality.
+- Installation/removal periods are evaluated as a half-open interval: `installed_date <= event_timestamp < uninstalled_date`.
+- A blank `uninstalled_date` is treated as open-ended only when the value is genuinely blank.
+- An unparseable non-blank removal date is not treated as open-ended, preventing unsafe identity guesses.
+
+Resolution outcomes:
+- Exactly 1 match → `RESOLVED` and return Serial Number.
+- 0 matches → `UNRESOLVED`.
+- More than 1 match → `AMBIGUOUS` and no Serial Number is returned.
+- Missing Location ID → `MISSING LOCATION`.
+- Invalid event timestamp → `INVALID TIME`.
 
 Rules:
 - Never assume the current Serial Number was always the historical Serial Number of a location.
@@ -199,6 +218,8 @@ Rules:
 - Never guess a Serial Number when the Machine List cannot resolve it.
 - Ambiguous or missing resolution must remain explicitly unresolved.
 - Reused IP must never merge different machines' histories.
+
+Phase 6B intentionally does **not** yet write Serial Number into Google Sheets. This keeps resolution validation separate from Phase 6C persistence and protects the already-validated Phase 5 Work Items behavior.
 
 ### Phase 6C — Append-only Work History
 Status: PLANNED
@@ -275,6 +296,8 @@ Future Shift Report can use history for:
 11. Unresolved identity must never be replaced with a guessed Serial Number.
 12. Every implementation/change must be recorded in this README.
 13. Phase 6A local browser storage is an intermediate Machine List cache only; it is not the final Work Tracking persistence layer.
+14. Machine List export anomalies must not be silently corrected by shifting values between columns.
+15. Phase 6B resolution must remain separate from Phase 6C persistence until resolution is live-validated.
 
 # Detailed Change Log
 
@@ -340,8 +363,19 @@ Future Shift Report can use history for:
 - Normalized Serial Number and location values and preserved installation/removal date values for future time-aware mapping.
 - Added browser storage key `comp.machineList.v1` as an intermediate local dataset cache for Phase 6B.
 - Added dataset clear control and persistent dataset status.
-- Phase 6A remains IN PROGRESS until a real Machine List file is uploaded and browser-validated.
+- User live-validated the real Machine List import and confirmed Serial Number, Location ID, Installed Date and Uninstalled Date are read correctly.
+- Phase 6A marked COMPLETED.
 - No MinerPlus analyzer logic or Phase 5 Work Items behavior was intentionally modified.
+
+## 2026-09-03 — Phase 6B implementation
+- Added `machine-resolver.js` as a separate time-aware location-to-machine resolution engine.
+- Implemented exact normalized `location_id` matching.
+- Implemented installation/removal interval matching using `installed_date <= event_timestamp < uninstalled_date`.
+- Implemented explicit `resolved`, `unresolved`, `ambiguous`, missing-location and invalid-time outcomes.
+- Prevented unparseable non-blank `uninstalled_date` values from being treated as open-ended.
+- Added a Phase 6B test interface to `machine-list.html` so resolution can be live-validated without changing Phase 5 persistence.
+- Added responsive styling for the Phase 6B test interface in `machine-list.css`.
+- Phase 6B remains LIVE VALIDATION PENDING.
 
 # Current Status
 
@@ -353,7 +387,7 @@ Future Shift Report can use history for:
 | Phase 3 — Engineer Selection | DONE — live validation confirmed |
 | Phase 4 — Engineer Identity | DONE — live validation confirmed |
 | Phase 5 — Work Tracking + Google Sheets Persistence | DONE — end-to-end validation and upsert verified |
-| Phase 6 — Machine Identity + Work History | IN PROGRESS — Phase 6A implemented, live validation pending |
+| Phase 6 — Machine Identity + Work History | IN PROGRESS — Phase 6A completed, Phase 6B live validation pending |
 | Phase 7 — Multi-user / Google Sheets Hardening | PLANNED |
 | Phase 8 — Work Export | PLANNED |
 | Phase 9 — Shift Report Integration | PLANNED |
