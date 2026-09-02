@@ -112,7 +112,7 @@ Validation completed 2026-09-03:
 - Persistence and upsert behavior passed.
 
 ## Phase 6 — Machine Identity + Work History
-Status: IN PROGRESS — Phase 6A COMPLETED, Phase 6B PARTIALLY LIVE-VALIDATED
+Status: IN PROGRESS — Phase 6A COMPLETED, Phase 6B PARTIALLY LIVE-VALIDATED, Phase 6C IMPLEMENTED / VALIDATION PENDING
 
 ### Primary goal
 Build reliable machine history based on **Serial Number**, not IP and not `location_id` alone.
@@ -198,7 +198,7 @@ Resolve the Serial Number occupying a `location_id` at a specific event timestam
 
 Implemented components:
 - `machine-resolver.js` provides the time-aware resolution engine.
-- `machine-list.html` now contains a Phase 6B resolution test interface.
+- `machine-list.html` contains a Phase 6B resolution test interface.
 - The resolver reads the normalized Machine List dataset from `comp.machineList.v1`.
 - Matching uses exact normalized `location_id` equality.
 - Installation/removal periods are evaluated as a half-open interval: `installed_date <= event_timestamp < uninstalled_date`.
@@ -232,21 +232,48 @@ Important data-source clarification:
 - Historical machine identity must progressively be captured by the application's append-only Work History once Phase 6C is implemented.
 - Until historical evidence exists, the resolver must continue to return unresolved/ambiguous rather than invent a previous Serial Number.
 
-Phase 6B intentionally does **not** yet write Serial Number into Google Sheets. This keeps resolution validation separate from Phase 6C persistence and protects the already-validated Phase 5 Work Items behavior.
+Phase 6B intentionally does **not** yet write Serial Number into Google Sheets. This kept resolution validation separate from Phase 6C persistence and protected the already-validated Phase 5 Work Items behavior.
 
 ### Phase 6C — Append-only Work History
-Status: PLANNED
+Status: IMPLEMENTED — VALIDATION PENDING
 
 `Work Items`
 - Latest operational/current state.
-- Existing Phase 5 IP-keyed upsert remains intact unless explicitly revised later.
+- Existing Phase 5 IP-keyed upsert remains intact.
+- Updating an IP continues to replace the current-state row rather than create a duplicate.
 
 `Work History`
-- Append-only events.
-- Serial Number is the preferred machine-history identity.
-- IP and location/Nama DC are contextual snapshots.
-- Replacement/removal produces separate machine histories.
-- Unresolved machine identity is represented explicitly.
+- Separate append-only event log in the same Google Spreadsheet.
+- Each saved work event receives a unique `Event ID`.
+- Serial Number is the preferred machine-history identity when Phase 6B resolves it.
+- IP, Location ID and Nama DC are contextual snapshots and are never used as the historical identity key.
+- `Resolution Status` and `Resolution Message` preserve unresolved/ambiguous identity instead of guessing.
+- History events are appended and are not updated by IP.
+
+History schema:
+`Event ID | Timestamp | IP | Serial Number | Location ID | Nama DC | Zona | Repeat Zero | Engineer ID | Status | Catatan | Resolution Status | Resolution Message | Source`
+
+Save flow:
+1. Existing Phase 5 `Work Items` upsert runs first.
+2. The same work payload is converted into append-only history events.
+3. Phase 6B resolver determines Serial Number using the saved event timestamp and local Machine List cache.
+4. A resolved event stores Serial Number; unresolved/ambiguous/missing-location cases remain explicit.
+5. History events are appended to `Work History`.
+6. Failure of the history append does not invalidate the already-successful `Work Items` save. The frontend logs the history failure; partial history saves are also reported by the backend response for diagnostics.
+
+Backend safeguards:
+- `appendWorkHistory` is a separate Apps Script action and does not change `upsertWorkItems` semantics.
+- Event IDs are checked to avoid duplicate append of the same event.
+- Apps Script uses a script lock around history append operations to reduce concurrent-write collisions.
+- The repository `Code.gs` remains a template; the deployed Apps Script copy must be updated and redeployed before live 6C validation.
+
+Validation required before Phase 6C is complete:
+- Updated Apps Script is deployed and reachable through the existing `/exec` URL.
+- Saving one selected IP creates one row in `Work History`.
+- Saving the same IP again creates a **new history event** rather than updating the previous history row.
+- A resolvable Location ID stores the expected Serial Number.
+- An unresolved/ambiguous Location ID keeps Serial Number blank and preserves the resolution state/message.
+- Phase 5 `Work Items` still upserts by IP without duplicate current-state rows.
 
 ### Phase 6D — History Viewer
 Status: PLANNED
@@ -312,6 +339,8 @@ Future Shift Report can use history for:
 14. Machine List export anomalies must not be silently corrected by shifting values between columns.
 15. Phase 6B resolution must remain separate from Phase 6C persistence until resolution is live-validated.
 16. Machine List realtime snapshots must not be assumed to contain complete historical replacement data.
+17. Work History is append-only; historical events must not be updated or merged by IP.
+18. Every Work History event requires a unique Event ID; duplicate Event IDs must not create duplicate history rows.
 
 # Detailed Change Log
 
@@ -398,7 +427,19 @@ Future Shift Report can use history for:
 - Recorded this as a data-source limitation rather than a resolver failure.
 - Confirmed that the replacement scenario must not be simulated by guessing historical data.
 - Clarified that append-only Work History in Phase 6C will become the application's own historical evidence for machine identity going forward.
-- Phase 6B remains partially live-validated; Phase 6C remains the next implementation stage.
+- Phase 6B remains partially live-validated; Phase 6C is the next implementation stage.
+
+## 2026-09-03 — Phase 6C implementation
+- Extended `google-apps-script/Code.gs` with a separate `Work History` sheet and `appendWorkHistory` action.
+- Preserved the existing `Work Items` upsert path and schema.
+- Added append-only history fields for Event ID, event context, Serial Number and resolver status/message.
+- Added Event ID de-duplication and a script lock around history append operations.
+- Updated `work-tracking.js` so successful Work Items saves also attempt to append Work History events.
+- Integrated the Phase 6B resolver into history enrichment using the event timestamp.
+- Added explicit handling for resolved, unresolved, ambiguous and missing-location history states.
+- Updated `ip-repeat-analyzer.html` to load `machine-resolver.js` before `work-tracking.js` and refreshed the cache-buster.
+- Removed the temporary Phase 6C placeholder file created during implementation.
+- Phase 6C implementation is complete, but live validation is pending deployment of the updated Apps Script and user verification in Google Sheets.
 
 # Current Status
 
@@ -410,7 +451,7 @@ Future Shift Report can use history for:
 | Phase 3 — Engineer Selection | DONE — live validation confirmed |
 | Phase 4 — Engineer Identity | DONE — live validation confirmed |
 | Phase 5 — Work Tracking + Google Sheets Persistence | DONE — end-to-end validation and upsert verified |
-| Phase 6 — Machine Identity + Work History | IN PROGRESS — Phase 6A completed, Phase 6B partially live-validated |
+| Phase 6 — Machine Identity + Work History | IN PROGRESS — Phase 6A completed, Phase 6B partially live-validated, Phase 6C validation pending |
 | Phase 7 — Multi-user / Google Sheets Hardening | PLANNED |
 | Phase 8 — Work Export | PLANNED |
 | Phase 9 — Shift Report Integration | PLANNED |
