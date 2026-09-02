@@ -112,7 +112,7 @@ Validation completed 2026-09-03:
 - Persistence and upsert behavior passed.
 
 ## Phase 6 — Machine Identity + Work History
-Status: IN PROGRESS — Phase 6A COMPLETED, Phase 6B IMPLEMENTED / LIVE VALIDATION PENDING
+Status: IN PROGRESS — Phase 6A COMPLETED, Phase 6B PARTIALLY LIVE-VALIDATED
 
 ### Primary goal
 Build reliable machine history based on **Serial Number**, not IP and not `location_id` alone.
@@ -191,7 +191,7 @@ Phase 6A does **not** yet:
 - Merge IP into machine identity.
 
 ### Phase 6B — Time-aware location-to-machine resolution
-Status: IMPLEMENTED — LIVE VALIDATION PENDING
+Status: IMPLEMENTED — PARTIALLY LIVE-VALIDATED
 
 Purpose:
 Resolve the Serial Number occupying a `location_id` at a specific event timestamp without guessing.
@@ -219,6 +219,19 @@ Rules:
 - Ambiguous or missing resolution must remain explicitly unresolved.
 - Reused IP must never merge different machines' histories.
 
+Live validation completed 2026-09-03:
+- User successfully tested a currently occupied Location ID and confirmed that the resolver returns the expected Serial Number.
+- User successfully tested a timestamp after the machine's `uninstalled_date` and confirmed that the resolver returns an unresolved result rather than incorrectly carrying forward the machine identity.
+- The historical replacement scenario could not be directly tested from the current operational Machine List because the Machine List is a **realtime snapshot**, not a historical dataset. A single current Machine List file therefore does not contain both the old and replacement Serial Numbers for a location that has already changed machines.
+- This is a data-source limitation, not a failed resolver test.
+- The replacement scenario remains a validation item for when historical Machine List records become available, or when sufficient Work History has been accumulated by the application itself.
+
+Important data-source clarification:
+- Machine List represents the current/realtime machine state.
+- Machine List should not be treated as a permanent historical record of every machine previously occupying a location.
+- Historical machine identity must progressively be captured by the application's append-only Work History once Phase 6C is implemented.
+- Until historical evidence exists, the resolver must continue to return unresolved/ambiguous rather than invent a previous Serial Number.
+
 Phase 6B intentionally does **not** yet write Serial Number into Google Sheets. This keeps resolution validation separate from Phase 6C persistence and protects the already-validated Phase 5 Work Items behavior.
 
 ### Phase 6C — Append-only Work History
@@ -242,10 +255,10 @@ History will be searchable primarily by Serial Number, with IP, Nama DC/location
 
 ### Phase 6 validation requirements
 Before Phase 6 is marked complete:
-- Same location before/after replacement resolves to the correct different Serial Numbers.
+- Same location before/after replacement resolves to the correct different Serial Numbers when historical source data is available.
 - A removed machine with no replacement results in an unassigned state.
 - Reused IP does not merge different machines.
-- Old machine history stays attached to the old Serial Number.
+- Old machine history stays attached to the old Serial Number once history is captured.
 - Missing/ambiguous Machine List resolution is visible and never guessed.
 - Phase 5 current Work Items upsert behavior remains unchanged.
 
@@ -298,6 +311,7 @@ Future Shift Report can use history for:
 13. Phase 6A local browser storage is an intermediate Machine List cache only; it is not the final Work Tracking persistence layer.
 14. Machine List export anomalies must not be silently corrected by shifting values between columns.
 15. Phase 6B resolution must remain separate from Phase 6C persistence until resolution is live-validated.
+16. Machine List realtime snapshots must not be assumed to contain complete historical replacement data.
 
 # Detailed Change Log
 
@@ -375,7 +389,16 @@ Future Shift Report can use history for:
 - Prevented unparseable non-blank `uninstalled_date` values from being treated as open-ended.
 - Added a Phase 6B test interface to `machine-list.html` so resolution can be live-validated without changing Phase 5 persistence.
 - Added responsive styling for the Phase 6B test interface in `machine-list.css`.
-- Phase 6B remains LIVE VALIDATION PENDING.
+- Phase 6B implementation is complete and has passed the currently testable realtime-data scenarios.
+
+## 2026-09-03 — Phase 6B live validation update
+- User confirmed successful resolution for a Location ID that is currently occupied by a machine.
+- User confirmed successful unresolved behavior for a Location ID queried at a timestamp after its `uninstalled_date`.
+- User could not test the machine-replacement scenario because the operational Machine List is a realtime snapshot and does not retain the previous machine in the same file after replacement.
+- Recorded this as a data-source limitation rather than a resolver failure.
+- Confirmed that the replacement scenario must not be simulated by guessing historical data.
+- Clarified that append-only Work History in Phase 6C will become the application's own historical evidence for machine identity going forward.
+- Phase 6B remains partially live-validated; Phase 6C remains the next implementation stage.
 
 # Current Status
 
@@ -387,7 +410,7 @@ Future Shift Report can use history for:
 | Phase 3 — Engineer Selection | DONE — live validation confirmed |
 | Phase 4 — Engineer Identity | DONE — live validation confirmed |
 | Phase 5 — Work Tracking + Google Sheets Persistence | DONE — end-to-end validation and upsert verified |
-| Phase 6 — Machine Identity + Work History | IN PROGRESS — Phase 6A completed, Phase 6B live validation pending |
+| Phase 6 — Machine Identity + Work History | IN PROGRESS — Phase 6A completed, Phase 6B partially live-validated |
 | Phase 7 — Multi-user / Google Sheets Hardening | PLANNED |
 | Phase 8 — Work Export | PLANNED |
 | Phase 9 — Shift Report Integration | PLANNED |
