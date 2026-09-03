@@ -54,9 +54,21 @@
   .machine-list-actions .repeat-primary-btn { margin-left: 0; width: 100%; }
   .machine-list-upload-content { text-align: center; flex-direction: column; }
   .machine-list-resolver-form { grid-template-columns: 1fr; }
+  .machine-list-heading,.machine-list-upload,.machine-list-actions,.machine-list-resolver-form{min-width:0}
+  .machine-list-clear-btn,.machine-list-actions .repeat-primary-btn,.machine-list-resolver-form input{min-height:42px}
 }
 @media (max-width: 780px) {
   /* Keep machine-list's existing mobile-open state compatible with shared sidebar styling. */
   .repeat-sidebar.mobile-open { transform: translateX(0); }
   .sidebar-overlay.visible { opacity: 1; visibility: visible; }
+}
+@media (max-width: 560px) {
+  .machine-list-heading{padding:1.1rem 1rem}
+  .machine-list-upload{margin:1rem;min-height:135px}
+  .machine-list-upload-content{padding:1rem}
+  .machine-list-actions{padding:0 1rem 1rem;flex-direction:column;align-items:stretch}
+  .machine-list-clear-btn{width:100%}
+  .machine-list-summary{padding:.85rem 1rem}
+  .machine-list-resolver-form{padding:1rem;gap:.75rem}
+  .machine-list-resolver-result{margin:0 1rem 1rem}
 }
