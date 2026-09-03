@@ -11,7 +11,12 @@
 </head>
 <body>
 <div class="hub-shell">
-    <aside class="hub-sidebar">
+    <button class="hub-menu-toggle" id="menuToggle" type="button" aria-label="Buka menu navigasi" aria-controls="sidebar" aria-expanded="false">
+        <i class="fas fa-bars" aria-hidden="true"></i>
+    </button>
+    <div class="hub-sidebar-overlay" id="sidebarOverlay" aria-hidden="true"></div>
+
+    <aside class="hub-sidebar" id="sidebar">
         <div class="hub-logo">
             <div class="hub-mark">CP</div>
             <div><div class="hub-brand">COMP Tools</div><div class="hub-subbrand">Data & comparison suite</div></div>
@@ -60,6 +65,32 @@
         </div>
     </main>
 </div>
+<script>
+(() => {
+    const menuToggle = document.getElementById('menuToggle');
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    if (!menuToggle || !sidebar || !overlay) return;
+
+    const closeSidebar = () => {
+        sidebar.classList.remove('active');
+        overlay.classList.remove('active');
+        menuToggle.setAttribute('aria-expanded', 'false');
+    };
+
+    menuToggle.addEventListener('click', () => {
+        const active = sidebar.classList.toggle('active');
+        overlay.classList.toggle('active', active);
+        menuToggle.setAttribute('aria-expanded', String(active));
+    });
+
+    overlay.addEventListener('click', closeSidebar);
+    sidebar.querySelectorAll('a').forEach(link => link.addEventListener('click', closeSidebar));
+    window.addEventListener('resize', () => {
+        if (window.innerWidth > 780) closeSidebar();
+    });
+})();
+</script>
 <script src="theme-toggle.js"></script>
 </body>
 </html>
