@@ -43,77 +43,26 @@
           <h1 class="hub-title">Machine List</h1>
           <p class="hub-desc">Machine List current yang dibagikan ke seluruh user melalui Google Sheets.</p>
         </div>
-        <button class="repeat-menu-toggle" id="menuToggle" type="button" aria-label="Toggle menu"><i class="fas fa-bars"></i></button>
+        <button class="repeat-menu-toggle" id="menuToggle" type="button" aria-label="Toggle menu" aria-controls="sidebar" aria-expanded="false"><i class="fas fa-bars"></i></button>
       </section>
 
       <section class="hub-hero repeat-hero">
-        <div>
-          <strong>Phase 5 — Shared Machine List</strong>
-          <p>Semua user membaca dataset Machine List yang sama dari Google Sheets. Cache browser hanya digunakan sebagai fallback ketika sumber bersama tidak dapat diakses.</p>
-        </div>
+        <div><strong>Phase 5 — Shared Machine List</strong><p>Semua user membaca dataset Machine List yang sama dari Google Sheets. Cache browser hanya digunakan sebagai fallback ketika sumber bersama tidak dapat diakses.</p></div>
         <div class="repeat-hero-icon"><i class="fas fa-server"></i></div>
       </section>
 
       <section class="hub-card machine-list-card">
-        <div class="machine-list-heading">
-          <div>
-            <h2>Machine List Current</h2>
-            <p>Upload hanya diperlukan ketika tersedia Machine List terbaru. Setelah tersimpan, user lain akan membaca snapshot yang sama saat halaman dimuat atau di-refresh.</p>
-          </div>
-          <div class="machine-list-status">Status: <span id="machineListStorageStatus">Memuat...</span></div>
-        </div>
-
-        <div class="machine-list-upload" id="machineListUploadArea">
-          <input type="file" id="machineListFile" accept=".xls,.xlsx" aria-label="Upload Machine List">
-          <div class="machine-list-upload-content">
-            <div class="machine-list-upload-icon"><i class="fas fa-server"></i></div>
-            <div>
-              <h3>Drop Machine List di sini</h3>
-              <p>atau klik untuk memilih file • .xls / .xlsx</p>
-              <span id="machineListFileName">Belum ada file</span>
-            </div>
-          </div>
-        </div>
-
+        <div class="machine-list-heading"><div><h2>Machine List Current</h2><p>Upload hanya diperlukan ketika tersedia Machine List terbaru. Setelah tersimpan, user lain akan membaca snapshot yang sama saat halaman dimuat atau di-refresh.</p></div><div class="machine-list-status">Status: <span id="machineListStorageStatus">Memuat...</span></div></div>
+        <div class="machine-list-upload" id="machineListUploadArea"><input type="file" id="machineListFile" accept=".xls,.xlsx" aria-label="Upload Machine List"><div class="machine-list-upload-content"><div class="machine-list-upload-icon"><i class="fas fa-server"></i></div><div><h3>Drop Machine List di sini</h3><p>atau klik untuk memilih file • .xls / .xlsx</p><span id="machineListFileName">Belum ada file</span></div></div></div>
         <div id="machineListError" class="machine-list-message machine-list-error" role="alert"></div>
-
-        <div class="machine-list-actions">
-          <button id="machineListClearBtn" class="machine-list-clear-btn" type="button" disabled><i class="fas fa-trash"></i> Hapus Cache Lokal</button>
-          <button id="machineListProcessBtn" class="repeat-primary-btn" type="button" disabled><i class="fas fa-cloud-arrow-up"></i> Validasi &amp; Simpan</button>
-        </div>
+        <div class="machine-list-actions"><button id="machineListClearBtn" class="machine-list-clear-btn" type="button" disabled><i class="fas fa-trash"></i> Hapus Cache Lokal</button><button id="machineListProcessBtn" class="repeat-primary-btn" type="button" disabled><i class="fas fa-cloud-arrow-up"></i> Validasi &amp; Simpan</button></div>
       </section>
 
-      <div id="machineListLoading" class="machine-list-loading" aria-live="polite">
-        <div class="loading-spinner"></div>
-        <p>Memproses Machine List...</p>
-      </div>
+      <div id="machineListLoading" class="machine-list-loading" aria-live="polite"><div class="loading-spinner"></div><p>Memproses Machine List...</p></div>
 
       <section class="hub-card machine-list-card">
-        <div class="machine-list-heading">
-          <div>
-            <h2>Normalized Dataset</h2>
-            <p id="machineListSummary">Memuat Machine List Current dari Google Sheets...</p>
-          </div>
-        </div>
-        <div class="machine-list-table-wrap">
-          <table class="machine-list-table">
-            <thead>
-              <tr>
-                <th>No</th>
-                <th>Serial Number</th>
-                <th>Location ID</th>
-                <th>Installed Date</th>
-                <th>Uninstalled Date</th>
-              </tr>
-            </thead>
-            <tbody id="machineListBody"></tbody>
-          </table>
-          <div id="machineListEmpty" class="machine-list-empty" hidden>
-            <i class="fas fa-server"></i>
-            <h3>Belum ada dataset</h3>
-            <p>Belum ada Machine List Current yang tersedia di Google Sheets.</p>
-          </div>
-        </div>
+        <div class="machine-list-heading"><div><h2>Normalized Dataset</h2><p id="machineListSummary">Memuat Machine List Current dari Google Sheets...</p></div></div>
+        <div class="machine-list-table-wrap"><table class="machine-list-table"><thead><tr><th>No</th><th>Serial Number</th><th>Location ID</th><th>Installed Date</th><th>Uninstalled Date</th></tr></thead><tbody id="machineListBody"></tbody></table><div id="machineListEmpty" class="machine-list-empty" hidden><i class="fas fa-server"></i><h3>Belum ada dataset</h3><p>Belum ada Machine List Current yang tersedia di Google Sheets.</p></div></div>
       </section>
     </div>
   </main>
@@ -128,14 +77,17 @@
   const sidebar = document.getElementById('sidebar');
   const sidebarOverlay = document.getElementById('sidebarOverlay');
   function closeSidebar() {
-    sidebar?.classList.remove('mobile-open');
-    sidebarOverlay?.classList.remove('visible');
+    sidebar?.classList.remove('active');
+    sidebarOverlay?.classList.remove('active');
+    menuToggle?.setAttribute('aria-expanded', 'false');
   }
   menuToggle?.addEventListener('click', () => {
-    sidebar?.classList.toggle('mobile-open');
-    sidebarOverlay?.classList.toggle('visible');
+    const open = sidebar?.classList.toggle('active');
+    sidebarOverlay?.classList.toggle('active', open);
+    menuToggle?.setAttribute('aria-expanded', String(Boolean(open)));
   });
   sidebarOverlay?.addEventListener('click', closeSidebar);
+  sidebar?.querySelectorAll('a').forEach(link => link.addEventListener('click', closeSidebar));
 </script>
 </body>
 </html>
