@@ -115,7 +115,6 @@ Changes made:
 
 ## Phase 3 does NOT do yet
 
-- No Google Sheets replacement.
 - No Cleaning History.
 - No Cleaning Count.
 - No integration into the MinerPlus result table.
@@ -144,13 +143,28 @@ Phase 3 will be marked **COMPLETED** after user confirms these tests pass.
 
 # Phase 4 — Machine List Temporary Database
 
-**Status: PLANNED**
+**Status: IMPLEMENTED IN REPO / DEPLOYMENT + USER VALIDATION PENDING**
 
-Google Sheets will be used as the shared temporary database for the current Machine List.
+Google Sheets is used as the shared temporary database for the current Machine List.
 
 ## Sheet
 
 `Machine List Current`
+
+## Backend actions
+
+The existing Google Apps Script endpoint has been extended without changing the existing Work Items and Work History actions:
+
+```text
+GET  ?action=getMachineList
+POST { action: "replaceMachineList", records: [...], sourceFileName: "..." }
+```
+
+Existing actions remain supported:
+
+- `upsertWorkItems`
+- `appendWorkHistory`
+- `getWorkHistory`
 
 ## Replacement strategy
 
@@ -159,11 +173,13 @@ Google Sheets will be used as the shared temporary database for the current Mach
 ```text
 Upload new Machine List
         ↓
-Validate completely
+Client parses + validates
+        ↓
+Server validates the complete snapshot
         ↓
 If valid:
-  delete old Machine List Current
-  insert new Machine List
+  delete old Machine List Current contents
+  write new Machine List
         ↓
 New snapshot becomes active
 ```
@@ -174,7 +190,49 @@ If validation fails:
 Keep old Machine List Current unchanged
 ```
 
-This validation-before-delete rule is mandatory so a bad upload cannot leave the shared database empty.
+The server performs complete validation **before** clearing the existing snapshot. A failed validation therefore cannot leave the shared Machine List empty.
+
+## Server validation
+
+The replacement endpoint currently validates:
+
+- Dataset is not empty.
+- Maximum 20,000 records per request.
+- Every record contains `serialNumber` and `locationId`.
+- Serial Number and Location ID length limits.
+- Optional date value length limits.
+- Duplicate Serial Numbers are rejected.
+- Duplicate Location IDs are rejected.
+
+A failed validation returns an error and does not modify `Machine List Current`.
+
+## Concurrency protection
+
+`LockService.getScriptLock()` is used during replacement so simultaneous Machine List replacements do not execute the delete/write section at the same time.
+
+## Client behavior
+
+`machine-list.js` now:
+
+1. Parses the uploaded file.
+2. Requires `serial_number` and `location_id`.
+3. Sends the validated normalized records to Google Apps Script.
+4. Waits for the backend response.
+5. Requires the backend `saved` count to equal the uploaded record count.
+6. Updates localStorage only after the shared Google Sheets replacement succeeds.
+7. Keeps the previous local dataset if the upload/save fails.
+
+`machine-list.html` now loads `google-sheets-config.js` and labels the action as **Validasi & Simpan**.
+
+## Metadata
+
+The Apps Script stores lightweight Machine List metadata in Script Properties:
+
+- `updatedAt`
+- `sourceFileName`
+- `rowCount`
+
+This avoids adding metadata rows to the temporary Machine List table itself.
 
 ## Important
 
@@ -182,11 +240,31 @@ This validation-before-delete rule is mandatory so a bad upload cannot leave the
 - The sheet represents only the current/realtime Machine List.
 - The old snapshot is discarded after a valid replacement.
 - Cleaning History must never be deleted when Machine List is replaced.
+- The deployed Apps Script Web App must be updated to the current `google-apps-script/Code.gs` before end-to-end testing; GitHub changes do not automatically update an already deployed Apps Script version.
 
-Optional metadata:
+## Phase 4 files changed
 
-- `machine_list_updated_at`
-- `machine_list_row_count`
+- `google-apps-script/Code.gs`
+- `machine-list.js`
+- `machine-list.html`
+
+No changes were made to `ip-repeat-analyzer.js` or `master-data.js`.
+
+## Phase 4 validation checklist
+
+After the current `Code.gs` is deployed to the existing Web App deployment, test:
+
+1. Upload a valid Machine List.
+2. Confirm `Machine List Current` is created/replaced.
+3. Confirm the old rows are gone after a successful replacement.
+4. Confirm the new row count exactly matches the uploaded normalized dataset.
+5. Upload an invalid Machine List missing `serial_number` or `location_id` and confirm the current sheet remains unchanged.
+6. Upload a file containing a duplicate Serial Number and confirm the current sheet remains unchanged.
+7. Upload a file containing a duplicate Location ID and confirm the current sheet remains unchanged.
+8. Confirm existing Work Tracking save/history functions still work.
+9. Confirm Cleaning History is not touched by Machine List replacement.
+
+Phase 4 will be marked **COMPLETED** only after the user confirms the end-to-end tests pass.
 
 ---
 
@@ -403,6 +481,26 @@ Every phase must be tested before the next phase is implemented.
 
 # Change Log
 
+## 2026-09-04 — Phase 4 implementation
+
+**Change:** Connected the Machine List upload flow to the shared Google Sheets architecture.
+
+**Backend:** Extended `google-apps-script/Code.gs` with `Machine List Current`, `replaceMachineList`, and `getMachineList` actions while preserving the existing Work Items and Work History actions.
+
+**Replacement:** Validated Delete & Insert. The complete incoming snapshot is validated before the existing sheet is cleared. Script Lock protects the replacement section from concurrent replacements.
+
+**Validation:** Required `serialNumber` + `locationId`, non-empty dataset, maximum 20,000 records, duplicate Serial Number rejection, duplicate Location ID rejection, and basic field-length checks.
+
+**Client:** `machine-list.js` now sends normalized records to the configured Google Apps Script and updates localStorage only after the backend confirms the full record count was saved. Failed saves preserve the previous local dataset.
+
+**UI:** `machine-list.html` now loads `google-sheets-config.js` and presents the operation as **Validasi & Simpan**. The obsolete Phase 6 resolver section was removed from this page because it is outside the current Machine Cleaning Tracker Phase 4 scope.
+
+**Scope protection:** `ip-repeat-analyzer.js` and `master-data.js` were not modified.
+
+**Deployment note:** The repository `Code.gs` is updated, but an already deployed Apps Script Web App does not automatically update from GitHub. The current `Code.gs` must be deployed to the existing Web App before end-to-end testing.
+
+**Status:** Implementation complete in repository; Apps Script deployment and user validation pending.
+
 ## 2026-09-04 — Phase 3 implementation
 
 **Change:** Updated `machine-list.js` so Phase 3 requires only `serial_number` and `location_id`.
@@ -412,8 +510,6 @@ Every phase must be tested before the next phase is implemented.
 **Preserved behavior:** File type validation, header scanning, normalization, empty-row handling, preview, localStorage storage, clear action, and `CompMachineList` API remain intact.
 
 **Scope protection:** `ip-repeat-analyzer.js`, `master-data.js`, and the existing MinerPlus calculation logic were not changed.
-
-**Commit:** `5163c81a8251fe0bdb3f693e69229b54f4713de3`
 
 **Status:** Implementation complete; user validation required before Phase 3 is marked completed.
 
