@@ -188,19 +188,24 @@ Review outcome:
 - No JavaScript, data processing, API, persistence, export, or calculation logic was changed.
 
 ## Phase M8 — Logic safety verification
-Status: PLANNED
+Status: COMPLETED
 
-Verify that responsive work did not alter:
+Final source-level safety verification completed against the mobile-work baseline and the current `main` branch.
 
-- Excel/CSV parsing.
-- IP validation/repeat calculation.
-- Zone logic.
-- Engineer selection/localStorage behavior.
-- Google Sheets persistence.
-- Work Items/Work History behavior.
-- Machine resolver behavior.
-- Export behavior.
-- Existing API endpoints.
+Verification performed:
+
+- Compared mobile-work baseline `9ce13156bef1d3e46db9207473f6d3b2a86505b8` with the current `main` branch.
+- The resulting change set contains only the responsive-plan document plus UI/responsive files: `bulk-compare-ui.css`, `cleaning-history.html`, `data-matcher-ui.css`, `excel-analyzer.css`, `index-hub.css`, `iplocationvalidator.css`, `machine-list.css`, `machine-list.html`, `mobile-tables.css`, and `theme-toggle.css`.
+- No analyzer/processing JavaScript file appears in the mobile-work diff.
+- No changes were detected to the core logic areas listed below: Excel/CSV parsing, IP validation/repeat calculations, zone logic, engineer selection/localStorage behavior, Google Sheets persistence, work/history processing, machine resolver logic, exports, or existing API endpoints.
+- `Cleaning History` and `Machine List` contain only the narrowly scoped mobile menu interaction added for responsive navigation; their data logic remains in the existing application scripts.
+- `theme-toggle.js` and the operational analyzer scripts were not modified by the mobile-responsive work.
+- The repository `main` branch is currently identical to M7 completion commit `ceb83c276ecdb914e25ec3bc189bd44933034d92` before this documentation-only M8 update.
+
+Safety conclusion:
+- No business/data-processing logic was changed as part of the mobile-responsive implementation.
+- M8 requires no application-code rollback or corrective patch.
+- The remaining limitation is testing scope: this is a source-level safety verification; a real-device browser regression test was not available in this environment.
 
 ## Implementation rule
 
