@@ -2,6 +2,7 @@ const SPREADSHEET_ID = 'PASTE_YOUR_GOOGLE_SHEET_ID_HERE';
 const WORK_SHEET_NAME = 'Work Items';
 const HISTORY_SHEET_NAME = 'Work History';
 const MACHINE_LIST_SHEET_NAME = 'Machine List Current';
+const MACHINE_LIST_META_KEY = 'comp.machineList.meta';
 
 // Optional lightweight request key. This is NOT a secret when the frontend is public.
 // Keep both this value and google-sheets-config.js requestKey empty to disable it.
@@ -318,6 +319,7 @@ function getWorkHistory(e) {
 function getMachineList() {
   const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
   const sheet = spreadsheet.getSheetByName(MACHINE_LIST_SHEET_NAME);
+  const meta = readMachineListMeta();
 
   // Read-only endpoint: never creates or modifies the current Machine List.
   if (!sheet || sheet.getLastRow() <= 1) {
@@ -325,15 +327,13 @@ function getMachineList() {
       ok: true,
       records: [],
       total: 0,
-      updatedAt: null
+      updatedAt: meta.updatedAt || null,
+      sourceFileName: meta.sourceFileName || ''
     });
   }
 
   const data = sheet.getDataRange().getValues();
   const records = [];
-  const updatedAt = sheet.getLastRow() > 1
-    ? sheet.getRange(sheet.getLastRow(), 4).getValue()
-    : null;
 
   for (let r = 1; r < data.length; r++) {
     const row = data[r];
@@ -356,7 +356,8 @@ function getMachineList() {
     ok: true,
     records,
     total: records.length,
-    updatedAt: updatedAt instanceof Date ? updatedAt.toISOString() : null
+    updatedAt: meta.updatedAt || null,
+    sourceFileName: meta.sourceFileName || ''
   });
 }
 
@@ -446,6 +447,11 @@ function replaceMachineList(records, sourceFileName) {
     SpreadsheetApp.flush();
 
     const updatedAt = new Date();
+    writeMachineListMeta({
+      updatedAt: updatedAt.toISOString(),
+      sourceFileName: normalizeMachineText(sourceFileName).slice(0, 200),
+      rowCount: normalizedRows.length
+    });
 
     return jsonResponse({
       ok: true,
@@ -458,6 +464,25 @@ function replaceMachineList(records, sourceFileName) {
   } finally {
     lock.releaseLock();
   }
+}
+
+function readMachineListMeta() {
+  try {
+    const raw = PropertiesService.getScriptProperties().getProperty(MACHINE_LIST_META_KEY);
+    if (!raw) return {};
+    const meta = JSON.parse(raw);
+    return meta && typeof meta === 'object' ? meta : {};
+  } catch (error) {
+    console.warn('Gagal membaca metadata Machine List:', error);
+    return {};
+  }
+}
+
+function writeMachineListMeta(meta) {
+  PropertiesService.getScriptProperties().setProperty(
+    MACHINE_LIST_META_KEY,
+    JSON.stringify(meta)
+  );
 }
 
 function normalizeMachineText(value) {
