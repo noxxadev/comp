@@ -207,6 +207,39 @@ Safety conclusion:
 - M8 requires no application-code rollback or corrective patch.
 - The remaining limitation is testing scope: this is a source-level safety verification; a real-device browser regression test was not available in this environment.
 
+## Phase M9 — Mobile Sidebar Refinement: Burger → Left Sidebar
+Status: COMPLETED
+
+Requirement:
+
+- On mobile, all 10 in-scope pages must follow the same navigation concept: **burger button → fixed sidebar from the left**.
+- The sidebar must never become a normal/static section above the page content.
+- The sidebar is hidden off-canvas by default on mobile and opens from the left when the burger is pressed.
+- A backdrop/overlay appears while the sidebar is open.
+- Tapping the overlay or a navigation link closes the sidebar.
+- Desktop sidebar behavior remains unchanged.
+
+Implemented:
+
+- `index.html`: added the mobile burger trigger, overlay, accessible `aria-expanded` state, and close-on-navigation behavior for the Tools Hub.
+- `index-hub.css`: replaced the previous mobile top-section sidebar layout with a fixed 260px left off-canvas sidebar and burger/overlay presentation.
+- `theme-preview.html`: aligned the standalone preview page to the same burger → left off-canvas sidebar pattern while preserving its standalone theme-preview content and theme toggle.
+- Existing operational pages that already use the burger/left-sidebar pattern were not unnecessarily rewritten.
+- No analyzer calculations, parsing, data processing, persistence, API endpoints, exports, or localStorage behavior were intentionally changed.
+
+Files changed in M9:
+- `index.html`
+- `index-hub.css`
+- `theme-preview.html`
+
+Verification:
+
+- `index.html` now exposes `#menuToggle`, `#sidebar`, and `#sidebarOverlay` for the mobile navigation pattern.
+- Tools Hub mobile CSS keeps the sidebar fixed to the left and off-canvas until `.active` is applied.
+- `theme-preview.html` now has its own mobile menu trigger, overlay, and `.active` sidebar state.
+- Existing operational-page navigation logic was preserved.
+- Source-level verification only; real-device/browser screenshot testing remains to be performed manually.
+
 ## Implementation rule
 
 Prefer CSS-only changes. Markup changes are allowed only when required to provide responsive UI behavior, and any such change must preserve existing IDs/classes used by application logic. JavaScript changes are avoided unless a navigation/UI interaction cannot be fixed safely in CSS alone.
