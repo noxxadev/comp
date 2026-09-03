@@ -16,7 +16,8 @@
     records: [],
     sourceHeaders: [],
     sourceFileName: '',
-    loadedAt: ''
+    loadedAt: '',
+    dataSource: 'none'
   };
 
   const $ = (id) => document.getElementById(id);
@@ -201,18 +202,21 @@
   function loadFromStorage() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return;
+      if (!raw) return false;
       const payload = JSON.parse(raw);
-      if (payload?.version !== 1 || !Array.isArray(payload.records)) return;
+      if (payload?.version !== 1 || !Array.isArray(payload.records)) return false;
 
       state.records = payload.records;
       state.sourceHeaders = Array.isArray(payload.headers) ? payload.headers : [];
       state.sourceFileName = payload.sourceFileName || '';
       state.loadedAt = payload.loadedAt || '';
+      state.dataSource = 'cache';
       render();
       updateStorageStatus();
+      return state.records.length > 0;
     } catch (error) {
       console.warn('Gagal memuat Machine List tersimpan:', error);
+      return false;
     }
   }
 
@@ -220,12 +224,21 @@
     const hasData = state.records.length > 0;
     clearBtn.disabled = !hasData;
     if (!hasData) {
-      storageStatus.textContent = 'Belum ada data tersimpan';
+      storageStatus.textContent = 'Belum ada data Machine List';
       return;
     }
+
     const loaded = state.loadedAt ? new Date(state.loadedAt) : null;
-    const stamp = loaded && !Number.isNaN(loaded.getTime()) ? ` • ${loaded.toLocaleString('id-ID')}` : '';
-    storageStatus.textContent = `${state.records.length.toLocaleString('id-ID')} record tersimpan${stamp}`;
+    const stamp = loaded && !Number.isNaN(loaded.getTime())
+      ? ` • ${loaded.toLocaleString('id-ID')}`
+      : '';
+    const source = state.dataSource === 'remote'
+      ? 'Google Sheets'
+      : state.dataSource === 'cache'
+        ? 'Cache lokal (fallback)'
+        : 'Lokal';
+
+    storageStatus.textContent = `${state.records.length.toLocaleString('id-ID')} record • ${source}${stamp}`;
   }
 
   function render() {
@@ -316,6 +329,83 @@
     return result;
   }
 
+  async function getRemoteMachineList() {
+    const config = getConfig();
+    const baseUrl = String(config.webAppUrl || '').trim();
+
+    if (!baseUrl) {
+      throw new Error('Google Sheets belum dikonfigurasi.');
+    }
+
+    const params = new URLSearchParams({ action: 'getMachineList' });
+    if (config.requestKey) params.set('requestKey', String(config.requestKey));
+
+    let response;
+    try {
+      response = await fetch(`${baseUrl}${baseUrl.includes('?') ? '&' : '?'}${params.toString()}`, {
+        method: 'GET',
+        cache: 'no-store'
+      });
+    } catch (error) {
+      throw new Error(`Gagal membaca Machine List dari Google Sheets: ${error.message || 'network error'}`);
+    }
+
+    const text = await response.text();
+    let result;
+    try {
+      result = JSON.parse(text);
+    } catch (error) {
+      throw new Error(`Google Apps Script mengembalikan response tidak valid (HTTP ${response.status}).`);
+    }
+
+    if (!response.ok || !result?.ok) {
+      throw new Error(result?.error || `Gagal membaca Machine List dari Google Sheets (HTTP ${response.status}).`);
+    }
+
+    return result;
+  }
+
+  function applyRemoteMachineList(result) {
+    const records = Array.isArray(result?.records) ? result.records.map(record => ({
+      serialNumber: normalizeSerialNumber(record?.serialNumber),
+      locationId: normalizeLocationId(record?.locationId),
+      installedDate: normalizeDateValue(record?.installedDate),
+      uninstalledDate: normalizeDateValue(record?.uninstalledDate)
+    })) : [];
+
+    state.records = records;
+    state.sourceHeaders = ['Serial Number', 'Location ID', 'Installed Date', 'Uninstalled Date'];
+    state.sourceFileName = normalizeText(result?.sourceFileName);
+    state.loadedAt = result?.updatedAt || new Date().toISOString();
+    state.dataSource = 'remote';
+    saveToStorage();
+    render();
+  }
+
+  async function loadRemoteMachineList({ silent = false } = {}) {
+    if (!silent) setLoading(true, 'Memuat Machine List terbaru dari Google Sheets...');
+
+    try {
+      const result = await getRemoteMachineList();
+      applyRemoteMachineList(result);
+      clearError();
+      return true;
+    } catch (error) {
+      console.error(error);
+      const hasCache = state.records.length > 0 || loadFromStorage();
+      if (hasCache) {
+        state.dataSource = 'cache';
+        updateStorageStatus();
+        showError(`Tidak dapat membaca Machine List terbaru. Menampilkan cache lokal terakhir. ${error.message}`);
+      } else {
+        showError(error.message || 'Gagal memuat Machine List dari Google Sheets.');
+      }
+      return false;
+    } finally {
+      if (!silent) setLoading(false);
+    }
+  }
+
   async function replaceRemoteMachineList(records, sourceFileName) {
     const result = await postToGoogleSheets({
       action: 'replaceMachineList',
@@ -342,7 +432,8 @@
       records: state.records,
       sourceHeaders: state.sourceHeaders,
       sourceFileName: state.sourceFileName,
-      loadedAt: state.loadedAt
+      loadedAt: state.loadedAt,
+      dataSource: state.dataSource
     };
     const sourceFileName = state.file.name;
 
@@ -358,6 +449,7 @@
       state.records = parsed.records;
       state.sourceFileName = sourceFileName;
       state.loadedAt = result.updatedAt || new Date().toISOString();
+      state.dataSource = 'remote';
       saveToStorage();
       render();
     } catch (error) {
@@ -366,6 +458,7 @@
       state.sourceHeaders = previousState.sourceHeaders;
       state.sourceFileName = previousState.sourceFileName;
       state.loadedAt = previousState.loadedAt;
+      state.dataSource = previousState.dataSource;
       showError(error.message || 'Gagal menyimpan Machine List. Dataset lama tetap dipertahankan.');
       render();
       updateStorageStatus();
@@ -380,6 +473,7 @@
     state.sourceHeaders = [];
     state.sourceFileName = '';
     state.loadedAt = '';
+    state.dataSource = 'none';
     state.file = null;
     localStorage.removeItem(STORAGE_KEY);
     fileName.textContent = 'Belum ada file';
@@ -420,10 +514,15 @@
       return {
         sourceFileName: state.sourceFileName,
         loadedAt: state.loadedAt,
-        count: state.records.length
+        count: state.records.length,
+        dataSource: state.dataSource
       };
+    },
+    refresh() {
+      return loadRemoteMachineList();
     }
   };
 
   loadFromStorage();
+  loadRemoteMachineList({ silent: false });
 })();
