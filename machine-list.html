@@ -30,7 +30,7 @@
       <a href="history-viewer.html"><i class="fas fa-clock-rotate-left"></i><span>Work History</span></a>
       <a href="theme-preview.html"><i class="fas fa-palette"></i><span>Theme Preview</span></a>
     </nav>
-    <div class="hub-meta"><strong>MACHINE LIST</strong><span>Current machine identity source</span></div>
+    <div class="hub-meta"><strong>MACHINE LIST</strong><span>Shared current machine data</span></div>
   </aside>
 
   <div class="sidebar-overlay" id="sidebarOverlay"></div>
@@ -41,15 +41,15 @@
         <div>
           <div class="hub-kicker">COMP / Tools</div>
           <h1 class="hub-title">Machine List</h1>
-          <p class="hub-desc">Kelola Machine List current sebagai sumber Serial Number bersama untuk workflow cleaning.</p>
+          <p class="hub-desc">Machine List current yang dibagikan ke seluruh user melalui Google Sheets.</p>
         </div>
         <button class="repeat-menu-toggle" id="menuToggle" type="button" aria-label="Toggle menu"><i class="fas fa-bars"></i></button>
       </section>
 
       <section class="hub-hero repeat-hero">
         <div>
-          <strong>Phase 4 — Machine List Temporary Database</strong>
-          <p>Machine List tetap terpisah dari MinerPlus. File baru divalidasi terlebih dahulu, lalu menggantikan snapshot <b>Machine List Current</b> di Google Sheets. Dataset lama tidak dihapus jika validasi atau penyimpanan gagal.</p>
+          <strong>Phase 5 — Shared Machine List</strong>
+          <p>Semua user membaca dataset Machine List yang sama dari Google Sheets. Cache browser hanya digunakan sebagai fallback ketika sumber bersama tidak dapat diakses.</p>
         </div>
         <div class="repeat-hero-icon"><i class="fas fa-server"></i></div>
       </section>
@@ -57,10 +57,10 @@
       <section class="hub-card machine-list-card">
         <div class="machine-list-heading">
           <div>
-            <h2>Upload Machine List</h2>
-            <p>File .xls atau .xlsx dengan minimal kolom <b>serial_number</b> dan <b>location_id</b>. Kolom tanggal bersifat opsional.</p>
+            <h2>Machine List Current</h2>
+            <p>Upload hanya diperlukan ketika tersedia Machine List terbaru. Setelah tersimpan, user lain akan membaca snapshot yang sama saat halaman dimuat atau di-refresh.</p>
           </div>
-          <div class="machine-list-status">Status: <span id="machineListStorageStatus">Belum ada data tersimpan</span></div>
+          <div class="machine-list-status">Status: <span id="machineListStorageStatus">Memuat...</span></div>
         </div>
 
         <div class="machine-list-upload" id="machineListUploadArea">
@@ -78,7 +78,7 @@
         <div id="machineListError" class="machine-list-message machine-list-error" role="alert"></div>
 
         <div class="machine-list-actions">
-          <button id="machineListClearBtn" class="machine-list-clear-btn" type="button" disabled><i class="fas fa-trash"></i> Hapus Dataset Lokal</button>
+          <button id="machineListClearBtn" class="machine-list-clear-btn" type="button" disabled><i class="fas fa-trash"></i> Hapus Cache Lokal</button>
           <button id="machineListProcessBtn" class="repeat-primary-btn" type="button" disabled><i class="fas fa-cloud-arrow-up"></i> Validasi &amp; Simpan</button>
         </div>
       </section>
@@ -92,7 +92,7 @@
         <div class="machine-list-heading">
           <div>
             <h2>Normalized Dataset</h2>
-            <p id="machineListSummary">Belum ada Machine List yang dimuat.</p>
+            <p id="machineListSummary">Memuat Machine List Current dari Google Sheets...</p>
           </div>
         </div>
         <div class="machine-list-table-wrap">
@@ -111,7 +111,7 @@
           <div id="machineListEmpty" class="machine-list-empty" hidden>
             <i class="fas fa-server"></i>
             <h3>Belum ada dataset</h3>
-            <p>Upload dan proses Machine List untuk melihat data yang sudah dinormalisasi.</p>
+            <p>Belum ada Machine List Current yang tersedia di Google Sheets.</p>
           </div>
         </div>
       </section>
@@ -121,7 +121,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.17.0/dist/xlsx.full.min.js"></script>
 <script src="google-sheets-config.js?v=20260904-1"></script>
-<script src="machine-list.js?v=20260904-1"></script>
+<script src="machine-list.js?v=20260904-2"></script>
 <script src="theme-toggle.js"></script>
 <script>
   const menuToggle = document.getElementById('menuToggle');
