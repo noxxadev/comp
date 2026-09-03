@@ -16,8 +16,6 @@
     width: 100% !important;
   }
 
-  /* Let kicker/title participate in the header grid so the burger is
-     genuinely aligned to the H1 row rather than positioned by a magic top. */
   .hub-top > div:first-child {
     display: contents !important;
   }
@@ -36,6 +34,16 @@
   /* Page-level description is intentionally hidden on mobile. */
   .hub-top > div:first-child > .hub-desc {
     display: none !important;
+  }
+
+  /* Tools Hub has a page counter as a third header child. Keep it in the
+     upper-right cell so the burger remains beside the actual title row. */
+  .hub-top > .hub-count {
+    grid-column: 2 !important;
+    grid-row: 1 !important;
+    justify-self: end !important;
+    align-self: center !important;
+    margin: 0 !important;
   }
 
   .hub-top > .hub-menu-toggle,
