@@ -132,9 +132,9 @@ Verification:
 - Application JavaScript, calculations, persistence, API calls, exports, and data-processing code were not changed by M5.
 
 ## Phase M6 — Page-by-page responsive pass
-Status: PLANNED
+Status: COMPLETED
 
-Order:
+Reviewed all pages in the frozen scope:
 
 1. Tools Hub
 2. Sub Account
@@ -146,6 +146,26 @@ Order:
 8. Machine List
 9. Cleaning History
 10. Theme Preview
+
+Implemented:
+
+- Added the final responsive polish as a shared CSS layer in `theme-toggle.css`, which is already loaded by the operational Tools Hub pages.
+- Tightened page/card width constraints so mobile content stays inside the viewport.
+- Standardized long-title, description, helper-text, and filename wrapping.
+- Standardized mobile control widths and minimum touch-friendly heights.
+- Normalized upload/action/filter/search behavior across the operational pages at phone widths.
+- Added final phone-width adjustments for stats, selection actions, repeat-analysis controls, and compact upload content.
+- Confirmed `Theme Preview` already has its own responsive breakpoints: sidebar hides at mobile width, main content expands to full width, the stats grid collapses, and the header stacks. No additional markup/logic change was necessary there.
+- No application JavaScript, data calculations, persistence, API, export, or processing logic was modified in M6.
+
+Files changed in M6:
+- `theme-toggle.css`
+
+Verification:
+- Compared M5 head `e977afa653478d6996cf8e81285b2933dd2f9b1a` against M6 head `e8972860214dce4fd9f53a4473d1969e6b42aed6`.
+- The implementation diff contains only the expected shared CSS change.
+- All page-specific behavior remains controlled by the existing HTML/JavaScript.
+- This verification is source-level; no real-device browser automation/screenshot test was available in this environment.
 
 ## Phase M7 — Cross-page consistency review
 Status: PLANNED
