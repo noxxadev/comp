@@ -250,13 +250,20 @@ function appendWorkHistory(events) {
 }
 
 function getWorkHistory(e) {
-  const sheet = getHistorySheet();
+  const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const sheet = spreadsheet.getSheetByName(HISTORY_SHEET_NAME);
+
+  // Read-only endpoint: never creates or modifies the history sheet.
+  if (!sheet) {
+    return jsonResponse({ ok: true, rows: [], total: 0, returned: 0 });
+  }
+
   const data = sheet.getDataRange().getValues();
   const requestedLimit = Number(e?.parameter?.limit || 2000);
   const limit = Math.min(Math.max(Number.isFinite(requestedLimit) ? Math.floor(requestedLimit) : 2000, 1), 5000);
 
   if (data.length <= 1) {
-    return jsonResponse({ ok: true, rows: [], total: 0 });
+    return jsonResponse({ ok: true, rows: [], total: 0, returned: 0 });
   }
 
   const rows = [];
