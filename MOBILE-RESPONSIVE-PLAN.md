@@ -37,15 +37,26 @@ Findings from the current `main` branch:
 - `script.js` currently provides a reusable mobile sidebar interaction for pages that expose `#menuToggle`, `#sidebar`, and `#sidebarOverlay`.
 
 ## Phase M2 — Navigation Standardization
-Status: NEXT
+Status: COMPLETED
 
-Target behavior:
+Implemented on the current `main` branch:
 
-- Desktop: existing sidebar behavior remains intact.
-- Tablet/mobile: consistent hamburger + slide-in sidebar + overlay for operational tool pages.
-- Keep existing menu destinations unchanged.
-- Do not alter application/data logic.
-- Keep Tools Hub visually coherent while preserving its current role as the launcher.
+- `Cleaning History` now has a hamburger button on mobile and a slide-in sidebar using the same `active`/overlay state convention as the shared tool navigation.
+- `Cleaning History` menu links close the mobile sidebar after navigation.
+- `Machine List` mobile navigation was aligned to the same `active` sidebar state used by the other tool pages.
+- `Machine List` overlay state now uses the shared `.sidebar-overlay.active` behavior.
+- Existing menu destinations and application IDs/classes required by the tool logic were preserved.
+- No application/data-processing logic, Google Sheets behavior, or analyzer calculations were changed.
+
+Files changed in M2:
+- `cleaning-history.html`
+- `machine-list.html`
+- `machine-list.css`
+
+Notes:
+- The existing `theme-toggle.js` navigation synchronization remains intact.
+- `Theme Preview` remains a standalone page and is not forced into the shared tool-sidebar implementation.
+- The current M2 implementation is intentionally minimal so later phases can standardize visual spacing without rewriting working tool behavior.
 
 ## Phase M3 — Shared Mobile Layout Rules
 Status: PLANNED
