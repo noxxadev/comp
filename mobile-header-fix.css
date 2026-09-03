@@ -1,7 +1,5 @@
-/* M11: shared mobile header alignment. UI-only; no application logic changes. */
+/* M11: shared mobile header polish. UI-only; no application logic changes. */
 @media (max-width: 780px) {
-  /* Put the kicker and title on explicit rows so the burger can occupy the
-     exact same row as the page title instead of relying on a magic top value. */
   .hub-top,
   .offline-top,
   .validator-top,
@@ -15,42 +13,41 @@
     column-gap: 12px !important;
     row-gap: 0 !important;
     align-items: center !important;
-    padding-right: 0 !important;
+    width: 100% !important;
   }
 
-  /* Let the existing kicker/title/description participate directly in the
-     header grid while preserving all existing IDs and classes. */
+  /* Let kicker/title participate in the header grid so the burger is
+     genuinely aligned to the H1 row rather than positioned by a magic top. */
   .hub-top > div:first-child {
     display: contents !important;
   }
 
   .hub-top > div:first-child > .hub-kicker {
-    grid-column: 1;
-    grid-row: 1;
-    align-self: end;
+    grid-column: 1 !important;
+    grid-row: 1 !important;
   }
 
   .hub-top > div:first-child > .hub-title {
-    grid-column: 1;
-    grid-row: 2;
-    align-self: center;
+    grid-column: 1 !important;
+    grid-row: 2 !important;
+    align-self: center !important;
   }
 
-  /* The page-level description is intentionally omitted on mobile. */
+  /* Page-level description is intentionally hidden on mobile. */
   .hub-top > div:first-child > .hub-desc {
     display: none !important;
   }
 
-  /* Burger occupies the same grid row as the H1 and is vertically centered. */
   .hub-top > .hub-menu-toggle,
   .hub-top > .excel-menu-toggle,
   .hub-top > .offline-menu-toggle,
   .hub-top > .validator-menu-toggle,
   .hub-top > .matcher-menu-toggle,
   .hub-top > .bulk-menu-toggle,
-  .hub-top > .repeat-menu-toggle {
-    grid-column: 2;
-    grid-row: 2;
+  .hub-top > .repeat-menu-toggle,
+  .hub-top > .history-menu-toggle {
+    grid-column: 2 !important;
+    grid-row: 2 !important;
     position: static !important;
     justify-self: end !important;
     align-self: center !important;
@@ -63,5 +60,19 @@
     display: grid !important;
     place-items: center !important;
     z-index: 1200 !important;
+  }
+}
+
+@media (max-width: 560px) {
+  .hub-top > .hub-menu-toggle,
+  .hub-top > .excel-menu-toggle,
+  .hub-top > .offline-menu-toggle,
+  .hub-top > .validator-menu-toggle,
+  .hub-top > .matcher-menu-toggle,
+  .hub-top > .bulk-menu-toggle,
+  .hub-top > .repeat-menu-toggle,
+  .hub-top > .history-menu-toggle {
+    width: 44px !important;
+    height: 44px !important;
   }
 }
