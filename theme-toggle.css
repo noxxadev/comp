@@ -36,3 +36,50 @@
 [data-theme="dark"] .theme-toggle button.active{background:#252b3a;box-shadow:0 2px 10px rgba(0,0,0,.28)}
 
 @media(max-width:780px){.theme-toggle-wrap{margin-top:8px}.theme-toggle{max-width:260px}}
+
+/* M6: final per-page responsive pass. CSS-only; JS hooks and application behavior remain unchanged. */
+@media(max-width:780px){
+  .hub-main,.hub-container,.excel-main,.offline-main,.validator-main,.matcher-main,.bulk-main,.repeat-main,.machine-list-main{min-width:0;max-width:100%;}
+  .hub-top,.offline-top,.validator-top,.matcher-top,.bulk-top,.repeat-top{gap:12px;}
+  .hub-title,.hub-desc{overflow-wrap:anywhere;}
+  .hub-hero,.excel-hero,.offline-hero,.validator-hero,.matcher-hero,.bulk-hero,.repeat-hero{min-width:0;}
+  .hub-hero > div:first-child,.excel-hero > div:first-child,.offline-hero > div:first-child,.validator-hero > div:first-child,.matcher-hero > div:first-child,.bulk-hero > div:first-child,.repeat-hero > div:first-child{min-width:0;}
+  .hub-hero p,.hub-card p,.excel-card-heading p,.offline-card-heading p,.validator-card-heading p,.matcher-card-heading p,.bulk-card-heading p,.repeat-card-heading p{overflow-wrap:anywhere;}
+  .hub-count{max-width:100%;white-space:normal;}
+  .excel-card-heading,.validator-card-heading,.matcher-card-heading,.bulk-card-heading{flex-wrap:wrap;}
+  .excel-card-heading > div:first-child,.validator-card-heading > div:first-child,.matcher-card-heading > div:first-child,.bulk-card-heading > div:first-child{min-width:0;flex:1;}
+  .file-upload-area,.compact-upload-area,.repeat-upload-area,.machine-list-upload{max-width:100%;}
+  input,select,textarea,button{max-width:100%;}
+  .filter-group,.upload-box,.upload-panel,.manual-panel{min-width:0;}
+  .checkbox-group,.dc-group-buttons,.filter-controls,.filter-section,.button-group{max-width:100%;}
+  .btn,.btn-filter,.filter-btn,.btn-group,.file-label,.upload-btn{min-height:42px;}
+  .output-container,.table-wrap,.result-table-wrap,#detailedResults,.tab-pane-body,.repeat-table-wrap,.machine-list-table-wrap{max-width:100%;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;}
+  .output-container table,.tab-table,.results-table,.result-table,.repeat-table,.machine-list-table{max-width:none;}
+}
+
+@media(max-width:560px){
+  .hub-main,.excel-main,.offline-main,.validator-main,.matcher-main,.bulk-main,.repeat-main{padding-left:14px;padding-right:14px;}
+  .hub-top{margin-bottom:18px;}
+  .hub-title{font-size:26px;line-height:1.12;}
+  .hub-desc{font-size:13px;line-height:1.5;}
+  .hub-hero{padding:18px;margin-bottom:16px;}
+  .hub-card{border-radius:14px;}
+  .excel-card,.matcher-card,.bulk-card,.validator-card{padding:14px;}
+  .excel-card-heading,.validator-card-heading,.matcher-card-heading,.bulk-card-heading{gap:10px;margin-bottom:12px;}
+  .file-upload-area{min-height:210px;padding:24px 14px;}
+  .upload-btn,.file-label,.dc-download-btn,.btn-primary,.btn-secondary{width:100%;justify-content:center;}
+  .stats-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;}
+  .stat-card{padding:12px;}
+  .stat-card .value{font-size:20px;}
+  .dc-summary-grid{grid-template-columns:1fr;}
+  .dc-selected-count{width:100%;}
+  .dc-progress-wrapper{gap:8px;}
+  .dc-progress-text{min-width:46px;}
+  .repeat-upload-content,.machine-list-upload-content{min-width:0;max-width:100%;}
+  .repeat-upload-content span,.machine-list-upload span{max-width:100%;overflow-wrap:anywhere;white-space:normal;}
+  .repeat-identity-control,.repeat-zone-filter{width:100%;}
+  .repeat-identity-control select,.repeat-zone-filter select{flex:1;min-width:0;}
+  .repeat-selection-actions{flex-direction:column;}
+  .repeat-selection-btn{width:100%;}
+  .repeat-controls{gap:8px;}
+}
