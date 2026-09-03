@@ -111,6 +111,24 @@
     return `evt-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
   }
 
+  function normalizeLocation(value) {
+    return String(value ?? '').replace(/\s+/g, ' ').trim().toUpperCase();
+  }
+
+  function resolveCurrentMachine(locationId) {
+    const resolver = window.CompMachineResolver;
+    const target = normalizeLocation(locationId);
+    if (!target || !resolver?.loadStoredRecords) return null;
+
+    const records = resolver.loadStoredRecords();
+    const matches = records.filter(record => normalizeLocation(record?.locationId) === target);
+
+    if (matches.length !== 1) return null;
+
+    const serialNumber = String(matches[0]?.serialNumber || '').trim();
+    return serialNumber ? { serialNumber } : null;
+  }
+
   function buildWorkHistoryEvents(items) {
     const resolver = window.CompMachineResolver;
     const rows = Object.values(items || {});
@@ -130,6 +148,21 @@
           };
         } else {
           resolution = resolver.resolve(locationId, timestamp);
+
+          // Machine List Current normally has no installation dates. In that
+          // case the historical resolver cannot establish a time range even
+          // though the current Location ID has exactly one machine. For a new
+          // work event, use the current snapshot as the authoritative identity.
+          if (!resolution?.serialNumber) {
+            const currentMachine = resolveCurrentMachine(locationId);
+            if (currentMachine) {
+              resolution = {
+                status: 'resolved',
+                serialNumber: currentMachine.serialNumber,
+                message: 'Serial Number ditemukan dari Machine List Current.'
+              };
+            }
+          }
         }
       } else {
         resolution = {
