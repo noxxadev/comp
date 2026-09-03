@@ -59,16 +59,27 @@ Notes:
 - The current M2 implementation is intentionally minimal so later phases can standardize visual spacing without rewriting working tool behavior.
 
 ## Phase M3 — Shared Mobile Layout Rules
-Status: PLANNED
+Status: COMPLETED
 
-Target:
+Implemented on the current `main` branch:
 
-- Consistent mobile page padding.
-- Prevent page-level horizontal overflow.
-- Consistent heading sizing and wrapping.
-- Consistent card spacing.
-- Consistent touch-friendly control sizing.
-- Breakpoints tuned for phone and tablet widths.
+- Added page-level `overflow-x: hidden` to the shared light Tools Hub shell so wide content cannot push the entire viewport sideways.
+- Added `min-width: 0` safeguards to shared main/container/card/hero elements so long content can shrink inside mobile grid/flex layouts.
+- Standardized mobile heading wrapping with `overflow-wrap:anywhere` for page titles and card content that may contain long filenames or labels.
+- Tuned shared phone/tablet breakpoints at 1050px, 780px, and 480px for more predictable spacing and card/grid behavior.
+- Reduced mobile page/card spacing consistently while keeping the existing desktop layout intact.
+- Standardized mobile card footer stacking to avoid cramped metadata/action rows.
+- Increased the `Sub Account` mobile menu button to a 44px touch target.
+- No analyzer calculations, file parsing, localStorage, API, export, or navigation destination logic was changed.
+
+Files changed in M3:
+- `index-hub.css`
+- `excel-analyzer.css`
+
+Verification:
+- Compared M2 completion commit `64f32ef72dbd2de3bd72e8a468e152ab362cb799` against the M3 head.
+- Only the two expected CSS files changed.
+- Changes are CSS-only.
 
 ## Phase M4 — Controls & Forms
 Status: PLANNED
