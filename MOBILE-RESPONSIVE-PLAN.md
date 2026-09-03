@@ -245,18 +245,16 @@ Status: COMPLETED
 
 Requirement:
 
-- All 10 in-scope pages use the same mobile burger position: fixed at the top-left with the same spacing and touch target.
-- The burger must not remain aligned to the right side of page titles on mobile.
+- All 10 in-scope pages use the same mobile burger position and touch target.
 - The sidebar must continue to open from the left as an off-canvas panel.
 - Bulk Compare must have a responsive burger that actually opens/closes its sidebar and overlay.
 - Desktop layout and application/data-processing behavior must remain unchanged.
 
 Implemented:
 
-- Added a shared mobile burger-position rule in `theme-toggle.css` covering Tools Hub, Sub Account, Offline, IP Validator, Pool vs Dashboard, Bulk Compare, IP Repeat, Machine List, and Cleaning History.
-- Standardized the mobile burger to `44px × 44px`, `top: 14px`, `left: 14px`, with the same visual treatment and high navigation z-index.
-- Added matching left padding to shared mobile page headers so the fixed burger does not overlap page titles/descriptions.
-- Bulk Compare now has its own narrow navigation handler using the existing `#menuToggle`, `#sidebar`, and `#sidebarOverlay` elements; no Bulk Compare matching/data logic was modified.
+- Added shared mobile burger rules in `theme-toggle.css` covering Tools Hub, Sub Account, Offline, IP Validator, Pool vs Dashboard, Bulk Compare, IP Repeat, Machine List, and Cleaning History.
+- Standardized the mobile burger to `44px × 44px` with consistent visual treatment and navigation z-index.
+- Bulk Compare received its own narrow navigation handler using the existing `#menuToggle`, `#sidebar`, and `#sidebarOverlay` elements; no Bulk Compare matching/data logic was modified.
 - Existing standalone Theme Preview already uses a fixed top-left mobile burger and remains visually independent.
 
 Files changed in M10:
@@ -265,11 +263,41 @@ Files changed in M10:
 
 Verification:
 
-- Source-level review confirms the shared operational-page burger selectors now use one mobile position and size.
+- Source-level review confirmed the shared operational-page burger selectors use one mobile position and size.
 - Bulk Compare has a click handler that toggles `.active` on the sidebar and overlay, updates `aria-expanded`, closes on overlay/navigation-link click, and closes when returning to desktop width.
 - `bulk-compare.js` was not modified.
 - No analyzer calculations, parsing, data processing, persistence, API endpoints, exports, localStorage behavior, or navigation destinations were changed.
 - Real-device/browser interaction testing should still be performed manually after deployment.
+
+## Phase M11 — Burger Position: Right of Page Title
+Status: COMPLETED
+
+Requirement:
+
+- On mobile, move the burger from the left side to the **right side of the page header**, aligned vertically with the page title/header area.
+- Keep the burger position consistent across the shared tool pages.
+- Keep the mobile sidebar exactly where it is: hidden off-canvas and opening from the **left**.
+- Desktop layout remains unchanged.
+- Do not modify application/data-processing logic.
+
+Implemented:
+
+- Updated the shared mobile burger rule in `theme-toggle.css` from `left:14px` to `right:14px`.
+- The burger remains fixed at `top:14px` with a `44px × 44px` touch target.
+- Shared mobile headers now reserve space on the right with `padding-right:58px`, while the previous left reservation is removed.
+- The sidebar z-index, off-canvas behavior, and left-side opening direction were not changed.
+- No JavaScript, analyzer calculations, parsing, persistence, API calls, exports, or data-processing logic was changed.
+
+Files changed in M11:
+- `theme-toggle.css`
+- `MOBILE-RESPONSIVE-PLAN.md`
+
+Verification:
+
+- CSS-only UI adjustment for the burger placement.
+- Burger remains associated with the existing navigation controls and sidebar state.
+- Sidebar remains on the left.
+- Desktop styles are outside the mobile `max-width:780px` rules and therefore unchanged.
 
 ## Implementation rule
 
