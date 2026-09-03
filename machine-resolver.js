@@ -117,36 +117,59 @@
     throw lastError || new Error('Gagal membaca Machine List.');
   }
 
-  function augmentIpRepeatTable(records) {
-    const table = document.querySelector('.repeat-table');
-    if (!table) return;
-
+  function buildLocationMap(records) {
     const locationMap = new Map();
     records.forEach(record => {
       const location = normalizeLocationId(record?.locationId);
       const serial = String(record?.serialNumber ?? '').trim();
       if (location && serial) locationMap.set(location, serial);
     });
+    return locationMap;
+  }
 
-    const headerRow = table.querySelector('thead tr');
-    if (headerRow && !headerRow.querySelector('[data-machine-identity-header="true"]')) {
-      const th = document.createElement('th');
-      th.scope = 'col';
-      th.textContent = 'Serial Number';
-      th.dataset.machineIdentityHeader = 'true';
-      headerRow.appendChild(th);
+  function getLocationFromRow(row) {
+    const ipCell = row.querySelector('.ip-cell');
+    const ip = String(ipCell?.textContent ?? '').replace(/\s+/g, '').trim();
+
+    // Do not parse or modify master-data.js. It remains the fixed source of
+    // IP -> Location mapping used by the existing analyzer.
+    if (ip && window.masterData && Object.prototype.hasOwnProperty.call(window.masterData, ip)) {
+      return normalizeLocationId(window.masterData[ip]);
     }
 
-    const body = table.querySelector('tbody');
+    // Fallback only for the existing rendered Nama DC column.
+    const cells = Array.from(row.children);
+    return normalizeLocationId(cells[4]?.textContent);
+  }
+
+  function ensureHeader(table) {
+    const headerRow = table.querySelector('thead tr');
+    if (!headerRow) return;
+
+    if (headerRow.querySelector('[data-machine-identity-header="true"]')) return;
+
+    const th = document.createElement('th');
+    th.scope = 'col';
+    th.textContent = 'Serial Number';
+    th.dataset.machineIdentityHeader = 'true';
+    headerRow.appendChild(th);
+  }
+
+  function augmentIpRepeatTable(records) {
+    const table = document.querySelector('.repeat-table');
+    if (!table) return;
+
+    ensureHeader(table);
+    const locationMap = buildLocationMap(records);
+    const body = table.querySelector('#resultsBody') || table.querySelector('tbody');
     if (!body) return;
 
     body.querySelectorAll('tr').forEach(row => {
-      const cells = Array.from(row.children);
-      if (!cells.length) return;
       row.querySelector('[data-machine-identity-cell="true"]')?.remove();
 
-      const location = normalizeLocationId(cells[4]?.textContent);
-      const serial = locationMap.get(location);
+      const location = getLocationFromRow(row);
+      const serial = locationMap.get(location) || '';
+
       const td = document.createElement('td');
       td.dataset.machineIdentityCell = 'true';
       td.className = 'machine-identity-cell';
@@ -165,6 +188,7 @@
         summary.appendChild(document.createTextNode(' '));
         summary.appendChild(status);
       }
+
       status.textContent = `• SN terhubung (${locationMap.size.toLocaleString('id-ID')} lokasi)`;
       status.classList.remove('error');
     }
@@ -177,11 +201,19 @@
     try {
       const records = await loadCurrentRecords();
       augmentIpRepeatTable(records);
-      const body = table.querySelector('tbody');
-      if (body) {
+
+      const body = table.querySelector('#resultsBody') || table.querySelector('tbody');
+      if (body && !body.dataset.machineIdentityObserver) {
         const observer = new MutationObserver(() => augmentIpRepeatTable(records));
         observer.observe(body, { childList: true });
+        body.dataset.machineIdentityObserver = 'true';
       }
+
+      // The analyzer can render immediately after upload/filter actions.
+      // Re-apply a few times so the identity column never depends on timing.
+      [250, 750, 1500].forEach(delay => {
+        setTimeout(() => augmentIpRepeatTable(records), delay);
+      });
     } catch (error) {
       console.error('Gagal menghubungkan Serial Number ke IP Repeat:', error);
       const summary = document.getElementById('resultSummary');
