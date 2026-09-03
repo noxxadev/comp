@@ -126,31 +126,57 @@
     const params = new URLSearchParams({ action: 'getWorkHistory', limit: String(limit) });
     if (config.requestKey) params.set('requestKey', String(config.requestKey));
 
-    const separator = baseUrl.includes('?') ? '&' : '?';
-    const response = await fetch(`${baseUrl}${separator}${params.toString()}`, {
-      method: 'GET',
-      cache: 'no-store',
-      credentials: 'omit',
-      redirect: 'follow'
-    });
-    const text = await response.text();
-    const result = JSON.parse(text);
+    let lastError = null;
+    for (let attempt = 0; attempt <= 3; attempt++) {
+      try {
+        const retry = attempt ? `&_comp_history_retry=${Date.now()}-${attempt}` : '';
+        const separator = baseUrl.includes('?') ? '&' : '?';
+        const response = await fetch(`${baseUrl}${separator}${params.toString()}${retry}`, {
+          method: 'GET',
+          cache: 'no-store',
+          credentials: 'omit',
+          redirect: 'follow'
+        });
+        const text = await response.text();
+        const result = JSON.parse(text);
 
-    if (!response.ok || !result?.ok) {
-      throw new Error(result?.error || `Gagal membaca Cleaning History (HTTP ${response.status}).`);
+        if (response.ok && result?.ok && Array.isArray(result.rows)) {
+          return result.rows;
+        }
+
+        lastError = new Error(result?.error || `Gagal membaca Cleaning History (HTTP ${response.status}).`);
+        if (response.status !== 404) break;
+      } catch (error) {
+        lastError = error;
+      }
+      if (attempt < 3) await new Promise(resolve => setTimeout(resolve, (attempt + 1) * 700));
     }
 
-    return Array.isArray(result.rows) ? result.rows : [];
+    throw lastError || new Error('Gagal membaca Cleaning History.');
+  }
+
+  function normalizeStatus(value) {
+    return String(value ?? '')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .toLocaleLowerCase('id-ID');
+  }
+
+  function normalizeSerialNumber(value) {
+    return String(value ?? '')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .toUpperCase();
   }
 
   function buildCleaningCountMap(historyRows) {
     const counts = new Map();
 
-    historyRows.forEach(row => {
+    (Array.isArray(historyRows) ? historyRows : []).forEach(row => {
       // Cleaning Count represents completed cleaning events only.
-      if (String(row?.status || '').trim() !== 'Selesai') return;
+      if (normalizeStatus(row?.status) !== 'selesai') return;
 
-      const serial = String(row?.serialNumber || '').trim().toUpperCase();
+      const serial = normalizeSerialNumber(row?.serialNumber);
       if (!serial) return;
 
       counts.set(serial, (counts.get(serial) || 0) + 1);
@@ -226,7 +252,7 @@
 
       const location = getLocationFromRow(row);
       const serial = locationMap.get(location) || '';
-      const count = serial ? (cleaningCounts.get(serial.toUpperCase()) || 0) : 0;
+      const count = serial ? (cleaningCounts.get(normalizeSerialNumber(serial)) || 0) : 0;
 
       const serialTd = document.createElement('td');
       serialTd.dataset.machineIdentityCell = 'true';
@@ -273,13 +299,27 @@
     const table = document.querySelector('.repeat-table');
     if (!table) return;
 
+    let records = [];
+    let cleaningCounts = new Map();
+
     try {
-      const [records, historyRows] = await Promise.all([
-        loadCurrentRecords(),
-        loadCleaningHistory()
-      ]);
-      const cleaningCounts = buildCleaningCountMap(historyRows);
+      // Load Machine List independently so the Phase 6 SN feature remains
+      // available even if the history endpoint temporarily fails.
+      records = await loadCurrentRecords();
       augmentIpRepeatTable(records, cleaningCounts);
+
+      try {
+        const historyRows = await loadCleaningHistory();
+        cleaningCounts = buildCleaningCountMap(historyRows);
+        augmentIpRepeatTable(records, cleaningCounts);
+      } catch (historyError) {
+        console.error('Gagal membaca Cleaning History:', historyError);
+        const countStatus = document.getElementById('cleaningCountStatus');
+        if (countStatus) {
+          countStatus.textContent = '• Cleaning Count gagal dimuat';
+          countStatus.classList.add('error');
+        }
+      }
 
       const body = table.querySelector('#resultsBody') || table.querySelector('tbody');
       if (body && !body.dataset.machineIdentityObserver) {
@@ -303,7 +343,7 @@
           summary.appendChild(document.createTextNode(' '));
           summary.appendChild(status);
         }
-        status.textContent = '• SN tersedia, Cleaning Count tidak tersedia';
+        status.textContent = '• SN tidak tersedia';
         status.classList.add('error');
       }
     }
