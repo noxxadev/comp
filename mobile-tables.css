@@ -1,0 +1,90 @@
+/* COMP Mobile Table Pass (M5)
+   Responsive presentation only; no data or rendering logic changes. */
+
+@media (max-width: 780px) {
+  /* Keep table containers inside the page/card width. */
+  .table-wrap,
+  .repeat-table-wrap,
+  .machine-list-table-wrap,
+  #detailedResults,
+  .output-container,
+  .tab-pane-body,
+  [class*="table-wrap"] {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Wide data tables stay wide inside the scroll region for readability. */
+  .table-wrap table,
+  .repeat-table-wrap table,
+  .machine-list-table-wrap table,
+  #detailedResults table,
+  .output-container table,
+  .tab-pane-body table,
+  [class*="table-wrap"] table {
+    max-width: none;
+    margin: 0;
+    white-space: nowrap;
+  }
+
+  /* Slightly tighter cells on phones without making data unreadable. */
+  .results-table th,
+  .results-table td,
+  .result-table th,
+  .result-table td,
+  .output-container th,
+  .output-container td,
+  .tab-table th,
+  .tab-table td,
+  .repeat-table th,
+  .repeat-table td,
+  .machine-list-table th,
+  .machine-list-table td {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  /* Prevent long filenames/IPs from forcing the surrounding card wider. */
+  .table-wrap,
+  .repeat-table-wrap,
+  .machine-list-table-wrap,
+  #detailedResults,
+  .output-container,
+  .tab-pane-body {
+    scrollbar-width: thin;
+  }
+}
+
+@media (max-width: 560px) {
+  .results-table,
+  .result-table,
+  .output-container table,
+  .tab-table,
+  .repeat-table,
+  .machine-list-table {
+    font-size: 10px;
+  }
+
+  .results-table th,
+  .results-table td,
+  .result-table th,
+  .result-table td,
+  .output-container th,
+  .output-container td,
+  .tab-table th,
+  .tab-table td,
+  .repeat-table th,
+  .repeat-table td,
+  .machine-list-table th,
+  .machine-list-table td {
+    padding-top: 9px;
+    padding-bottom: 9px;
+    padding-left: 9px;
+    padding-right: 9px;
+  }
+}
