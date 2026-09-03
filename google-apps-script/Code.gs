@@ -50,13 +50,32 @@ const ALLOWED_RESOLUTION_STATUSES = [
   'invalid-time'
 ];
 
-function doGet() {
-  return jsonResponse({
-    ok: true,
-    service: 'COMP Work Tracking',
-    sheet: WORK_SHEET_NAME,
-    configured: SPREADSHEET_ID !== 'PASTE_YOUR_GOOGLE_SHEET_ID_HERE'
-  });
+function doGet(e) {
+  try {
+    const action = String(e?.parameter?.action || '').trim();
+
+    if (REQUEST_KEY && e?.parameter?.requestKey !== REQUEST_KEY) {
+      return jsonResponse({ ok: false, error: 'Invalid request key.' });
+    }
+
+    if (SPREADSHEET_ID === 'PASTE_YOUR_GOOGLE_SHEET_ID_HERE') {
+      return jsonResponse({ ok: false, error: 'Spreadsheet ID is not configured.' });
+    }
+
+    if (action === 'getWorkHistory') {
+      return getWorkHistory(e);
+    }
+
+    return jsonResponse({
+      ok: true,
+      service: 'COMP Work Tracking',
+      sheet: WORK_SHEET_NAME,
+      configured: true
+    });
+  } catch (error) {
+    console.error(error);
+    return jsonResponse({ ok: false, error: error.message || 'Unknown server error.' });
+  }
 }
 
 function doPost(e) {
@@ -228,6 +247,45 @@ function appendWorkHistory(events) {
   } finally {
     lock.releaseLock();
   }
+}
+
+function getWorkHistory(e) {
+  const sheet = getHistorySheet();
+  const data = sheet.getDataRange().getValues();
+  const requestedLimit = Number(e?.parameter?.limit || 2000);
+  const limit = Math.min(Math.max(Number.isFinite(requestedLimit) ? Math.floor(requestedLimit) : 2000, 1), 5000);
+
+  if (data.length <= 1) {
+    return jsonResponse({ ok: true, rows: [], total: 0 });
+  }
+
+  const rows = [];
+  for (let r = data.length - 1; r >= 1 && rows.length < limit; r--) {
+    const row = data[r];
+    rows.push({
+      eventId: String(row[0] || '').trim(),
+      timestamp: row[1] instanceof Date ? row[1].toISOString() : String(row[1] || '').trim(),
+      ip: String(row[2] || '').trim(),
+      serialNumber: String(row[3] || '').trim(),
+      locationId: String(row[4] || '').trim(),
+      name: String(row[5] || '').trim(),
+      zone: String(row[6] || '-').trim() || '-',
+      repeat: Number(row[7] || 0),
+      engineerId: String(row[8] || '').trim(),
+      status: String(row[9] || '').trim(),
+      note: String(row[10] || '').trim(),
+      resolutionStatus: String(row[11] || '').trim(),
+      resolutionMessage: String(row[12] || '').trim(),
+      source: String(row[13] || '').trim()
+    });
+  }
+
+  return jsonResponse({
+    ok: true,
+    rows,
+    total: Math.max(data.length - 1, 0),
+    returned: rows.length
+  });
 }
 
 function getWorkSheet() {
