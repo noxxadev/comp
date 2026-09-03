@@ -345,7 +345,7 @@ Phase 5 will be marked **COMPLETED** only after the user confirms these tests pa
 
 # Phase 6 — IP → Location → Serial Number
 
-**Status: PLANNED**
+**Status: COMPLETED / USER CONFIRMED**
 
 Combine the existing MinerPlus result with the shared Machine List.
 
@@ -376,33 +376,42 @@ Never merge machine identity by IP alone.
 
 If an IP/location is later used by another physical machine, its new Serial Number must represent a different machine in history.
 
+## Validation
+
+User confirmed that Serial Number is now displayed correctly in the IP Repeat result after the Phase 6 resolver integration fix.
+
+**Scope protection:** `master-data.js` and `ip-repeat-analyzer.js` were not modified.
+
 ---
 
 # Phase 7 — Cleaning History
 
-**Status: PLANNED**
+**Status: COMPLETED / USER CONFIRMED**
 
 Create a permanent append-only cleaning history.
 
-Suggested fields:
+## Implemented
 
-```text
-Timestamp
-Serial Number
-IP
-Location
-Worker
-```
+- Dedicated `cleaning-history.html` read-only history page.
+- Dedicated `cleaning-history.js` loader and renderer.
+- Google Sheets `Work History` is used as the permanent history source.
+- History displays Timestamp, Serial Number, IP, Location, Worker/Engineer, Status, Catatan, and Resolution.
+- Existing backend `appendWorkHistory` is used for new events.
+- History records are not edited or deleted by the history page.
 
-Each cleaning action creates a new event.
+## Identity protection
 
-Machine List replacement must not remove or rewrite historical cleaning events.
+Cleaning History uses Serial Number as the preferred physical-machine identity. Machine List replacement does not delete historical records.
+
+## Validation
+
+User confirmed the Cleaning History workflow is functioning and the page is displaying history records. A subsequent Phase 8 fix ensured new completed events receive the current Serial Number correctly.
 
 ---
 
 # Phase 8 — Cleaning Count
 
-**Status: PLANNED**
+**Status: COMPLETED / USER CONFIRMED**
 
 Calculate how many times each physical machine has been cleaned using Serial Number.
 
@@ -418,29 +427,87 @@ Target display:
 IP | Repeat Zero | Location | SN | Cleaning Count
 ```
 
-This directly addresses the original problem of workers repeatedly cleaning the same machine without knowing its previous cleaning count.
+## Implemented
+
+- Cleaning history is loaded from Google Sheets.
+- Only completed (`Selesai`) events with a valid Serial Number contribute to Cleaning Count.
+- Count is keyed by normalized Serial Number.
+- Current Machine List Serial Number is displayed with the IP Repeat result.
+- A machine with no completed history shows count `0`.
+- A machine whose Serial Number cannot be resolved shows `-` rather than an invented count.
+
+## Phase 8 identity fix
+
+Machine List Current may not contain installation dates. The existing historical resolver therefore could not always resolve a newly completed event by date. `work-tracking.js` now falls back to the current Machine List when the current Location ID has exactly one machine, allowing the new event to persist the current Serial Number.
+
+**Scope protection:** `master-data.js` and the existing MinerPlus analyzer calculation logic were not changed.
+
+## Validation
+
+User performed an end-to-end cleaning submission and confirmed:
+
+```text
+Cleaning History → Serial Number exists
+Cleaning Count   → 1 after one completed submission
+```
+
+This confirms the event → history → count pipeline is working.
 
 ---
 
 # Phase 9 — Cleaning Action
 
-**Status: PLANNED**
+**Status: COMPLETED / USER CONFIRMED**
 
 Allow an engineer to select a prioritized machine and record the cleaning action.
 
-Record at minimum:
+## Implemented workflow
 
 ```text
-Serial Number
-IP
-Location
-Worker
-Timestamp
+IP Repeat Analyzer
+      ↓
+Select prioritized IP
+      ↓
+Select Engineer
+      ↓
+Choose cleaning/work status
+      ↓
+Add optional note
+      ↓
+Simpan Pekerjaan
+      ↓
+Work Items + Cleaning History
+      ↓
+Cleaning Count recalculates from history
 ```
 
-The event is appended to Cleaning History.
+The existing Work Tracking panel provides the action interface directly on the prioritized IP result:
 
-Cleaning Count then updates automatically from the history.
+- Select one or more IP targets.
+- Select the engineer/worker identity.
+- Choose status (`Belum Dikerjakan`, `In Progress`, `Selesai`, `Problem`, `Skipped`).
+- Add an optional note.
+- Save the work to Google Sheets.
+- When completed, append a permanent Cleaning History event containing the current Serial Number, IP, Location, engineer, timestamp, status, and note.
+
+## Important behavior
+
+- Serial Number is resolved from Machine List Current rather than being typed manually.
+- A missing/ambiguous machine lookup does not invent a Serial Number.
+- Cleaning Count is derived from completed history rather than manually incremented.
+- Existing MinerPlus calculation logic remains unchanged.
+- `master-data.js` remains unchanged.
+
+## Validation
+
+User confirmed an actual cleaning submission produced:
+
+```text
+Cleaning History → Serial Number populated
+Cleaning Count   → 1 after one completed submission
+```
+
+Therefore the Phase 9 cleaning action has been validated end-to-end.
 
 ---
 
@@ -474,6 +541,8 @@ master-data.js
 Google Sheets: Machine List Current
    ↓
 Serial Number
+   ↓
+Cleaning Action
    ↓
 Cleaning History
    ↓
@@ -540,6 +609,46 @@ Every phase must be tested before the next phase is implemented.
 ---
 
 # Change Log
+
+## 2026-09-04 — Phase 9 validation and roadmap update
+
+**Change:** Phase 9 Cleaning Action is now marked completed after an end-to-end user validation.
+
+**Validated flow:** An engineer can select a prioritized IP, submit the cleaning/work action, and the resulting completed event is stored with Serial Number in Cleaning History. Cleaning Count then reflects the completed event.
+
+**Result confirmed by user:** After one completed submission, Cleaning History contains the Serial Number and Cleaning Count becomes `1`.
+
+**Identity protection:** Serial Number is resolved from Machine List Current. No manual SN entry is required, and no Serial Number is guessed when lookup data is unavailable or ambiguous.
+
+**Scope protection:** `master-data.js` remains unchanged. Existing MinerPlus calculation logic remains unchanged.
+
+**Next:** Phase 10 — Multi-user Hardening.
+
+## 2026-09-04 — Phase 8 validation and identity fix
+
+**Change:** Fixed Cleaning Count so newly completed work events persist the current Serial Number even when Machine List Current has no installation date.
+
+**Client:** `work-tracking.js` now falls back to the current Machine List when the current Location ID maps to exactly one machine and the historical resolver cannot resolve the event by date.
+
+**Validation:** User confirmed Cleaning History contains Serial Number and Cleaning Count becomes `1` after one completed submission.
+
+**Scope protection:** `master-data.js` and the existing MinerPlus analyzer logic were not modified.
+
+## 2026-09-04 — Phase 7 implementation
+
+**Change:** Added a dedicated read-only Cleaning History page backed by Google Sheets Work History.
+
+**Files:** `cleaning-history.html`, `cleaning-history.js`.
+
+**Behavior:** Displays Timestamp, Serial Number, IP, Location, Worker/Engineer, Status, Catatan, and Resolution. No edit/delete controls are exposed.
+
+## 2026-09-04 — Phase 6 implementation and fix
+
+**Change:** Integrated current Machine List Serial Number into the IP Repeat result without modifying the fixed `master-data.js` mapping or the MinerPlus analyzer calculation logic.
+
+**Fix:** Improved resolver integration so Location is derived reliably from the existing IP → `master-data.js` mapping instead of depending on a fragile table-cell position.
+
+**Validation:** User confirmed Serial Number is displayed correctly.
 
 ## 2026-09-04 — Phase 5 implementation
 
