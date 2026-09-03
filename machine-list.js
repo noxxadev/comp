@@ -316,11 +316,11 @@
     return result;
   }
 
-  async function replaceRemoteMachineList(records) {
+  async function replaceRemoteMachineList(records, sourceFileName) {
     const result = await postToGoogleSheets({
       action: 'replaceMachineList',
       records,
-      sourceFileName: state.sourceFileName
+      sourceFileName
     });
 
     const saved = Number(result.saved || 0);
@@ -338,36 +338,37 @@
     setLoading(true, 'Membaca dan memvalidasi Machine List...');
     processBtn.disabled = true;
 
+    const previousState = {
+      records: state.records,
+      sourceHeaders: state.sourceHeaders,
+      sourceFileName: state.sourceFileName,
+      loadedAt: state.loadedAt
+    };
+    const sourceFileName = state.file.name;
+
     try {
       const buffer = await state.file.arrayBuffer();
       const workbook = XLSX.read(buffer, { type: 'array', cellDates: false });
       const parsed = validateAndParse(workbook);
 
       setLoading(true, `Mengganti Machine List Current dengan ${parsed.records.length.toLocaleString('id-ID')} record...`);
-      const previousState = {
-        records: state.records,
-        sourceHeaders: state.sourceHeaders,
-        sourceFileName: state.sourceFileName,
-        loadedAt: state.loadedAt
-      };
+      const result = await replaceRemoteMachineList(parsed.records, sourceFileName);
 
-      try {
-        const result = await replaceRemoteMachineList(parsed.records);
-        state.sourceHeaders = parsed.headers;
-        state.records = parsed.records;
-        state.loadedAt = result.updatedAt || new Date().toISOString();
-        saveToStorage();
-        render();
-      } catch (error) {
-        state.records = previousState.records;
-        state.sourceHeaders = previousState.sourceHeaders;
-        state.sourceFileName = previousState.sourceFileName;
-        state.loadedAt = previousState.loadedAt;
-        throw error;
-      }
+      state.sourceHeaders = parsed.headers;
+      state.records = parsed.records;
+      state.sourceFileName = sourceFileName;
+      state.loadedAt = result.updatedAt || new Date().toISOString();
+      saveToStorage();
+      render();
     } catch (error) {
       console.error(error);
+      state.records = previousState.records;
+      state.sourceHeaders = previousState.sourceHeaders;
+      state.sourceFileName = previousState.sourceFileName;
+      state.loadedAt = previousState.loadedAt;
       showError(error.message || 'Gagal menyimpan Machine List. Dataset lama tetap dipertahankan.');
+      render();
+      updateStorageStatus();
     } finally {
       setLoading(false);
       processBtn.disabled = !state.file;
