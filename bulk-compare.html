@@ -34,7 +34,7 @@
     <div class="hub-container">
       <section class="hub-top bulk-top">
         <div><div class="hub-kicker">COMP / Tools</div><h1 class="hub-title">Bulk Compare</h1><p class="hub-desc">Download, merge, dan verifikasi beberapa DC F2Pool sekaligus dalam satu workspace.</p></div>
-        <button class="bulk-menu-toggle" id="menuToggle" type="button" aria-label="Toggle menu"><i class="fas fa-bars"></i></button>
+        <button class="bulk-menu-toggle" id="menuToggle" type="button" aria-label="Toggle menu" aria-controls="sidebar" aria-expanded="false"><i class="fas fa-bars"></i></button>
       </section>
       <section class="hub-hero bulk-hero">
         <div><strong>Bulk Compare Multi-DC</strong><p>Pilih beberapa DC F2Pool, download datanya, upload hasil download dan Machinelist, lalu jalankan verifikasi bulk.</p></div>
@@ -65,5 +65,28 @@
 <script src="f2pool-dc-links.js"></script>
 <script src="bulk-compare.js"></script>
 <script src="theme-toggle.js"></script>
+<script>
+(() => {
+  const menuToggle = document.getElementById('menuToggle');
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebarOverlay');
+  if (!menuToggle || !sidebar || !overlay) return;
+  const closeSidebar = () => {
+    sidebar.classList.remove('active');
+    overlay.classList.remove('active');
+    menuToggle.setAttribute('aria-expanded', 'false');
+  };
+  menuToggle.addEventListener('click', () => {
+    const open = sidebar.classList.toggle('active');
+    overlay.classList.toggle('active', open);
+    menuToggle.setAttribute('aria-expanded', String(open));
+  });
+  overlay.addEventListener('click', closeSidebar);
+  sidebar.querySelectorAll('a').forEach(link => link.addEventListener('click', closeSidebar));
+  window.addEventListener('resize', () => {
+    if (window.innerWidth > 780) closeSidebar();
+  });
+})();
+</script>
 </body>
 </html>
