@@ -83,3 +83,67 @@
   .repeat-selection-btn{width:100%;}
   .repeat-controls{gap:8px;}
 }
+
+/* M10: standardize mobile burger placement across all shared tool pages. */
+@media(max-width:780px){
+  .hub-menu-toggle,
+  .excel-menu-toggle,
+  .offline-menu-toggle,
+  .validator-menu-toggle,
+  .matcher-menu-toggle,
+  .bulk-menu-toggle,
+  .repeat-menu-toggle,
+  .history-menu-toggle{
+    position:fixed !important;
+    top:14px !important;
+    left:14px !important;
+    right:auto !important;
+    width:44px !important;
+    height:44px !important;
+    min-width:44px !important;
+    min-height:44px !important;
+    margin:0 !important;
+    padding:0 !important;
+    display:grid !important;
+    place-items:center !important;
+    z-index:1200 !important;
+    border:1px solid var(--border) !important;
+    border-radius:10px !important;
+    background:var(--surface) !important;
+    color:var(--text) !important;
+    box-shadow:0 4px 14px rgba(20,24,45,.10);
+  }
+
+  .hub-top,.offline-top,.validator-top,.matcher-top,.bulk-top,.repeat-top{
+    padding-left:58px;
+  }
+
+  .history-page .hub-top{
+    padding-left:58px;
+  }
+
+  .hub-sidebar,
+  .history-sidebar{
+    z-index:1100 !important;
+  }
+
+  .sidebar-overlay,
+  .hub-sidebar-overlay,
+  #sidebarOverlay{
+    z-index:1050;
+  }
+}
+
+@media(max-width:560px){
+  .hub-menu-toggle,
+  .excel-menu-toggle,
+  .offline-menu-toggle,
+  .validator-menu-toggle,
+  .matcher-menu-toggle,
+  .bulk-menu-toggle,
+  .repeat-menu-toggle,
+  .history-menu-toggle{
+    top:14px !important;
+    left:14px !important;
+  }
+}
