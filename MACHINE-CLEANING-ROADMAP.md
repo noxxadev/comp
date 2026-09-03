@@ -25,6 +25,8 @@ Google Sheets — Machine List Current
    ↓
 Serial Number (SN)
    ↓
+Cleaning Action
+   ↓
 Cleaning History
    ↓
 Cleaning Count
@@ -239,7 +241,7 @@ This avoids adding metadata rows to the temporary Machine List table itself.
 - Do not append new Machine List snapshots.
 - The sheet represents only the current/realtime Machine List.
 - The old snapshot is discarded after a valid replacement.
-- Cleaning History must never be deleted when Machine List is replaced.
+- Cleaning History must not be deleted when Machine List is replaced.
 - The deployed Apps Script Web App must be updated to the current `google-apps-script/Code.gs` before end-to-end testing; GitHub changes do not automatically update an already deployed Apps Script version.
 
 ## Phase 4 files changed
@@ -438,7 +440,7 @@ IP | Repeat Zero | Location | SN | Cleaning Count
 
 ## Phase 8 identity fix
 
-Machine List Current may not contain installation dates. The existing historical resolver therefore could not always resolve a newly completed event by date. `work-tracking.js` now falls back to the current Machine List when the current Location ID has exactly one machine, allowing the new event to persist the current Serial Number.
+Machine List Current may not contain installation dates. The existing historical resolver therefore could not always resolve a newly completed event by date. `work-tracking.js` now falls back to the current Machine List when the current Location ID maps to exactly one machine, allowing the new event to persist the current Serial Number.
 
 **Scope protection:** `master-data.js` and the existing MinerPlus analyzer calculation logic were not changed.
 
@@ -511,21 +513,78 @@ Therefore the Phase 9 cleaning action has been validated end-to-end.
 
 ---
 
-# Phase 10 — Multi-user
+# Phase 10 — Multi-user Hardening
 
-**Status: PLANNED**
+**Status: IMPLEMENTED IN REPO / USER VALIDATION PENDING**
 
 Target approximately 5 simultaneous users.
 
-Requirements:
+## Objective
 
-- Shared Machine List.
-- Shared Cleaning History.
-- Different workers can record cleaning events.
-- No IP locking.
-- Stable engineer identity.
-- Avoid duplicate history events and race-condition issues where practical.
-- A new valid Machine List replaces the current shared snapshot.
+Harden the shared Google Sheets workflow for multiple engineers using the same system at approximately the same time without changing the existing machine identity or MinerPlus calculation logic.
+
+## Implemented safeguards
+
+### 1. Shared Machine List remains authoritative
+
+All users continue to read the current Machine List from Google Sheets. Browser localStorage remains cache/fallback only.
+
+### 2. Work Items concurrent-write protection
+
+`google-apps-script/Code.gs` now wraps the complete `upsertWorkItems` read → row-resolution → write sequence with `LockService.getScriptLock()`.
+
+This protects against two users simultaneously reading the same Work Items state and both deciding to append a new row for the same IP.
+
+The lock also covers simultaneous updates to an existing IP so the read/write operation is serialized server-side.
+
+### 3. Cleaning History concurrent-write protection
+
+`appendWorkHistory` already uses `LockService.getScriptLock()` and continues to serialize history append operations.
+
+### 4. Machine List replacement protection
+
+`replaceMachineList` already uses `LockService.getScriptLock()` around the delete/insert replacement section and continues to protect the current snapshot from concurrent replacements.
+
+### 5. History event idempotency
+
+Cleaning History continues to use a unique `eventId`. The backend checks existing event IDs and request-local IDs before appending, so retrying the same event payload does not create a second row with the same event ID.
+
+### 6. Stable engineer identity
+
+The frontend continues to use stable engineer IDs from `engineer-data.js` and stores the selected engineer ID in browser localStorage. The display name can change later without changing the identity key.
+
+## Important limitation
+
+The current architecture does **not** provide user authentication. Engineer IDs are application-level identities selected from the configured engineer catalog, not proof of identity.
+
+It also does not attempt to declare two simultaneous cleaning actions on the same physical machine as duplicates when they have different event IDs. That would risk deleting legitimate repeated cleaning events. Duplicate prevention is therefore limited to safe idempotency and server-side concurrency protection.
+
+## Scope protection
+
+Phase 10 changes only the shared persistence hardening in `google-apps-script/Code.gs`.
+
+No changes were made to:
+
+- `master-data.js`
+- MinerPlus IP/repeat calculation logic in `ip-repeat-analyzer.js`
+- Machine identity rules
+- Cleaning History append-only model
+- Machine List replacement model
+
+## Validation checklist
+
+Before marking Phase 10 completed, test with at least two browser sessions:
+
+1. Both users load the same Machine List.
+2. User A and User B save different IPs at nearly the same time.
+3. Confirm both Work Items are present.
+4. User A and User B update the same existing IP at nearly the same time and confirm the sheet remains structurally valid with one current row for that IP.
+5. Submit two different cleaning events and confirm both appear in Cleaning History.
+6. Confirm each completed event contributes correctly to Cleaning Count by Serial Number.
+7. Refresh Cleaning History from both browsers and confirm the shared history is consistent.
+8. Confirm Machine List replacement remains protected and does not affect Cleaning History.
+
+Phase 10 will be marked **COMPLETED** after multi-browser validation confirms these behaviors.
 
 ---
 
@@ -544,7 +603,7 @@ Serial Number
    ↓
 Cleaning Action
    ↓
-Cleaning History
+Google Sheets: Work Items + Cleaning History
    ↓
 Cleaning Count
 ```
@@ -557,12 +616,19 @@ Cleaning Count
 - Replaced entirely when a new valid Machine List is uploaded.
 - Temporary operational data.
 
+### Work Items
+
+- Current work state for each IP.
+- One current row per IP under normal operation.
+- Server-side lock protects concurrent read/update/write operations.
+
 ### Cleaning History
 
 - Permanent event history.
 - Append-only.
 - Never deleted when Machine List is replaced.
 - Identity based primarily on Serial Number.
+- Event IDs provide safe idempotency for repeated submissions of the same event payload.
 
 ---
 
@@ -605,10 +671,34 @@ Every phase must be tested before the next phase is implemented.
 16. A Machine List replacement must never delete Cleaning History.
 17. Each phase is validated before proceeding to the next.
 18. Every implementation must be recorded in this roadmap/change log.
+19. Shared write operations must use server-side concurrency protection where the operation depends on a read → decide → write sequence.
+20. Unique event IDs must be preserved for Cleaning History idempotency.
+21. Phase 10 does not introduce authentication; engineer IDs are application-level identities.
 
 ---
 
 # Change Log
+
+## 2026-09-04 — Phase 10 multi-user hardening implementation
+
+**Change:** Hardened the shared Google Sheets persistence layer for approximately 5 simultaneous users.
+
+**Backend:** Added `LockService.getScriptLock()` around the complete `upsertWorkItems` read → row resolution → write sequence in `google-apps-script/Code.gs`.
+
+**Existing protections retained:**
+- `appendWorkHistory` continues to use a script lock for history append operations.
+- `replaceMachineList` continues to use a script lock for Machine List replacement.
+- Cleaning History continues to reject duplicate `eventId` values already present in the sheet or duplicated within the same request.
+
+**Result:** Concurrent Work Items writes for different users are serialized, preventing the specific race where two requests simultaneously decide that the same IP is a new row and both append it.
+
+**Identity:** Stable engineer IDs remain supplied by `engineer-data.js`; no authentication system was introduced in this phase.
+
+**Scope protection:** `master-data.js` and `ip-repeat-analyzer.js` MinerPlus calculation logic were not modified.
+
+**Validation:** Repository implementation is complete. Multi-browser concurrent-write testing is still required before Phase 10 is marked fully completed.
+
+**Commit:** `78a3d23bac7706838bb0193d9dfb01523105f5d4`
 
 ## 2026-09-04 — Phase 9 validation and roadmap update
 
