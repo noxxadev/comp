@@ -270,16 +270,76 @@ Phase 4 will be marked **COMPLETED** only after the user confirms the end-to-end
 
 # Phase 5 — Shared Machine List Loading
 
-**Status: PLANNED**
+**Status: IMPLEMENTED IN REPO / USER VALIDATION PENDING**
 
-All users read the same current Machine List from Google Sheets.
+## Objective
 
-Target usage:
+All users should automatically read the same current Machine List from Google Sheets. A user should not need to upload the same file individually.
 
-- Approximately 5 engineers/users.
-- No need for each engineer to upload the same Machine List separately.
-- Browser cache/localStorage may be used as a cache, but Google Sheets remains the source of truth.
-- A newly uploaded Machine List becomes active for all users after they reload/read the current data.
+## Implementation
+
+`machine-list.js` now performs a remote read on page load through:
+
+```text
+GET ?action=getMachineList
+```
+
+The returned `Machine List Current` snapshot is normalized and becomes the active browser dataset.
+
+The localStorage dataset remains available only as a cache/fallback. Google Sheets remains the source of truth.
+
+## Shared-user behavior
+
+```text
+User A ─┐
+User B ─┤
+User C ─┤→ Google Sheets — Machine List Current
+User D ─┤
+User E ─┘
+```
+
+When a new Machine List is uploaded successfully, it replaces the shared snapshot. Other users receive that new snapshot the next time they load/refresh the Machine List page.
+
+## Cache/fallback behavior
+
+- Successful Google Sheets read → use remote data and refresh local cache.
+- Google Sheets unavailable + valid local cache → show cached data with a clear `Cache lokal (fallback)` status.
+- Google Sheets unavailable + no cache → show an error and no invented Machine List.
+- The browser cache is never treated as a replacement for the shared source of truth.
+
+## UI changes
+
+`machine-list.html` now:
+
+- Loads `google-sheets-config.js` before `machine-list.js`.
+- Identifies the page as **Phase 5 — Shared Machine List**.
+- Shows whether the current data came from Google Sheets or local fallback cache.
+- Renames the local-only clear action to **Hapus Cache Lokal** so it does not imply deletion of the shared database.
+
+## Public API
+
+`window.CompMachineList.refresh()` is available to explicitly refresh the current Machine List from Google Sheets.
+
+## Scope protection
+
+No changes were made to:
+
+- `ip-repeat-analyzer.js`
+- `master-data.js`
+- MinerPlus calculation logic
+- Cleaning History logic
+
+## Phase 5 validation checklist
+
+1. Open `machine-list.html` in Browser A and confirm it loads the current Machine List from Google Sheets.
+2. Open the same page in Browser B and confirm the same records are displayed.
+3. Upload a new valid Machine List from one browser.
+4. Refresh Browser B and confirm it receives the new snapshot without uploading anything.
+5. Confirm the status shows Google Sheets as the active source after a successful remote read.
+6. Temporarily make the remote source unavailable and confirm a valid local cache is clearly shown as fallback rather than silently treated as current.
+7. Confirm no Machine List data is guessed or fabricated when both remote data and cache are unavailable.
+
+Phase 5 will be marked **COMPLETED** only after the user confirms these tests pass.
 
 ---
 
@@ -481,6 +541,26 @@ Every phase must be tested before the next phase is implemented.
 
 # Change Log
 
+## 2026-09-04 — Phase 5 implementation
+
+**Change:** Implemented shared Machine List loading from Google Sheets.
+
+**Backend dependency:** Uses the existing `getMachineList` GET action in `google-apps-script/Code.gs`.
+
+**Client:** `machine-list.js` now reads the shared current snapshot automatically on page load, normalizes the returned records, and updates localStorage only after a successful remote read. A remote read failure can fall back to the last valid local cache with an explicit fallback status.
+
+**UI:** `machine-list.html` now loads `google-sheets-config.js` before the Machine List script and identifies the page as Phase 5. The local-only cache clearing action is explicitly labeled **Hapus Cache Lokal**.
+
+**Scope protection:** `ip-repeat-analyzer.js`, `master-data.js`, MinerPlus calculation logic, and Cleaning History logic were not modified.
+
+**Validation:** Browser A/B shared-data test, replacement visibility after refresh, remote-source status, cache fallback, and no-data/no-guess behavior are required before Phase 5 is marked completed.
+
+**Commits:**
+- `5b68fb8917d73f71c9ac8e9581efa4c22ec68c50` — shared Machine List loading logic.
+- `4e38b54dbedf1cf62ff5060f90630f705a08092a` — Phase 5 UI/config loading.
+
+**Status:** Implementation complete in repository; user validation pending.
+
 ## 2026-09-04 — Phase 4 implementation
 
 **Change:** Connected the Machine List upload flow to the shared Google Sheets architecture.
@@ -491,9 +571,9 @@ Every phase must be tested before the next phase is implemented.
 
 **Validation:** Required `serialNumber` + `locationId`, non-empty dataset, maximum 20,000 records, duplicate Serial Number rejection, duplicate Location ID rejection, and basic field-length checks.
 
-**Client:** `machine-list.js` now sends normalized records to the configured Google Apps Script and updates localStorage only after the backend confirms the full record count was saved. Failed saves preserve the previous local dataset.
+**Client:** `machine-list.js` sends normalized records to the configured Google Apps Script and updates localStorage only after the backend confirms the full record count was saved. Failed saves preserve the previous local dataset.
 
-**UI:** `machine-list.html` now loads `google-sheets-config.js` and presents the operation as **Validasi & Simpan**. The obsolete Phase 6 resolver section was removed from this page because it is outside the current Machine Cleaning Tracker Phase 4 scope.
+**UI:** `machine-list.html` loads `google-sheets-config.js` and presents the operation as **Validasi & Simpan**. The obsolete Phase 6 resolver section was removed from this page because it is outside the current Machine Cleaning Tracker Phase 4 scope.
 
 **Scope protection:** `ip-repeat-analyzer.js` and `master-data.js` were not modified.
 
@@ -505,7 +585,7 @@ Every phase must be tested before the next phase is implemented.
 
 **Change:** Updated `machine-list.js` so Phase 3 requires only `serial_number` and `location_id`.
 
-**Optional fields:** `installed_date` and `uninstalled_date` remain supported when present but are no longer required.
+**Optional fields:** `installed_date` and `uninstalled_date` remain supported but are not required.
 
 **Preserved behavior:** File type validation, header scanning, normalization, empty-row handling, preview, localStorage storage, clear action, and `CompMachineList` API remain intact.
 
