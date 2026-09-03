@@ -21,9 +21,7 @@
     .history-empty { padding:36px 16px; text-align:center; opacity:.7; }
     .history-summary { margin:0; opacity:.7; font-size:.9rem; }
     .history-menu-toggle { display:none; width:38px; height:38px; border:1px solid var(--border); border-radius:10px; background:var(--surface); color:var(--text); cursor:pointer; }
-    @media (max-width:700px) {
-      .history-toolbar { align-items:flex-start; flex-direction:column; }
-    }
+    @media (max-width:700px) { .history-toolbar { align-items:flex-start; flex-direction:column; } }
     @media (max-width:780px) {
       .history-sidebar { width:240px !important; height:100vh !important; position:fixed !important; inset:0 auto 0 0 !important; padding:20px 12px !important; border-right:1px solid var(--border) !important; border-bottom:0 !important; overflow-y:auto !important; transform:translateX(-100%); transition:transform .18s ease,box-shadow .18s ease !important; z-index:100 !important; }
       .history-sidebar.active { transform:translateX(0); box-shadow:8px 0 28px rgba(20,24,45,.12); }
@@ -60,40 +58,20 @@
             <h1 class="hub-title">Cleaning History</h1>
             <p class="hub-desc">Riwayat event pekerjaan yang tersimpan permanen di Google Sheets.</p>
           </div>
-          <button class="history-menu-toggle" id="menuToggle" type="button" aria-label="Toggle menu" aria-controls="sidebar" aria-expanded="false">
-            <i class="fas fa-bars"></i>
-          </button>
+          <button class="history-menu-toggle" id="menuToggle" type="button" aria-label="Toggle menu" aria-controls="sidebar" aria-expanded="false"><i class="fas fa-bars"></i></button>
         </section>
 
         <section class="hub-card history-card">
           <div class="history-toolbar">
-            <div>
-              <p id="historySummary" class="history-summary">Memuat riwayat...</p>
-              <div id="historyStatus" class="history-status">Memuat...</div>
-            </div>
+            <div><p id="historySummary" class="history-summary">Memuat riwayat...</p><div id="historyStatus" class="history-status">Memuat...</div></div>
             <button id="refreshHistoryBtn" class="history-refresh" type="button"><i class="fas fa-rotate"></i> Refresh</button>
           </div>
-
           <div class="history-table-wrap">
             <table class="history-table">
-              <thead>
-                <tr>
-                  <th>Timestamp</th>
-                  <th>Serial Number</th>
-                  <th>IP</th>
-                  <th>Location</th>
-                  <th>Worker / Engineer</th>
-                  <th>Status</th>
-                  <th>Catatan</th>
-                  <th>Resolution</th>
-                </tr>
-              </thead>
+              <thead><tr><th>Timestamp</th><th>Serial Number</th><th>IP</th><th>Location</th><th>Worker / Engineer</th><th>Status</th><th>Catatan</th><th>Resolution</th></tr></thead>
               <tbody id="historyBody"></tbody>
             </table>
-            <div id="historyEmpty" class="history-empty" hidden>
-              <i class="fas fa-clock-rotate-left"></i>
-              <p>Belum ada event Cleaning History.</p>
-            </div>
+            <div id="historyEmpty" class="history-empty" hidden><i class="fas fa-clock-rotate-left"></i><p>Belum ada event Cleaning History.</p></div>
           </div>
         </section>
       </div>
@@ -103,7 +81,6 @@
   <script src="google-sheets-config.js?v=20260901-2"></script>
   <script src="cleaning-history.js?v=20260904-1"></script>
   <script src="theme-toggle.js"></script>
-  <script src="script.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       const menuToggle = document.getElementById('menuToggle');
