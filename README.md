@@ -108,11 +108,11 @@ Validation completed 2026-09-03:
 - Apps Script `/exec` returned `configured: true`.
 - `doPost` completed successfully.
 - Data appeared in `Work Tracking` → `Work Items`.
-- Updating an existing IP changed the existing row and did not create a duplicate.
+- Updating an existing IP changed that row and did not create a duplicate.
 - Persistence and upsert behavior passed.
 
 ## Phase 6 — Machine Identity + Work History
-Status: IN PROGRESS — Phase 6A COMPLETED, Phase 6B PARTIALLY LIVE-VALIDATED, Phase 6C IMPLEMENTED / VALIDATION PENDING
+Status: IN PROGRESS — Phase 6A COMPLETED, Phase 6B PARTIALLY LIVE-VALIDATED, Phase 6C VALIDATION PENDING, Phase 6D IMPLEMENTED / VALIDATION PENDING
 
 ### Primary goal
 Build reliable machine history based on **Serial Number**, not IP and not `location_id` alone.
@@ -181,6 +181,11 @@ New Phase 6A files:
 - `machine-list.css`
 - `machine-list.js`
 
+Realtime snapshot rule:
+- Each newly processed Machine List replaces the active local dataset under `comp.machineList.v1`.
+- The active Machine List cache must represent one current/realtime snapshot, not an appended collection of old snapshots.
+- Replacing the active snapshot does not delete any append-only `Work History` events already stored in Google Sheets.
+
 Live validation completed 2026-09-03:
 - User confirmed `machine-list.html` successfully reads Serial Number, Location ID, Installed Date and Uninstalled Date from the real Machine List file used operationally.
 - Phase 6A is therefore considered complete.
@@ -203,7 +208,7 @@ Implemented components:
 - Matching uses exact normalized `location_id` equality.
 - Installation/removal periods are evaluated as a half-open interval: `installed_date <= event_timestamp < uninstalled_date`.
 - A blank `uninstalled_date` is treated as open-ended only when the value is genuinely blank.
-- An unparseable non-blank removal date is not treated as open-ended, preventing unsafe identity guesses.
+- An unparseable non-blank `uninstalled_date` is not treated as open-ended, preventing unsafe identity guesses.
 
 Resolution outcomes:
 - Exactly 1 match → `RESOLVED` and return Serial Number.
@@ -276,9 +281,35 @@ Validation required before Phase 6C is complete:
 - Phase 5 `Work Items` still upserts by IP without duplicate current-state rows.
 
 ### Phase 6D — History Viewer
-Status: PLANNED
+Status: IMPLEMENTED — VALIDATION PENDING
 
-History will be searchable primarily by Serial Number, with IP, Nama DC/location, Engineer, Status and date as context/filter fields.
+Purpose:
+Provide a dedicated read-only page for searching and reviewing append-only Work History without changing historical rows.
+
+Implemented components:
+- `history-viewer.html` provides the Work History page and shared COMP navigation.
+- `history-viewer.css` provides responsive filtering/table styles.
+- `history-viewer.js` loads history from the Apps Script endpoint and performs client-side filtering.
+- Search is primarily centered on Serial Number, with IP, Location ID/Nama DC, Engineer, Status and date range as additional filters.
+- History is displayed newest-first based on the append order returned by the backend.
+- Resolution state and resolution message are visible so unresolved/ambiguous identity is not hidden.
+- `index.html` now exposes Work History in the Tools Hub.
+- `machine-list.html` now links to Work History from the shared sidebar.
+
+Backend read endpoint:
+- `doGet` now supports `action=getWorkHistory`.
+- The endpoint reads from `Work History` only and returns up to 5,000 events per request, with the viewer requesting 2,000 by default.
+- The backend does not update, merge or rewrite history rows.
+- Existing `doPost` behavior for Phase 5 and Phase 6C remains separate.
+
+Phase 6D validation required:
+- Redeploy the updated Apps Script `Code.gs`.
+- Open `history-viewer.html` through GitHub Pages.
+- Confirm existing Work History events load successfully.
+- Confirm Serial Number filtering returns only the expected machine history.
+- Confirm additional IP/location/engineer/status/date filters work.
+- Confirm unresolved/ambiguous events remain visible with blank Serial Number where appropriate.
+- Confirm opening or refreshing the viewer does not modify the Google Sheet.
 
 ### Phase 6 validation requirements
 Before Phase 6 is marked complete:
@@ -288,6 +319,7 @@ Before Phase 6 is marked complete:
 - Old machine history stays attached to the old Serial Number once history is captured.
 - Missing/ambiguous Machine List resolution is visible and never guessed.
 - Phase 5 current Work Items upsert behavior remains unchanged.
+- Phase 6C and Phase 6D live validations are completed.
 
 ## Phase 7 — Multi-user / Google Sheets Hardening
 Status: PLANNED
@@ -341,6 +373,9 @@ Future Shift Report can use history for:
 16. Machine List realtime snapshots must not be assumed to contain complete historical replacement data.
 17. Work History is append-only; historical events must not be updated or merged by IP.
 18. Every Work History event requires a unique Event ID; duplicate Event IDs must not create duplicate history rows.
+19. The active Machine List browser cache represents one realtime snapshot; a newer upload replaces the previous active snapshot.
+20. Work History is never deleted as a side effect of replacing the active Machine List snapshot.
+21. Phase 6D is read-only with respect to Work History; the viewer must never mutate historical rows.
 
 # Detailed Change Log
 
@@ -439,7 +474,17 @@ Future Shift Report can use history for:
 - Added explicit handling for resolved, unresolved, ambiguous and missing-location history states.
 - Updated `ip-repeat-analyzer.html` to load `machine-resolver.js` before `work-tracking.js` and refreshed the cache-buster.
 - Removed the temporary Phase 6C placeholder file created during implementation.
-- Phase 6C implementation is complete, but live validation is pending deployment of the updated Apps Script and user verification in Google Sheets.
+- Phase 6C implementation is complete, but live validation remains required before Phase 6C is considered complete.
+
+## 2026-09-04 — Phase 6D implementation
+- Added `history-viewer.html` as a dedicated read-only Work History viewer.
+- Added `history-viewer.js` for loading up to 2,000 events and filtering by Serial Number, IP, Location ID/Nama DC, Engineer, Status and date range.
+- Added `history-viewer.css` for responsive filter controls, table layout and resolution badges.
+- Added `getWorkHistory` to `google-apps-script/Code.gs` as a read-only `doGet` action.
+- The backend returns history newest-first and caps a single request at 5,000 events.
+- Added Work History to the Tools Hub and the Machine List sidebar navigation.
+- Viewer does not write to or modify Work History.
+- Phase 6D implementation is complete; live validation is pending Apps Script redeployment and user verification.
 
 # Current Status
 
@@ -451,7 +496,7 @@ Future Shift Report can use history for:
 | Phase 3 — Engineer Selection | DONE — live validation confirmed |
 | Phase 4 — Engineer Identity | DONE — live validation confirmed |
 | Phase 5 — Work Tracking + Google Sheets Persistence | DONE — end-to-end validation and upsert verified |
-| Phase 6 — Machine Identity + Work History | IN PROGRESS — Phase 6A completed, Phase 6B partially live-validated, Phase 6C validation pending |
+| Phase 6 — Machine Identity + Work History | IN PROGRESS — Phase 6A completed, Phase 6B partially live-validated, Phase 6C and 6D live validation pending |
 | Phase 7 — Multi-user / Google Sheets Hardening | PLANNED |
 | Phase 8 — Work Export | PLANNED |
 | Phase 9 — Shift Report Integration | PLANNED |
