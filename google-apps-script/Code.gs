@@ -1,6 +1,7 @@
 const SPREADSHEET_ID = 'PASTE_YOUR_GOOGLE_SHEET_ID_HERE';
 const WORK_SHEET_NAME = 'Work Items';
 const HISTORY_SHEET_NAME = 'Work History';
+const MACHINE_LIST_SHEET_NAME = 'Machine List Current';
 
 // Optional lightweight request key. This is NOT a secret when the frontend is public.
 // Keep both this value and google-sheets-config.js requestKey empty to disable it.
@@ -32,6 +33,13 @@ const HISTORY_HEADERS = [
   'Resolution Status',
   'Resolution Message',
   'Source'
+];
+
+const MACHINE_LIST_HEADERS = [
+  'Serial Number',
+  'Location ID',
+  'Installed Date',
+  'Uninstalled Date'
 ];
 
 const ALLOWED_STATUSES = [
@@ -66,10 +74,18 @@ function doGet(e) {
       return getWorkHistory(e);
     }
 
+    if (action === 'getMachineList') {
+      return getMachineList();
+    }
+
     return jsonResponse({
       ok: true,
       service: 'COMP Work Tracking',
-      sheet: WORK_SHEET_NAME,
+      sheets: {
+        work: WORK_SHEET_NAME,
+        history: HISTORY_SHEET_NAME,
+        machineList: MACHINE_LIST_SHEET_NAME
+      },
       configured: true
     });
   } catch (error) {
@@ -96,6 +112,10 @@ function doPost(e) {
 
     if (payload.action === 'appendWorkHistory') {
       return appendWorkHistory(payload.events);
+    }
+
+    if (payload.action === 'replaceMachineList') {
+      return replaceMachineList(payload.records, payload.sourceFileName);
     }
 
     return jsonResponse({ ok: false, error: 'Unsupported action.' });
@@ -293,6 +313,155 @@ function getWorkHistory(e) {
     total: Math.max(data.length - 1, 0),
     returned: rows.length
   });
+}
+
+function getMachineList() {
+  const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const sheet = spreadsheet.getSheetByName(MACHINE_LIST_SHEET_NAME);
+
+  // Read-only endpoint: never creates or modifies the current Machine List.
+  if (!sheet || sheet.getLastRow() <= 1) {
+    return jsonResponse({
+      ok: true,
+      records: [],
+      total: 0,
+      updatedAt: null
+    });
+  }
+
+  const data = sheet.getDataRange().getValues();
+  const records = [];
+  const updatedAt = sheet.getLastRow() > 1
+    ? sheet.getRange(sheet.getLastRow(), 4).getValue()
+    : null;
+
+  for (let r = 1; r < data.length; r++) {
+    const row = data[r];
+    const serialNumber = String(row[0] || '').trim();
+    const locationId = String(row[1] || '').trim();
+    const installedDate = String(row[2] || '').trim();
+    const uninstalledDate = String(row[3] || '').trim();
+
+    if (!serialNumber && !locationId && !installedDate && !uninstalledDate) continue;
+
+    records.push({
+      serialNumber,
+      locationId,
+      installedDate,
+      uninstalledDate
+    });
+  }
+
+  return jsonResponse({
+    ok: true,
+    records,
+    total: records.length,
+    updatedAt: updatedAt instanceof Date ? updatedAt.toISOString() : null
+  });
+}
+
+function replaceMachineList(records, sourceFileName) {
+  const rows = Array.isArray(records) ? records : [];
+
+  if (!rows.length) {
+    return jsonResponse({ ok: false, error: 'Machine List kosong. Dataset lama tidak diubah.' });
+  }
+
+  if (rows.length > 20000) {
+    return jsonResponse({ ok: false, error: 'Machine List terlalu besar. Maksimum 20.000 record per upload.' });
+  }
+
+  // Validate the complete incoming snapshot BEFORE touching the existing sheet.
+  const normalizedRows = [];
+  const seenSerialNumbers = new Set();
+  const seenLocations = new Set();
+
+  for (let i = 0; i < rows.length; i++) {
+    const record = rows[i] || {};
+    const serialNumber = normalizeMachineText(record.serialNumber);
+    const locationId = normalizeMachineText(record.locationId).toUpperCase();
+    const installedDate = normalizeMachineText(record.installedDate);
+    const uninstalledDate = normalizeMachineText(record.uninstalledDate);
+
+    if (!serialNumber || !locationId) {
+      return jsonResponse({
+        ok: false,
+        error: `Record Machine List ke-${i + 1} tidak memiliki serial_number dan location_id. Dataset lama tidak diubah.`
+      });
+    }
+
+    if (serialNumber.length > 200 || locationId.length > 200) {
+      return jsonResponse({
+        ok: false,
+        error: `Record Machine List ke-${i + 1} memiliki nilai terlalu panjang. Dataset lama tidak diubah.`
+      });
+    }
+
+    if (installedDate.length > 100 || uninstalledDate.length > 100) {
+      return jsonResponse({
+        ok: false,
+        error: `Tanggal pada record Machine List ke-${i + 1} terlalu panjang. Dataset lama tidak diubah.`
+      });
+    }
+
+    const serialKey = serialNumber.toUpperCase();
+    const locationKey = locationId.toUpperCase();
+
+    if (seenSerialNumbers.has(serialKey)) {
+      return jsonResponse({
+        ok: false,
+        error: `Serial Number duplikat pada record ke-${i + 1}: ${serialNumber}. Dataset lama tidak diubah.`
+      });
+    }
+
+    if (seenLocations.has(locationKey)) {
+      return jsonResponse({
+        ok: false,
+        error: `Location ID duplikat pada record ke-${i + 1}: ${locationId}. Dataset lama tidak diubah.`
+      });
+    }
+
+    seenSerialNumbers.add(serialKey);
+    seenLocations.add(locationKey);
+    normalizedRows.push([serialNumber, locationId, installedDate, uninstalledDate]);
+  }
+
+  const lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+
+  try {
+    const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
+    let sheet = spreadsheet.getSheetByName(MACHINE_LIST_SHEET_NAME);
+
+    if (!sheet) {
+      sheet = spreadsheet.insertSheet(MACHINE_LIST_SHEET_NAME);
+    }
+
+    // Replacement happens only after the entire new snapshot passed validation.
+    sheet.clearContents();
+    sheet.getRange(1, 1, 1, MACHINE_LIST_HEADERS.length).setValues([MACHINE_LIST_HEADERS]);
+    sheet.setFrozenRows(1);
+
+    sheet.getRange(2, 1, normalizedRows.length, MACHINE_LIST_HEADERS.length).setValues(normalizedRows);
+    SpreadsheetApp.flush();
+
+    const updatedAt = new Date();
+
+    return jsonResponse({
+      ok: true,
+      action: 'replaceMachineList',
+      saved: normalizedRows.length,
+      sourceFileName: normalizeMachineText(sourceFileName).slice(0, 200),
+      updatedAt: updatedAt.toISOString(),
+      sheet: MACHINE_LIST_SHEET_NAME
+    });
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function normalizeMachineText(value) {
+  return String(value ?? '').replace(/\s+/g, ' ').trim();
 }
 
 function getWorkSheet() {
