@@ -1,3 +1,5 @@
+@import url('mobile-tables.css');
+
 :root{--theme-toggle-bg:var(--surface-2);--theme-toggle-border:var(--border);--theme-toggle-text:var(--text);--theme-toggle-muted:var(--muted)}
 
 .theme-toggle-wrap{margin-top:14px;padding-top:14px;border-top:1px solid var(--border)}
