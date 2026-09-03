@@ -240,6 +240,37 @@ Verification:
 - Existing operational-page navigation logic was preserved.
 - Source-level verification only; real-device/browser screenshot testing remains to be performed manually.
 
+## Phase M10 — Burger Position & Interaction Standardization
+Status: COMPLETED
+
+Requirement:
+
+- All 10 in-scope pages use the same mobile burger position: fixed at the top-left with the same spacing and touch target.
+- The burger must not remain aligned to the right side of page titles on mobile.
+- The sidebar must continue to open from the left as an off-canvas panel.
+- Bulk Compare must have a responsive burger that actually opens/closes its sidebar and overlay.
+- Desktop layout and application/data-processing behavior must remain unchanged.
+
+Implemented:
+
+- Added a shared mobile burger-position rule in `theme-toggle.css` covering Tools Hub, Sub Account, Offline, IP Validator, Pool vs Dashboard, Bulk Compare, IP Repeat, Machine List, and Cleaning History.
+- Standardized the mobile burger to `44px × 44px`, `top: 14px`, `left: 14px`, with the same visual treatment and high navigation z-index.
+- Added matching left padding to shared mobile page headers so the fixed burger does not overlap page titles/descriptions.
+- Bulk Compare now has its own narrow navigation handler using the existing `#menuToggle`, `#sidebar`, and `#sidebarOverlay` elements; no Bulk Compare matching/data logic was modified.
+- Existing standalone Theme Preview already uses a fixed top-left mobile burger and remains visually independent.
+
+Files changed in M10:
+- `theme-toggle.css`
+- `bulk-compare.html`
+
+Verification:
+
+- Source-level review confirms the shared operational-page burger selectors now use one mobile position and size.
+- Bulk Compare has a click handler that toggles `.active` on the sidebar and overlay, updates `aria-expanded`, closes on overlay/navigation-link click, and closes when returning to desktop width.
+- `bulk-compare.js` was not modified.
+- No analyzer calculations, parsing, data processing, persistence, API endpoints, exports, localStorage behavior, or navigation destinations were changed.
+- Real-device/browser interaction testing should still be performed manually after deployment.
+
 ## Implementation rule
 
 Prefer CSS-only changes. Markup changes are allowed only when required to provide responsive UI behavior, and any such change must preserve existing IDs/classes used by application logic. JavaScript changes are avoided unless a navigation/UI interaction cannot be fixed safely in CSS alone.
