@@ -168,15 +168,24 @@ Verification:
 - This verification is source-level; no real-device browser automation/screenshot test was available in this environment.
 
 ## Phase M7 — Cross-page consistency review
-Status: PLANNED
+Status: COMPLETED
 
-Verify:
+Cross-page review completed against the actual current `main` branch pages.
 
-- Navigation pattern is consistent.
-- Mobile spacing and typography are coherent.
-- Cards and controls align consistently.
-- No unintended horizontal page overflow.
-- Light/dark theme behavior remains intact.
+Verified:
+
+- Navigation destinations are consistent with the frozen 10-page scope; `history-viewer.html` is not part of the mobile plan.
+- Operational pages use the shared Tools Hub navigation/theme layer while preserving the standalone `Theme Preview` layout.
+- Mobile spacing, heading hierarchy, card treatment, and control sizing are consistent with the shared responsive rules introduced in M3–M6.
+- Wide tables remain inside dedicated scroll containers rather than intentionally widening the page.
+- `Cleaning History` keeps its dedicated mobile sidebar while remaining compatible with the shared active/overlay navigation convention.
+- `Theme Preview` intentionally remains visually independent and retains its own mobile behavior.
+- Light/dark theme handling remains connected to the shared theme layer; no theme persistence behavior was altered.
+
+Review outcome:
+- No additional responsive code changes were necessary in M7.
+- M7 is documentation/verification-only.
+- No JavaScript, data processing, API, persistence, export, or calculation logic was changed.
 
 ## Phase M8 — Logic safety verification
 Status: PLANNED
