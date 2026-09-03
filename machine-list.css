@@ -55,3 +55,8 @@
   .machine-list-upload-content { text-align: center; flex-direction: column; }
   .machine-list-resolver-form { grid-template-columns: 1fr; }
 }
+@media (max-width: 780px) {
+  /* Keep machine-list's existing mobile-open state compatible with shared sidebar styling. */
+  .repeat-sidebar.mobile-open { transform: translateX(0); }
+  .sidebar-overlay.visible { opacity: 1; visibility: visible; }
+}
