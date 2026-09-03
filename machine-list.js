@@ -27,11 +27,16 @@
   const processBtn = $('machineListProcessBtn');
   const errorBox = $('machineListError');
   const loading = $('machineListLoading');
+  const loadingText = loading?.querySelector('p');
   const summary = $('machineListSummary');
   const tableBody = $('machineListBody');
   const emptyBox = $('machineListEmpty');
   const clearBtn = $('machineListClearBtn');
   const storageStatus = $('machineListStorageStatus');
+
+  function getConfig() {
+    return window.CompGoogleSheetsConfig || { webAppUrl: '', requestKey: '' };
+  }
 
   function normalizeHeader(value) {
     return String(value ?? '')
@@ -75,6 +80,11 @@
   function clearError() {
     errorBox.textContent = '';
     errorBox.classList.remove('visible');
+  }
+
+  function setLoading(active, message = 'Memproses Machine List...') {
+    loading.classList.toggle('visible', active);
+    if (loadingText) loadingText.textContent = message;
   }
 
   function setFile(file) {
@@ -163,9 +173,15 @@
       throw new Error('Kolom Machine List tidak lengkap. Wajib ada serial_number dan location_id.');
     }
 
+    const records = buildRecords(matrix, headerRowIndex, indexes);
+
+    if (!records.length) {
+      throw new Error('Machine List tidak memiliki record data. Dataset lama tidak akan diubah.');
+    }
+
     return {
       headers: matrix[headerRowIndex].map(value => normalizeText(value)),
-      records: buildRecords(matrix, headerRowIndex, indexes),
+      records,
       headerRowIndex
     };
   }
@@ -259,11 +275,67 @@
     }
   }
 
+  async function postToGoogleSheets(payload) {
+    const config = getConfig();
+    const url = String(config.webAppUrl || '').trim();
+
+    if (!url) {
+      throw new Error('Google Sheets belum dikonfigurasi. Isi webAppUrl pada google-sheets-config.js.');
+    }
+
+    let response;
+    try {
+      response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+        body: JSON.stringify({
+          ...payload,
+          requestKey: String(config.requestKey || '')
+        })
+      });
+    } catch (error) {
+      throw new Error(`Gagal terhubung ke Google Sheets: ${error.message || 'network error'}`);
+    }
+
+    const text = await response.text();
+    let result;
+    try {
+      result = JSON.parse(text);
+    } catch (error) {
+      throw new Error(`Google Apps Script mengembalikan response tidak valid (HTTP ${response.status}).`);
+    }
+
+    if (!response.ok) {
+      throw new Error(result?.error || `Google Sheets gagal menerima data (HTTP ${response.status}).`);
+    }
+
+    if (!result?.ok) {
+      throw new Error(result?.error || 'Google Apps Script menolak penyimpanan Machine List.');
+    }
+
+    return result;
+  }
+
+  async function replaceRemoteMachineList(records) {
+    const result = await postToGoogleSheets({
+      action: 'replaceMachineList',
+      records,
+      sourceFileName: state.sourceFileName
+    });
+
+    const saved = Number(result.saved || 0);
+    if (saved !== records.length) {
+      throw new Error(`Google Sheets hanya menyimpan ${saved} dari ${records.length} record. Dataset lokal tidak diubah.`);
+    }
+
+    return result;
+  }
+
   async function processFile() {
     if (!state.file) return;
 
     clearError();
-    loading.classList.add('visible');
+    setLoading(true, 'Membaca dan memvalidasi Machine List...');
     processBtn.disabled = true;
 
     try {
@@ -271,16 +343,33 @@
       const workbook = XLSX.read(buffer, { type: 'array', cellDates: false });
       const parsed = validateAndParse(workbook);
 
-      state.sourceHeaders = parsed.headers;
-      state.records = parsed.records;
-      state.loadedAt = new Date().toISOString();
-      saveToStorage();
-      render();
+      setLoading(true, `Mengganti Machine List Current dengan ${parsed.records.length.toLocaleString('id-ID')} record...`);
+      const previousState = {
+        records: state.records,
+        sourceHeaders: state.sourceHeaders,
+        sourceFileName: state.sourceFileName,
+        loadedAt: state.loadedAt
+      };
+
+      try {
+        const result = await replaceRemoteMachineList(parsed.records);
+        state.sourceHeaders = parsed.headers;
+        state.records = parsed.records;
+        state.loadedAt = result.updatedAt || new Date().toISOString();
+        saveToStorage();
+        render();
+      } catch (error) {
+        state.records = previousState.records;
+        state.sourceHeaders = previousState.sourceHeaders;
+        state.sourceFileName = previousState.sourceFileName;
+        state.loadedAt = previousState.loadedAt;
+        throw error;
+      }
     } catch (error) {
       console.error(error);
-      showError(error.message || 'Gagal membaca Machine List.');
+      showError(error.message || 'Gagal menyimpan Machine List. Dataset lama tetap dipertahankan.');
     } finally {
-      loading.classList.remove('visible');
+      setLoading(false);
       processBtn.disabled = !state.file;
     }
   }
