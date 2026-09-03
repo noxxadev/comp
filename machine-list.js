@@ -4,7 +4,9 @@
   const STORAGE_KEY = 'comp.machineList.v1';
   const REQUIRED_HEADERS = {
     serialNumber: ['serial_number', 'serial number', 'serialnumber'],
-    locationId: ['location_id', 'location id', 'locationid'],
+    locationId: ['location_id', 'location id', 'locationid']
+  };
+  const OPTIONAL_HEADERS = {
     installedDate: ['installed_date', 'installed date', 'installeddate'],
     uninstalledDate: ['uninstalled_date', 'uninstalled date', 'uninstalleddate']
   };
@@ -102,8 +104,8 @@
       const row = matrix[i] || [];
       const serialNumber = normalizeSerialNumber(row[indexes.serialNumber]);
       const locationId = normalizeLocationId(row[indexes.locationId]);
-      const installedDate = normalizeDateValue(row[indexes.installedDate]);
-      const uninstalledDate = normalizeDateValue(row[indexes.uninstalledDate]);
+      const installedDate = normalizeDateValue(indexes.installedDate !== -1 ? row[indexes.installedDate] : '');
+      const uninstalledDate = normalizeDateValue(indexes.uninstalledDate !== -1 ? row[indexes.uninstalledDate] : '');
 
       if (!serialNumber && !locationId && !installedDate && !uninstalledDate) continue;
 
@@ -143,10 +145,10 @@
       const headers = matrix[i] || [];
       const serialNumber = findHeaderIndex(headers, REQUIRED_HEADERS.serialNumber);
       const locationId = findHeaderIndex(headers, REQUIRED_HEADERS.locationId);
-      const installedDate = findHeaderIndex(headers, REQUIRED_HEADERS.installedDate);
-      const uninstalledDate = findHeaderIndex(headers, REQUIRED_HEADERS.uninstalledDate);
+      const installedDate = findHeaderIndex(headers, OPTIONAL_HEADERS.installedDate);
+      const uninstalledDate = findHeaderIndex(headers, OPTIONAL_HEADERS.uninstalledDate);
 
-      if (serialNumber !== -1 && locationId !== -1 && installedDate !== -1 && uninstalledDate !== -1) {
+      if (serialNumber !== -1 && locationId !== -1) {
         headerRowIndex = i;
         indexes = { serialNumber, locationId, installedDate, uninstalledDate };
         break;
@@ -154,7 +156,7 @@
     }
 
     if (!indexes) {
-      throw new Error('Kolom Machine List tidak lengkap. Wajib ada serial_number, location_id, installed_date, dan uninstalled_date.');
+      throw new Error('Kolom Machine List tidak lengkap. Wajib ada serial_number dan location_id. installed_date dan uninstalled_date bersifat opsional.');
     }
 
     return {
