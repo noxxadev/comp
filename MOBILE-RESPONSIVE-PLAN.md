@@ -107,15 +107,29 @@ Verification:
 - No application JavaScript, calculations, parsing, persistence, API calls, Google Sheets behavior, or navigation logic were modified.
 
 ## Phase M5 — Tables
-Status: PLANNED
+Status: COMPLETED
 
-Rules:
+Implemented on the current `main` branch:
 
-- Keep wide data tables as horizontal-scroll regions when necessary.
-- Prevent the whole page from horizontally scrolling because of a table.
-- Improve table readability with mobile-appropriate padding/font sizes.
-- Add controlled/stable scrolling behavior where useful.
-- Do not change table data or rendering logic.
+- Added a shared mobile table override layer through `mobile-tables.css`.
+- Table wrappers remain constrained to the card/page width and provide horizontal scrolling inside the table region.
+- Wide operational tables remain wide enough to preserve column readability instead of being compressed into unusable narrow columns.
+- Mobile table cell/header padding is reduced moderately at phone widths to show more data per screen without changing table content.
+- Horizontal scrolling uses touch-friendly momentum scrolling and contains horizontal overscroll inside the table region where supported.
+- Covered the existing table wrapper patterns used by Offline Analyzer, IP Validator, Pool vs Dashboard, Bulk Compare, IP Repeat, Machine List, Sub Account, and other shared Tools Hub tables.
+- No table data, sorting/filtering logic, rendering logic, or application JavaScript was changed.
+
+Files changed in M5:
+- `mobile-tables.css`
+- `theme-toggle.css`
+
+Implementation note:
+- `theme-toggle.css` imports `mobile-tables.css` so the new responsive table rules are loaded alongside the existing shared theme styles without modifying page logic or individual analyzer scripts.
+
+Verification:
+- The M5 changes are CSS-only.
+- The table rules are scoped to `max-width: 780px`/`560px` and existing table wrapper classes/IDs.
+- Application JavaScript, calculations, persistence, API calls, exports, and data-processing code were not changed by M5.
 
 ## Phase M6 — Page-by-page responsive pass
 Status: PLANNED
