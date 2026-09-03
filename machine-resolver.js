@@ -2,6 +2,7 @@
   'use strict';
 
   const STORAGE_KEY = 'comp.machineList.v1';
+  const HISTORY_LIMIT = 5000;
 
   function normalizeLocationId(value) {
     return String(value ?? '').replace(/\s+/g, ' ').trim().toUpperCase();
@@ -117,6 +118,47 @@
     throw lastError || new Error('Gagal membaca Machine List.');
   }
 
+  async function loadCleaningHistory(limit = HISTORY_LIMIT) {
+    const config = window.CompGoogleSheetsConfig || { webAppUrl: '', requestKey: '' };
+    const baseUrl = String(config.webAppUrl || '').trim();
+    if (!baseUrl) throw new Error('Google Sheets belum dikonfigurasi.');
+
+    const params = new URLSearchParams({ action: 'getWorkHistory', limit: String(limit) });
+    if (config.requestKey) params.set('requestKey', String(config.requestKey));
+
+    const separator = baseUrl.includes('?') ? '&' : '?';
+    const response = await fetch(`${baseUrl}${separator}${params.toString()}`, {
+      method: 'GET',
+      cache: 'no-store',
+      credentials: 'omit',
+      redirect: 'follow'
+    });
+    const text = await response.text();
+    const result = JSON.parse(text);
+
+    if (!response.ok || !result?.ok) {
+      throw new Error(result?.error || `Gagal membaca Cleaning History (HTTP ${response.status}).`);
+    }
+
+    return Array.isArray(result.rows) ? result.rows : [];
+  }
+
+  function buildCleaningCountMap(historyRows) {
+    const counts = new Map();
+
+    historyRows.forEach(row => {
+      // Cleaning Count represents completed cleaning events only.
+      if (String(row?.status || '').trim() !== 'Selesai') return;
+
+      const serial = String(row?.serialNumber || '').trim().toUpperCase();
+      if (!serial) return;
+
+      counts.set(serial, (counts.get(serial) || 0) + 1);
+    });
+
+    return counts;
+  }
+
   function buildLocationMap(records) {
     const locationMap = new Map();
     records.forEach(record => {
@@ -155,27 +197,50 @@
     headerRow.appendChild(th);
   }
 
-  function augmentIpRepeatTable(records) {
+  function ensureCleaningCountHeader(table) {
+    const headerRow = table.querySelector('thead tr');
+    if (!headerRow) return;
+    if (headerRow.querySelector('[data-cleaning-count-header="true"]')) return;
+
+    const th = document.createElement('th');
+    th.scope = 'col';
+    th.textContent = 'Cleaning Count';
+    th.dataset.cleaningCountHeader = 'true';
+    headerRow.appendChild(th);
+  }
+
+  function augmentIpRepeatTable(records, cleaningCounts = new Map()) {
     const table = document.querySelector('.repeat-table');
     if (!table) return;
 
     ensureHeader(table);
+    ensureCleaningCountHeader(table);
+
     const locationMap = buildLocationMap(records);
     const body = table.querySelector('#resultsBody') || table.querySelector('tbody');
     if (!body) return;
 
     body.querySelectorAll('tr').forEach(row => {
       row.querySelector('[data-machine-identity-cell="true"]')?.remove();
+      row.querySelector('[data-cleaning-count-cell="true"]')?.remove();
 
       const location = getLocationFromRow(row);
       const serial = locationMap.get(location) || '';
+      const count = serial ? (cleaningCounts.get(serial.toUpperCase()) || 0) : 0;
 
-      const td = document.createElement('td');
-      td.dataset.machineIdentityCell = 'true';
-      td.className = 'machine-identity-cell';
-      td.textContent = serial || 'SN Tidak Ditemukan';
-      if (!serial) td.classList.add('machine-identity-missing');
-      row.appendChild(td);
+      const serialTd = document.createElement('td');
+      serialTd.dataset.machineIdentityCell = 'true';
+      serialTd.className = 'machine-identity-cell';
+      serialTd.textContent = serial || 'SN Tidak Ditemukan';
+      if (!serial) serialTd.classList.add('machine-identity-missing');
+
+      const countTd = document.createElement('td');
+      countTd.dataset.cleaningCountCell = 'true';
+      countTd.className = 'cleaning-count-cell';
+      countTd.textContent = serial ? String(count) : '-';
+
+      row.appendChild(serialTd);
+      row.appendChild(countTd);
     });
 
     const summary = document.getElementById('resultSummary');
@@ -191,6 +256,16 @@
 
       status.textContent = `• SN terhubung (${locationMap.size.toLocaleString('id-ID')} lokasi)`;
       status.classList.remove('error');
+
+      let countStatus = document.getElementById('cleaningCountStatus');
+      if (!countStatus) {
+        countStatus = document.createElement('span');
+        countStatus.id = 'cleaningCountStatus';
+        countStatus.className = 'machine-identity-status';
+        summary.appendChild(document.createTextNode(' '));
+        summary.appendChild(countStatus);
+      }
+      countStatus.textContent = `• Cleaning Count aktif (${cleaningCounts.size.toLocaleString('id-ID')} SN)`;
     }
   }
 
@@ -199,23 +274,25 @@
     if (!table) return;
 
     try {
-      const records = await loadCurrentRecords();
-      augmentIpRepeatTable(records);
+      const [records, historyRows] = await Promise.all([
+        loadCurrentRecords(),
+        loadCleaningHistory()
+      ]);
+      const cleaningCounts = buildCleaningCountMap(historyRows);
+      augmentIpRepeatTable(records, cleaningCounts);
 
       const body = table.querySelector('#resultsBody') || table.querySelector('tbody');
       if (body && !body.dataset.machineIdentityObserver) {
-        const observer = new MutationObserver(() => augmentIpRepeatTable(records));
+        const observer = new MutationObserver(() => augmentIpRepeatTable(records, cleaningCounts));
         observer.observe(body, { childList: true });
         body.dataset.machineIdentityObserver = 'true';
       }
 
-      // The analyzer can render immediately after upload/filter actions.
-      // Re-apply a few times so the identity column never depends on timing.
       [250, 750, 1500].forEach(delay => {
-        setTimeout(() => augmentIpRepeatTable(records), delay);
+        setTimeout(() => augmentIpRepeatTable(records, cleaningCounts), delay);
       });
     } catch (error) {
-      console.error('Gagal menghubungkan Serial Number ke IP Repeat:', error);
+      console.error('Gagal menghubungkan Serial Number / Cleaning Count ke IP Repeat:', error);
       const summary = document.getElementById('resultSummary');
       if (summary) {
         let status = document.getElementById('machineIdentityStatus');
@@ -226,7 +303,7 @@
           summary.appendChild(document.createTextNode(' '));
           summary.appendChild(status);
         }
-        status.textContent = '• SN tidak tersedia';
+        status.textContent = '• SN tersedia, Cleaning Count tidak tersedia';
         status.classList.add('error');
       }
     }
@@ -238,6 +315,8 @@
     normalizeLocationId,
     loadStoredRecords,
     loadCurrentRecords,
+    loadCleaningHistory,
+    buildCleaningCountMap,
     getStorageKey: () => STORAGE_KEY
   };
 
