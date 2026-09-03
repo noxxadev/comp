@@ -104,8 +104,12 @@
       const row = matrix[i] || [];
       const serialNumber = normalizeSerialNumber(row[indexes.serialNumber]);
       const locationId = normalizeLocationId(row[indexes.locationId]);
-      const installedDate = normalizeDateValue(indexes.installedDate !== -1 ? row[indexes.installedDate] : '');
-      const uninstalledDate = normalizeDateValue(indexes.uninstalledDate !== -1 ? row[indexes.uninstalledDate] : '');
+      const installedDate = indexes.installedDate === -1
+        ? ''
+        : normalizeDateValue(row[indexes.installedDate]);
+      const uninstalledDate = indexes.uninstalledDate === -1
+        ? ''
+        : normalizeDateValue(row[indexes.uninstalledDate]);
 
       if (!serialNumber && !locationId && !installedDate && !uninstalledDate) continue;
 
@@ -156,7 +160,7 @@
     }
 
     if (!indexes) {
-      throw new Error('Kolom Machine List tidak lengkap. Wajib ada serial_number dan location_id. installed_date dan uninstalled_date bersifat opsional.');
+      throw new Error('Kolom Machine List tidak lengkap. Wajib ada serial_number dan location_id.');
     }
 
     return {
