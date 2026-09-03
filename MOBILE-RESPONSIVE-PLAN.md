@@ -82,17 +82,29 @@ Verification:
 - Changes are CSS-only.
 
 ## Phase M4 — Controls & Forms
-Status: PLANNED
+Status: COMPLETED
 
-Review and improve:
+Implemented on the current `main` branch:
 
-- File upload areas.
-- Inputs and textareas.
-- Select/dropdown controls.
-- Checkboxes and selection controls.
-- Primary/secondary buttons.
-- Filter and search controls.
-- Action rows that currently become crowded on narrow screens.
+- File upload controls use larger mobile-friendly touch targets where the page already exposes file selectors.
+- Search inputs and select controls are given stable mobile heights and width behavior.
+- Checkbox/selection rows in Bulk Compare are easier to tap on narrow screens.
+- Filter buttons wrap and expand appropriately instead of becoming cramped.
+- Action buttons become full-width/stacked where needed on phones.
+- Manual IP input and validation controls remain readable and usable on narrow screens.
+- Machine List upload, clear, resolver, and action controls were tightened for phone widths.
+- Long upload filenames and helper text are constrained so they do not force horizontal page overflow.
+
+Files changed in M4:
+- `data-matcher-ui.css`
+- `bulk-compare-ui.css`
+- `iplocationvalidator.css`
+- `machine-list.css`
+
+Verification:
+- Compared M3 completion commit `21cc4f6a36a518b5395feab6f03169a52713dc85` against the final M4 head.
+- Only the four expected CSS files changed during M4.
+- No application JavaScript, calculations, parsing, persistence, API calls, Google Sheets behavior, or navigation logic were modified.
 
 ## Phase M5 — Tables
 Status: PLANNED
