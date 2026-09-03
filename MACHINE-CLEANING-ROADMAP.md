@@ -81,11 +81,11 @@ Confirmed rule:
 
 # Phase 3 — Machine List Upload
 
-**Status: NEXT / PLANNED**
+**Status: IMPLEMENTED / USER VALIDATION PENDING**
 
 ## Objective
 
-Add a dedicated Machine List upload function without changing the existing MinerPlus analyzer.
+Provide a dedicated Machine List upload and validation function without changing the existing MinerPlus analyzer.
 
 ## Required Machine List columns
 
@@ -94,20 +94,24 @@ Minimum required fields:
 - `serial_number`
 - `location_id`
 
-The Machine List may also contain other operational fields, but Phase 3 only needs to establish reliable upload and validation of the required fields.
+The Machine List may also contain other operational fields. `installed_date` and `uninstalled_date` are supported when present, but are **optional** for Phase 3.
 
-## Phase 3 responsibilities
+## Phase 3 implementation
 
-1. Select Machine List `.xls` / `.xlsx` file.
-2. Read the spreadsheet.
-3. Detect required columns by header name, not fixed column position.
-4. Validate that `serial_number` exists.
-5. Validate that `location_id` exists.
-6. Normalize text values by trimming whitespace.
-7. Normalize `location_id` consistently for lookup.
-8. Ignore fully empty rows.
-9. Show upload/validation result.
-10. Show a preview of the parsed Machine List.
+Implemented in `machine-list.js` only.
+
+Changes made:
+
+1. `serial_number` is required.
+2. `location_id` is required.
+3. `installed_date` is optional.
+4. `uninstalled_date` is optional.
+5. Header detection remains alias-based and is not tied to fixed column positions.
+6. Existing text normalization is preserved.
+7. Existing `location_id` normalization to uppercase is preserved.
+8. Fully empty rows continue to be ignored.
+9. Existing preview, localStorage persistence, clear-data action, and public `window.CompMachineList` API are preserved.
+10. `ip-repeat-analyzer.js` was not modified.
 
 ## Phase 3 does NOT do yet
 
@@ -119,9 +123,22 @@ The Machine List may also contain other operational fields, but Phase 3 only nee
 
 ## Phase 3 success criteria
 
-A valid Machine List can be uploaded and its `serial_number` + `location_id` values can be verified in the browser.
+A valid Machine List containing at least `serial_number` and `location_id` can be uploaded and previewed in the browser, even when the two date columns are absent.
 
-An invalid file must be rejected clearly without affecting existing MinerPlus functionality.
+An invalid file missing either required column is rejected clearly.
+
+## Validation to perform
+
+User should test at least:
+
+- `.xlsx` containing `serial_number` + `location_id` only.
+- `.xlsx` containing all four known columns.
+- `.xls` containing the two required columns.
+- Invalid spreadsheet missing `serial_number`.
+- Invalid spreadsheet missing `location_id`.
+- Confirm existing preview and localStorage behavior still work.
+
+Phase 3 will be marked **COMPLETED** after user confirms these tests pass.
 
 ---
 
@@ -386,6 +403,20 @@ Every phase must be tested before the next phase is implemented.
 
 # Change Log
 
+## 2026-09-04 — Phase 3 implementation
+
+**Change:** Updated `machine-list.js` so Phase 3 requires only `serial_number` and `location_id`.
+
+**Optional fields:** `installed_date` and `uninstalled_date` remain supported when present but are no longer required.
+
+**Preserved behavior:** File type validation, header scanning, normalization, empty-row handling, preview, localStorage storage, clear action, and `CompMachineList` API remain intact.
+
+**Scope protection:** `ip-repeat-analyzer.js`, `master-data.js`, and the existing MinerPlus calculation logic were not changed.
+
+**Commit:** `5163c81a8251fe0bdb3f693e69229b54f4713de3`
+
+**Status:** Implementation complete; user validation required before Phase 3 is marked completed.
+
 ## 2026-09-04 — New Machine Cleaning Tracker Roadmap
 
 **Change:** Replaced the previously proposed Phase 6A–6G direction with a new roadmap focused specifically on the machine cleaning workflow.
@@ -409,6 +440,4 @@ Every phase must be tested before the next phase is implemented.
 - Approximately 5 users are expected.
 - Supabase is not required for this architecture.
 
-**Current next step:** Phase 3 — Machine List Upload.
-
-**Implementation status:** Roadmap frozen; no Phase 3 code changes included in this commit.
+**Implementation status:** Phase 3 code implemented; user validation pending.
