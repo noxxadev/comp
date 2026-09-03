@@ -20,12 +20,23 @@
     .history-table th { font-size:.8rem; text-transform:uppercase; letter-spacing:.04em; }
     .history-empty { padding:36px 16px; text-align:center; opacity:.7; }
     .history-summary { margin:0; opacity:.7; font-size:.9rem; }
-    @media (max-width:700px) { .history-toolbar { align-items:flex-start; flex-direction:column; } }
+    .history-menu-toggle { display:none; width:38px; height:38px; border:1px solid var(--border); border-radius:10px; background:var(--surface); color:var(--text); cursor:pointer; }
+    @media (max-width:700px) {
+      .history-toolbar { align-items:flex-start; flex-direction:column; }
+    }
+    @media (max-width:780px) {
+      .history-sidebar { width:240px !important; height:100vh !important; position:fixed !important; inset:0 auto 0 0 !important; padding:20px 12px !important; border-right:1px solid var(--border) !important; border-bottom:0 !important; overflow-y:auto !important; transform:translateX(-100%); transition:transform .18s ease,box-shadow .18s ease !important; z-index:100 !important; }
+      .history-sidebar.active { transform:translateX(0); box-shadow:8px 0 28px rgba(20,24,45,.12); }
+      .history-menu-toggle { display:grid; place-items:center; }
+      .history-menu-toggle:focus-visible { outline:2px solid var(--brand); outline-offset:2px; }
+      .history-page { padding-top:0; }
+      .history-table { min-width:900px; }
+    }
   </style>
 </head>
 <body>
   <div class="hub-shell">
-    <aside class="hub-sidebar" id="sidebar">
+    <aside class="hub-sidebar history-sidebar" id="sidebar">
       <div class="hub-logo">
         <div class="hub-mark">CP</div>
         <div><div class="hub-brand">COMP Tools</div><div class="hub-subbrand">Data &amp; comparison suite</div></div>
@@ -39,6 +50,8 @@
       <div class="hub-meta"><strong>CLEANING</strong><span>Permanent cleaning event history</span></div>
     </aside>
 
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
     <main class="hub-main">
       <div class="hub-container history-page">
         <section class="hub-top">
@@ -47,6 +60,9 @@
             <h1 class="hub-title">Cleaning History</h1>
             <p class="hub-desc">Riwayat event pekerjaan yang tersimpan permanen di Google Sheets.</p>
           </div>
+          <button class="history-menu-toggle" id="menuToggle" type="button" aria-label="Toggle menu" aria-controls="sidebar" aria-expanded="false">
+            <i class="fas fa-bars"></i>
+          </button>
         </section>
 
         <section class="hub-card history-card">
@@ -87,5 +103,25 @@
   <script src="google-sheets-config.js?v=20260901-2"></script>
   <script src="cleaning-history.js?v=20260904-1"></script>
   <script src="theme-toggle.js"></script>
+  <script src="script.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const menuToggle = document.getElementById('menuToggle');
+      const sidebar = document.getElementById('sidebar');
+      const overlay = document.getElementById('sidebarOverlay');
+      const closeSidebar = () => {
+        sidebar?.classList.remove('active');
+        overlay?.classList.remove('active');
+        menuToggle?.setAttribute('aria-expanded', 'false');
+      };
+      menuToggle?.addEventListener('click', () => {
+        const open = sidebar?.classList.toggle('active');
+        overlay?.classList.toggle('active', open);
+        menuToggle?.setAttribute('aria-expanded', String(Boolean(open)));
+      });
+      overlay?.addEventListener('click', closeSidebar);
+      sidebar?.querySelectorAll('a').forEach(link => link.addEventListener('click', closeSidebar));
+    });
+  </script>
 </body>
 </html>
