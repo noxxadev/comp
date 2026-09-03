@@ -1,0 +1,54 @@
+/* M11: shared mobile header polish. UI-only; no application logic changes. */
+@media (max-width: 780px) {
+  .hub-top,
+  .offline-top,
+  .validator-top,
+  .matcher-top,
+  .bulk-top,
+  .repeat-top {
+    position: relative;
+    padding-right: 54px !important;
+  }
+
+  .hub-menu-toggle,
+  .excel-menu-toggle,
+  .offline-menu-toggle,
+  .validator-menu-toggle,
+  .matcher-menu-toggle,
+  .bulk-menu-toggle,
+  .repeat-menu-toggle,
+  .history-menu-toggle {
+    position: absolute !important;
+    top: 20px !important;
+    right: 0 !important;
+    left: auto !important;
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px !important;
+    min-height: 44px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    display: grid !important;
+    place-items: center !important;
+    z-index: 1200 !important;
+  }
+
+  /* Only the page-level description directly under the title is hidden. */
+  .hub-top > div:first-child > .hub-desc {
+    display: none !important;
+  }
+}
+
+@media (max-width: 560px) {
+  .hub-menu-toggle,
+  .excel-menu-toggle,
+  .offline-menu-toggle,
+  .validator-menu-toggle,
+  .matcher-menu-toggle,
+  .bulk-menu-toggle,
+  .repeat-menu-toggle,
+  .history-menu-toggle {
+    top: 20px !important;
+    right: 0 !important;
+  }
+}
