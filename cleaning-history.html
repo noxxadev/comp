@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cleaning History — COMP Tools</title>
+  <link rel="icon" href="/favicon.ico" type="image/x-icon">
+  <link rel="stylesheet" href="index-hub.css">
+  <link rel="stylesheet" href="theme-toggle.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    .history-page { padding: 28px 0 48px; }
+    .history-card { overflow: hidden; }
+    .history-toolbar { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:18px; }
+    .history-status { font-size:.85rem; opacity:.75; }
+    .history-refresh { border:0; border-radius:10px; padding:10px 14px; cursor:pointer; }
+    .history-table-wrap { overflow:auto; }
+    .history-table { width:100%; border-collapse:collapse; min-width:1050px; }
+    .history-table th, .history-table td { padding:11px 12px; border-bottom:1px solid rgba(127,127,127,.18); text-align:left; white-space:nowrap; }
+    .history-table th { font-size:.8rem; text-transform:uppercase; letter-spacing:.04em; }
+    .history-empty { padding:36px 16px; text-align:center; opacity:.7; }
+    .history-summary { margin:0; opacity:.7; font-size:.9rem; }
+    @media (max-width:700px) { .history-toolbar { align-items:flex-start; flex-direction:column; } }
+  </style>
+</head>
+<body>
+  <div class="hub-shell">
+    <aside class="hub-sidebar" id="sidebar">
+      <div class="hub-logo">
+        <div class="hub-mark">CP</div>
+        <div><div class="hub-brand">COMP Tools</div><div class="hub-subbrand">Data &amp; comparison suite</div></div>
+      </div>
+      <nav class="hub-nav" aria-label="Tool navigation">
+        <a href="index.html"><i class="fas fa-grid-2"></i><span>Tools Hub</span></a>
+        <a href="ip-repeat-analyzer.html"><i class="fas fa-repeat"></i><span>IP Repeat</span></a>
+        <a class="active" href="cleaning-history.html"><i class="fas fa-clock-rotate-left"></i><span>Cleaning History</span></a>
+        <a href="machine-list.html"><i class="fas fa-server"></i><span>Machine List</span></a>
+      </nav>
+      <div class="hub-meta"><strong>CLEANING</strong><span>Permanent cleaning event history</span></div>
+    </aside>
+
+    <main class="hub-main">
+      <div class="hub-container history-page">
+        <section class="hub-top">
+          <div>
+            <div class="hub-kicker">COMP / Machine Cleaning</div>
+            <h1 class="hub-title">Cleaning History</h1>
+            <p class="hub-desc">Riwayat event pekerjaan yang tersimpan permanen di Google Sheets.</p>
+          </div>
+        </section>
+
+        <section class="hub-card history-card">
+          <div class="history-toolbar">
+            <div>
+              <p id="historySummary" class="history-summary">Memuat riwayat...</p>
+              <div id="historyStatus" class="history-status">Memuat...</div>
+            </div>
+            <button id="refreshHistoryBtn" class="history-refresh" type="button"><i class="fas fa-rotate"></i> Refresh</button>
+          </div>
+
+          <div class="history-table-wrap">
+            <table class="history-table">
+              <thead>
+                <tr>
+                  <th>Timestamp</th>
+                  <th>Serial Number</th>
+                  <th>IP</th>
+                  <th>Location</th>
+                  <th>Worker / Engineer</th>
+                  <th>Status</th>
+                  <th>Catatan</th>
+                  <th>Resolution</th>
+                </tr>
+              </thead>
+              <tbody id="historyBody"></tbody>
+            </table>
+            <div id="historyEmpty" class="history-empty" hidden>
+              <i class="fas fa-clock-rotate-left"></i>
+              <p>Belum ada event Cleaning History.</p>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <script src="google-sheets-config.js?v=20260901-2"></script>
+  <script src="cleaning-history.js?v=20260904-1"></script>
+  <script src="theme-toggle.js"></script>
+</body>
+</html>
