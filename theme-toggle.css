@@ -150,3 +150,31 @@
     left:auto !important;
   }
 }
+
+/* M11: keep the burger aligned with the right edge of the page content/card. UI-only. */
+@media(max-width:780px){
+  .hub-top,
+  .offline-top,
+  .validator-top,
+  .matcher-top,
+  .bulk-top,
+  .repeat-top{
+    position:relative !important;
+    padding-right:0 !important;
+  }
+
+  .hub-top > .hub-menu-toggle,
+  .hub-top > .excel-menu-toggle,
+  .hub-top > .offline-menu-toggle,
+  .hub-top > .validator-menu-toggle,
+  .hub-top > .matcher-menu-toggle,
+  .hub-top > .bulk-menu-toggle,
+  .hub-top > .repeat-menu-toggle,
+  .hub-top > .history-menu-toggle{
+    position:absolute !important;
+    top:50% !important;
+    right:0 !important;
+    left:auto !important;
+    transform:translateY(-50%) !important;
+  }
+}
