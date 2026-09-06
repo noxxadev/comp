@@ -39,6 +39,7 @@ function doGet(e) {
     if (SPREADSHEET_ID === 'PASTE_YOUR_GOOGLE_SHEET_ID_HERE') {
       return jsonResponse({ ok: false, error: 'Spreadsheet ID is not configured.' });
     }
+    if (action === 'getWorkItems') return getWorkItems(e);
     if (action === 'getWorkHistory') return getWorkHistory(e);
     if (action === 'getMachineList') return getMachineList();
     return jsonResponse({
@@ -195,6 +196,32 @@ function appendWorkHistory(events) {
   } finally {
     lock.releaseLock();
   }
+}
+
+function getWorkItems(e) {
+  const sheet = getWorkSheet();
+  const data = sheet.getDataRange().getValues();
+  const requestedLimit = Number(e?.parameter?.limit || 2000);
+  const limit = Math.min(Math.max(Number.isFinite(requestedLimit) ? Math.floor(requestedLimit) : 2000, 1), 5000);
+  if (data.length <= 1) return jsonResponse({ ok: true, rows: [], total: 0, returned: 0 });
+
+  const rows = [];
+  for (let r = data.length - 1; r >= 1 && rows.length < limit; r--) {
+    const row = data[r];
+    rows.push({
+      ip: String(row[0] || '').trim(),
+      name: String(row[1] || '').trim(),
+      zone: String(row[2] || '-').trim() || '-',
+      repeat: Number(row[3] || 0),
+      serialNumber: String(row[4] || '').trim(),
+      cleaningCount: row[5] === '' || row[5] === null || row[5] === undefined ? '-' : (Number.isFinite(Number(row[5])) ? Number(row[5]) : String(row[5]).trim()),
+      engineerId: String(row[6] || '').trim(),
+      status: String(row[7] || '').trim(),
+      timestamp: row[8] instanceof Date ? row[8].toISOString() : String(row[8] || '').trim(),
+      note: String(row[9] || '').trim()
+    });
+  }
+  return jsonResponse({ ok: true, rows, total: Math.max(data.length - 1, 0), returned: rows.length });
 }
 
 function getWorkHistory(e) {
