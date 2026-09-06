@@ -13,9 +13,8 @@ const HEADERS = [
 ];
 
 const HISTORY_HEADERS = [
-  'Event ID', 'Timestamp', 'IP', 'Serial Number', 'Location ID', 'Nama DC', 'Zona',
-  'Repeat Zero', 'Engineer ID', 'Status', 'Catatan', 'Resolution Status',
-  'Resolution Message', 'Source'
+  'Event ID', 'Timestamp', 'IP', 'Serial Number', 'Location ID', 'Zona',
+  'Repeat Zero', 'Engineer ID', 'Status', 'Catatan', 'Resolution Status'
 ];
 
 const MACHINE_LIST_HEADERS = [
@@ -150,14 +149,12 @@ function appendWorkHistory(events) {
       const ip = String(event?.ip || '').trim();
       const serialNumber = String(event?.serialNumber || '').trim();
       const locationId = String(event?.locationId || '').trim();
-      const name = String(event?.name || '').trim();
       const zone = String(event?.zone || '-').trim() || '-';
       const repeat = Number(event?.repeat || 0);
       const engineerId = String(event?.engineerId || '').trim();
       const status = String(event?.status || '').trim();
       const note = String(event?.note || '').trim();
       const resolutionStatus = String(event?.resolutionStatus || '').trim();
-      const resolutionMessage = String(event?.resolutionMessage || '').trim();
       const timestampText = String(event?.timestamp || '').trim();
       const timestamp = new Date(timestampText);
 
@@ -166,11 +163,11 @@ function appendWorkHistory(events) {
       if (!ALLOWED_RESOLUTION_STATUSES.includes(resolutionStatus)) return;
       if (resolutionStatus === 'resolved' && !serialNumber) return;
       if (!timestampText || Number.isNaN(timestamp.getTime())) return;
-      if (note.length > 500 || resolutionMessage.length > 500) return;
+      if (note.length > 500) return;
 
       values.push([
-        eventId, timestamp, ip, serialNumber, locationId, name, zone, repeat,
-        engineerId, status, note, resolutionStatus, resolutionMessage, 'IP Repeat Analyzer'
+        eventId, timestamp, ip, serialNumber, locationId, zone, repeat,
+        engineerId, status, note, resolutionStatus
       ]);
       seenRequestIds.add(eventId);
     });
@@ -190,6 +187,8 @@ function getWorkHistory(e) {
   const sheet = spreadsheet.getSheetByName(HISTORY_SHEET_NAME);
   if (!sheet) return jsonResponse({ ok: true, rows: [], total: 0, returned: 0 });
 
+  ensureHistorySchema(sheet);
+
   const data = sheet.getDataRange().getValues();
   const requestedLimit = Number(e?.parameter?.limit || 2000);
   const limit = Math.min(Math.max(Number.isFinite(requestedLimit) ? Math.floor(requestedLimit) : 2000, 1), 5000);
@@ -204,18 +203,49 @@ function getWorkHistory(e) {
       ip: String(row[2] || '').trim(),
       serialNumber: String(row[3] || '').trim(),
       locationId: String(row[4] || '').trim(),
-      name: String(row[5] || '').trim(),
-      zone: String(row[6] || '-').trim() || '-',
-      repeat: Number(row[7] || 0),
-      engineerId: String(row[8] || '').trim(),
-      status: String(row[9] || '').trim(),
-      note: String(row[10] || '').trim(),
-      resolutionStatus: String(row[11] || '').trim(),
-      resolutionMessage: String(row[12] || '').trim(),
-      source: String(row[13] || '').trim()
+      zone: String(row[5] || '-').trim() || '-',
+      repeat: Number(row[6] || 0),
+      engineerId: String(row[7] || '').trim(),
+      status: String(row[8] || '').trim(),
+      note: String(row[9] || '').trim(),
+      resolutionStatus: String(row[10] || '').trim()
     });
   }
   return jsonResponse({ ok: true, rows, total: Math.max(data.length - 1, 0), returned: rows.length });
+}
+
+function ensureHistorySchema(sheet) {
+  const lastColumn = sheet.getLastColumn();
+  const lastRow = sheet.getLastRow();
+
+  if (!lastColumn || lastRow === 0) {
+    sheet.getRange(1, 1, 1, HISTORY_HEADERS.length).setValues([HISTORY_HEADERS]);
+    sheet.setFrozenRows(1);
+    return;
+  }
+
+  const currentHeaders = sheet.getRange(1, 1, 1, lastColumn).getValues()[0].map(value => String(value || '').trim());
+  const sameSchema = HISTORY_HEADERS.length === currentHeaders.length && HISTORY_HEADERS.every((header, index) => header === currentHeaders[index]);
+  if (sameSchema) return;
+
+  const headerIndex = new Map();
+  currentHeaders.forEach((header, index) => {
+    if (header) headerIndex.set(header, index);
+  });
+
+  const rows = lastRow > 1 ? sheet.getRange(2, 1, lastRow - 1, lastColumn).getValues() : [];
+  const migratedRows = rows.map(row => HISTORY_HEADERS.map(header => {
+    const index = headerIndex.get(header);
+    return index === undefined ? '' : row[index];
+  }));
+
+  sheet.clearContents();
+  sheet.getRange(1, 1, 1, HISTORY_HEADERS.length).setValues([HISTORY_HEADERS]);
+  if (migratedRows.length) {
+    sheet.getRange(2, 1, migratedRows.length, HISTORY_HEADERS.length).setValues(migratedRows);
+  }
+  sheet.setFrozenRows(1);
+  SpreadsheetApp.flush();
 }
 
 function getMachineList() {
@@ -323,9 +353,8 @@ function getHistorySheet() {
   let sheet = spreadsheet.getSheetByName(HISTORY_SHEET_NAME);
   if (!sheet) {
     sheet = spreadsheet.insertSheet(HISTORY_SHEET_NAME);
-    sheet.getRange(1, 1, 1, HISTORY_HEADERS.length).setValues([HISTORY_HEADERS]);
-    sheet.setFrozenRows(1);
   }
+  ensureHistorySchema(sheet);
   return sheet;
 }
 
