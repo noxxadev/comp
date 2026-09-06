@@ -155,6 +155,7 @@ function appendWorkHistory(events) {
     }
 
     const values = [];
+    const savedEvents = [];
     const seenRequestIds = new Set();
     rows.forEach(event => {
       const eventId = String(event?.eventId || '').trim();
@@ -181,12 +182,14 @@ function appendWorkHistory(events) {
         eventId, timestamp, ip, serialNumber, locationId, zone, repeat,
         engineerId, status, note, resolutionStatus
       ]);
+      savedEvents.push({ eventId, ip, serialNumber, status });
       seenRequestIds.add(eventId);
     });
 
     if (values.length) {
       sheet.getRange(sheet.getLastRow() + 1, 1, values.length, HISTORY_HEADERS.length).setValues(values);
       SpreadsheetApp.flush();
+      refreshWorkItemCleaningCounts(savedEvents);
     }
     return jsonResponse({ ok: true, saved: values.length });
   } finally {
@@ -372,6 +375,39 @@ function loadCleaningCountsBySerial() {
   return counts;
 }
 
+function refreshWorkItemCleaningCounts(events) {
+  const targets = Array.isArray(events) ? events.filter(event => event?.status === 'Selesai' && event?.ip) : [];
+  if (!targets.length) return;
+
+  const sheet = getWorkSheet();
+  const data = sheet.getDataRange().getValues();
+  if (data.length <= 1) return;
+
+  const targetIps = new Set(targets.map(event => String(event.ip).trim()).filter(Boolean));
+  const machineByLocation = loadCurrentMachineByLocation();
+  const cleaningCountBySerial = loadCleaningCountsBySerial();
+  const updates = [];
+
+  for (let r = 1; r < data.length; r++) {
+    const ip = String(data[r][0] || '').trim();
+    if (!targetIps.has(ip)) continue;
+
+    const locationId = String(data[r][1] || '').trim();
+    const machine = machineByLocation.get(normalizeLocationKey(locationId));
+    const serialNumber = machine?.serialNumber || String(data[r][4] || '').trim();
+    const cleaningCount = serialNumber
+      ? Number(cleaningCountBySerial.get(normalizeSerialKey(serialNumber)) || 0)
+      : '-';
+
+    updates.push({ row: r + 1, serialNumber, cleaningCount });
+  }
+
+  updates.forEach(update => {
+    sheet.getRange(update.row, 5, 1, 2).setValues([[update.serialNumber, update.cleaningCount]]);
+  });
+  if (updates.length) SpreadsheetApp.flush();
+}
+
 function normalizeLocationKey(value) {
   return String(value ?? '').replace(/\s+/g, ' ').trim().toUpperCase();
 }
@@ -451,9 +487,7 @@ function ensureWorkItemsSchema(sheet) {
 function getHistorySheet() {
   const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
   let sheet = spreadsheet.getSheetByName(HISTORY_SHEET_NAME);
-  if (!sheet) {
-    sheet = spreadsheet.insertSheet(HISTORY_SHEET_NAME);
-  }
+  if (!sheet) sheet = spreadsheet.insertSheet(HISTORY_SHEET_NAME);
   ensureHistorySchema(sheet);
   return sheet;
 }
