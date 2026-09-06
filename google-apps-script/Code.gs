@@ -9,7 +9,8 @@ const MACHINE_LIST_META_KEY = 'comp.machineList.meta';
 const REQUEST_KEY = '';
 
 const HEADERS = [
-  'IP', 'Nama DC', 'Zona', 'Repeat Zero', 'Engineer ID', 'Status', 'Timestamp', 'Catatan'
+  'IP', 'Nama DC', 'Zona', 'Repeat Zero', 'Serial Number', 'Cleaning Count',
+  'Engineer ID', 'Status', 'Timestamp', 'Catatan'
 ];
 
 const HISTORY_HEADERS = [
@@ -76,12 +77,14 @@ function upsertWorkItems(items) {
   if (!rows.length) return jsonResponse({ ok: false, error: 'No work items supplied.' });
   if (rows.length > 200) return jsonResponse({ ok: false, error: 'Too many work items in one request.' });
 
-  // Protect the read → decide row → write sequence from concurrent users.
+  // Protect the read → resolve → count → write sequence from concurrent users.
   const lock = LockService.getScriptLock();
   lock.waitLock(10000);
 
   try {
     const sheet = getWorkSheet();
+    const machineByLocation = loadCurrentMachineByLocation();
+    const cleaningCountBySerial = loadCleaningCountsBySerial();
     const data = sheet.getDataRange().getValues();
     const rowByIp = new Map();
 
@@ -104,7 +107,16 @@ function upsertWorkItems(items) {
 
       if (!isValidIpv4(ip) || !engineerId || !ALLOWED_STATUSES.includes(status) || note.length > 500) return;
 
-      const values = [[ip, name, zone, repeat, engineerId, status, now, note]];
+      const machine = machineByLocation.get(normalizeLocationKey(name));
+      const serialNumber = machine?.serialNumber || '';
+      const cleaningCount = serialNumber
+        ? Number(cleaningCountBySerial.get(normalizeSerialKey(serialNumber)) || 0)
+        : '-';
+
+      const values = [[
+        ip, name, zone, repeat, serialNumber, cleaningCount,
+        engineerId, status, now, note
+      ]];
       const existingRow = rowByIp.get(ip);
 
       if (existingRow) {
@@ -317,6 +329,57 @@ function replaceMachineList(records, sourceFileName) {
   }
 }
 
+function loadCurrentMachineByLocation() {
+  const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const sheet = spreadsheet.getSheetByName(MACHINE_LIST_SHEET_NAME);
+  const map = new Map();
+  if (!sheet || sheet.getLastRow() <= 1) return map;
+
+  const data = sheet.getDataRange().getValues();
+  for (let r = 1; r < data.length; r++) {
+    const serialNumber = String(data[r][0] || '').trim();
+    const locationId = String(data[r][1] || '').trim();
+    if (!serialNumber || !locationId) continue;
+    const key = normalizeLocationKey(locationId);
+    if (!key || map.has(key)) {
+      if (key) map.set(key, null);
+      continue;
+    }
+    map.set(key, { serialNumber });
+  }
+  return map;
+}
+
+function loadCleaningCountsBySerial() {
+  const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const sheet = spreadsheet.getSheetByName(HISTORY_SHEET_NAME);
+  const counts = new Map();
+  if (!sheet || sheet.getLastRow() <= 1) return counts;
+
+  ensureHistorySchema(sheet);
+  const data = sheet.getDataRange().getValues();
+  const statusColumn = HISTORY_HEADERS.indexOf('Status');
+  const serialColumn = HISTORY_HEADERS.indexOf('Serial Number');
+
+  for (let r = 1; r < data.length; r++) {
+    const status = String(data[r][statusColumn] || '').trim();
+    const serialNumber = String(data[r][serialColumn] || '').trim();
+    if (status !== 'Selesai' || !serialNumber) continue;
+
+    const key = normalizeSerialKey(serialNumber);
+    counts.set(key, Number(counts.get(key) || 0) + 1);
+  }
+  return counts;
+}
+
+function normalizeLocationKey(value) {
+  return String(value ?? '').replace(/\s+/g, ' ').trim().toUpperCase();
+}
+
+function normalizeSerialKey(value) {
+  return String(value ?? '').replace(/\s+/g, ' ').trim().toUpperCase();
+}
+
 function readMachineListMeta() {
   try {
     const raw = PropertiesService.getScriptProperties().getProperty(MACHINE_LIST_META_KEY);
@@ -344,8 +407,45 @@ function getWorkSheet() {
     sheet = spreadsheet.insertSheet(WORK_SHEET_NAME);
     sheet.getRange(1, 1, 1, HEADERS.length).setValues([HEADERS]);
     sheet.setFrozenRows(1);
+    return sheet;
   }
+
+  ensureWorkItemsSchema(sheet);
   return sheet;
+}
+
+function ensureWorkItemsSchema(sheet) {
+  const lastColumn = sheet.getLastColumn();
+  const lastRow = sheet.getLastRow();
+
+  if (!lastColumn || lastRow === 0) {
+    sheet.getRange(1, 1, 1, HEADERS.length).setValues([HEADERS]);
+    sheet.setFrozenRows(1);
+    return;
+  }
+
+  const currentHeaders = sheet.getRange(1, 1, 1, lastColumn).getValues()[0].map(value => String(value || '').trim());
+  const sameSchema = HEADERS.length === currentHeaders.length && HEADERS.every((header, index) => header === currentHeaders[index]);
+  if (sameSchema) return;
+
+  const headerIndex = new Map();
+  currentHeaders.forEach((header, index) => {
+    if (header) headerIndex.set(header, index);
+  });
+
+  const rows = lastRow > 1 ? sheet.getRange(2, 1, lastRow - 1, lastColumn).getValues() : [];
+  const migratedRows = rows.map(row => HEADERS.map(header => {
+    const index = headerIndex.get(header);
+    return index === undefined ? '' : row[index];
+  }));
+
+  sheet.clearContents();
+  sheet.getRange(1, 1, 1, HEADERS.length).setValues([HEADERS]);
+  if (migratedRows.length) {
+    sheet.getRange(2, 1, migratedRows.length, HEADERS.length).setValues(migratedRows);
+  }
+  sheet.setFrozenRows(1);
+  SpreadsheetApp.flush();
 }
 
 function getHistorySheet() {
