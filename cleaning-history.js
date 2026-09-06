@@ -10,7 +10,7 @@
     const baseUrl = String(config.webAppUrl || '').trim();
     if (!baseUrl) throw new Error('Google Sheets belum dikonfigurasi.');
 
-    const params = new URLSearchParams({ action: 'getWorkHistory', limit: String(limit) });
+    const params = new URLSearchParams({ action: 'getWorkItems', limit: String(limit) });
     if (config.requestKey) params.set('requestKey', String(config.requestKey));
 
     const separator = baseUrl.includes('?') ? '&' : '?';
@@ -26,11 +26,11 @@
     try {
       result = JSON.parse(text);
     } catch (_) {
-      throw new Error(`Response Cleaning History tidak valid (HTTP ${response.status}).`);
+      throw new Error(`Response Work Items tidak valid (HTTP ${response.status}).`);
     }
 
     if (!response.ok || !result?.ok) {
-      throw new Error(result?.error || `Gagal membaca Cleaning History (HTTP ${response.status}).`);
+      throw new Error(result?.error || `Gagal membaca Work Items (HTTP ${response.status}).`);
     }
 
     return result;
@@ -41,7 +41,7 @@
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
+      .replace(/\"/g, '&quot;')
       .replace(/'/g, '&#039;');
   }
 
@@ -63,19 +63,21 @@
     rows.forEach(row => {
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td>${escapeHtml(formatTimestamp(row.timestamp))}</td>
-        <td><strong>${escapeHtml(row.serialNumber || '-')}</strong></td>
         <td>${escapeHtml(row.ip || '-')}</td>
-        <td>${escapeHtml(row.locationId || row.name || '-')}</td>
+        <td>${escapeHtml(row.name || '-')}</td>
+        <td>${escapeHtml(row.zone || '-')}</td>
+        <td>${escapeHtml(String(row.repeat ?? '-'))}</td>
+        <td><strong>${escapeHtml(row.serialNumber || '-')}</strong></td>
+        <td><strong>${escapeHtml(String(row.cleaningCount ?? '-'))}</strong></td>
         <td>${escapeHtml(row.engineerId || '-')}</td>
         <td>${escapeHtml(row.status || '-')}</td>
+        <td>${escapeHtml(formatTimestamp(row.timestamp))}</td>
         <td>${escapeHtml(row.note || '-')}</td>
-        <td>${escapeHtml(row.resolutionStatus || '-')}</td>
       `;
       body.appendChild(tr);
     });
 
-    summary.textContent = `Menampilkan ${rows.length.toLocaleString('id-ID')} event dari ${Number(total || 0).toLocaleString('id-ID')} total event.`;
+    summary.textContent = `Menampilkan ${rows.length.toLocaleString('id-ID')} Work Item dari ${Number(total || 0).toLocaleString('id-ID')} total item.`;
   }
 
   async function refresh() {
@@ -87,7 +89,7 @@
     try {
       const result = await loadHistory();
       render(Array.isArray(result.rows) ? result.rows : [], result.total);
-      if (status) status.textContent = 'Google Sheets';
+      if (status) status.textContent = 'Google Sheets — Work Items';
     } catch (error) {
       console.error('Cleaning History:', error);
       render([], 0);
