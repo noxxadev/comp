@@ -15,7 +15,7 @@
     .history-status { font-size:.85rem; opacity:.75; }
     .history-refresh { border:0; border-radius:10px; padding:10px 14px; cursor:pointer; }
     .history-table-wrap { overflow:auto; }
-    .history-table { width:100%; border-collapse:collapse; min-width:1050px; }
+    .history-table { width:100%; border-collapse:collapse; min-width:1100px; }
     .history-table th, .history-table td { padding:11px 12px; border-bottom:1px solid rgba(127,127,127,.18); text-align:left; white-space:nowrap; }
     .history-table th { font-size:.8rem; text-transform:uppercase; letter-spacing:.04em; }
     .history-empty { padding:36px 16px; text-align:center; opacity:.7; }
@@ -28,7 +28,7 @@
       .history-menu-toggle { display:grid; place-items:center; }
       .history-menu-toggle:focus-visible { outline:2px solid var(--brand); outline-offset:2px; }
       .history-page { padding-top:0; }
-      .history-table { min-width:900px; }
+      .history-table { min-width:1000px; }
     }
   </style>
 </head>
@@ -45,7 +45,7 @@
         <a class="active" href="cleaning-history.html"><i class="fas fa-clock-rotate-left"></i><span>Cleaning History</span></a>
         <a href="machine-list.html"><i class="fas fa-server"></i><span>Machine List</span></a>
       </nav>
-      <div class="hub-meta"><strong>CLEANING</strong><span>Permanent cleaning event history</span></div>
+      <div class="hub-meta"><strong>WORK ITEMS</strong><span>Current cleaning work list</span></div>
     </aside>
 
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
@@ -56,22 +56,22 @@
           <div>
             <div class="hub-kicker">COMP / Machine Cleaning</div>
             <h1 class="hub-title">Cleaning History</h1>
-            <p class="hub-desc">Riwayat event pekerjaan yang tersimpan permanen di Google Sheets.</p>
+            <p class="hub-desc">Daftar pekerjaan saat ini yang tersimpan pada Google Sheets — Work Items.</p>
           </div>
           <button class="history-menu-toggle" id="menuToggle" type="button" aria-label="Toggle menu" aria-controls="sidebar" aria-expanded="false"><i class="fas fa-bars"></i></button>
         </section>
 
         <section class="hub-card history-card">
           <div class="history-toolbar">
-            <div><p id="historySummary" class="history-summary">Memuat riwayat...</p><div id="historyStatus" class="history-status">Memuat...</div></div>
+            <div><p id="historySummary" class="history-summary">Memuat Work Items...</p><div id="historyStatus" class="history-status">Memuat...</div></div>
             <button id="refreshHistoryBtn" class="history-refresh" type="button"><i class="fas fa-rotate"></i> Refresh</button>
           </div>
           <div class="history-table-wrap">
             <table class="history-table">
-              <thead><tr><th>Timestamp</th><th>Serial Number</th><th>IP</th><th>Location ID</th><th>Worker / Engineer</th><th>Status</th><th>Catatan</th><th>Resolution Status</th></tr></thead>
+              <thead><tr><th>IP</th><th>Nama DC</th><th>Zona</th><th>Repeat Zero</th><th>Serial Number</th><th>Cleaning Count</th><th>Worker / Engineer</th><th>Status</th><th>Timestamp</th><th>Catatan</th></tr></thead>
               <tbody id="historyBody"></tbody>
             </table>
-            <div id="historyEmpty" class="history-empty" hidden><i class="fas fa-clock-rotate-left"></i><p>Belum ada event Cleaning History.</p></div>
+            <div id="historyEmpty" class="history-empty" hidden><i class="fas fa-list-check"></i><p>Belum ada Work Item.</p></div>
           </div>
         </section>
       </div>
@@ -79,7 +79,7 @@
   </div>
 
   <script src="google-sheets-config.js?v=20260901-2"></script>
-  <script src="cleaning-history.js?v=20260904-1"></script>
+  <script src="cleaning-history.js?v=20260906-1"></script>
   <script src="theme-toggle.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
