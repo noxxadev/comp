@@ -7,6 +7,7 @@
   <link rel="icon" href="/favicon.ico" type="image/x-icon">
   <link rel="stylesheet" href="index-hub.css">
   <link rel="stylesheet" href="ip-repeat-analyzer.css?v=20260901-7">
+  <link rel="stylesheet" href="ip-repeat-hero-status.css">
   <link rel="stylesheet" href="theme-toggle.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
@@ -42,11 +43,18 @@
         <button class="repeat-menu-toggle" id="menuToggle" type="button" aria-label="Toggle menu"><i class="fas fa-bars"></i></button>
       </section>
 
-      <section class="hub-hero repeat-hero">
-        <div>
+      <section class="hub-hero repeat-hero repeat-hero-system">
+        <div class="repeat-hero-copy">
+          <span class="repeat-hero-kicker">System Status</span>
           <strong>IP Repeat Analysis</strong>
         </div>
-        <div class="repeat-hero-icon"><i class="fas fa-repeat"></i></div>
+        <div class="repeat-system-status" aria-label="System status ready">
+          <div class="repeat-system-icon"><i class="fas fa-repeat"></i></div>
+          <div class="repeat-system-meta">
+            <span class="repeat-system-label">Analyzer</span>
+            <span class="repeat-system-value">Ready</span>
+          </div>
+        </div>
       </section>
 
       <section class="hub-card repeat-card input-card">
