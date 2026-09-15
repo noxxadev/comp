@@ -15,7 +15,8 @@
   top: 50%;
   transform: translateY(-50%);
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(59,130,246,.14) 0%, rgba(59,130,246,0) 70%);
+  background: rgba(255,255,255,.035);
+  box-shadow: 0 0 90px rgba(255,255,255,.08);
   pointer-events: none;
 }
 
