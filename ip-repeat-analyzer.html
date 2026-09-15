@@ -38,7 +38,6 @@
         <div>
           <div class="hub-kicker">COMP / Tools</div>
           <h1 class="hub-title">IP Repeat Analyzer</h1>
-          <p class="hub-desc">Hitung kemunculan IP dari file MinerPlus dan cocokkan dengan Master Data DC.</p>
         </div>
         <button class="repeat-menu-toggle" id="menuToggle" type="button" aria-label="Toggle menu"><i class="fas fa-bars"></i></button>
       </section>
@@ -46,7 +45,6 @@
       <section class="hub-hero repeat-hero">
         <div>
           <strong>IP Repeat Analysis</strong>
-          <p>Upload satu file Excel. Sistem otomatis mencari kolom <b>IP</b>, menggabungkan IP yang sama, lalu memberi nama DC berdasarkan <code>master-data.js</code>.</p>
         </div>
         <div class="repeat-hero-icon"><i class="fas fa-repeat"></i></div>
       </section>
@@ -55,7 +53,6 @@
         <div class="repeat-card-heading">
           <div>
             <h2>Upload Data</h2>
-            <p>File .xls atau .xlsx hasil export MinerPlus. Kolom lain tidak diproses.</p>
           </div>
           <div class="master-status">Master Data: <span id="masterDataStatus">Loading...</span></div>
         </div>
@@ -75,7 +72,7 @@
         <div id="uploadError" class="repeat-message error-message" role="alert"></div>
 
         <div class="repeat-actions">
-          <div class="repeat-info"><i class="fas fa-circle-info"></i><span>Spasi di dalam nilai IP diabaikan saat pencocokan.</span></div>
+          <div class="repeat-info"><i class="fas fa-circle-info"></i></div>
           <button id="processBtn" class="repeat-primary-btn" type="button" disabled><i class="fas fa-play"></i> Proses Data</button>
         </div>
       </section>
@@ -89,7 +86,6 @@
         <div class="repeat-card-heading results-heading">
           <div>
             <h2>Analysis Results</h2>
-            <p id="resultSummary">Hasil pengolahan IP.</p>
           </div>
           <div class="repeat-identity-control">
             <label for="engineerSelect">Engineer</label>
