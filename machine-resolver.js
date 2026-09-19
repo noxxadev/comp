@@ -257,8 +257,17 @@
       const serialTd = document.createElement('td');
       serialTd.dataset.machineIdentityCell = 'true';
       serialTd.className = 'machine-identity-cell';
-      serialTd.textContent = serial || 'SN Tidak Ditemukan';
-      if (!serial) serialTd.classList.add('machine-identity-missing');
+      if (serial) {
+        const link = document.createElement('a');
+        link.href = 'cleaning-history.html?serial=' + encodeURIComponent(serial);
+        link.textContent = serial;
+        link.className = 'machine-identity-link';
+        link.title = 'Lihat Cleaning History untuk ' + serial;
+        serialTd.appendChild(link);
+      } else {
+        serialTd.textContent = 'SN Tidak Ditemukan';
+        serialTd.classList.add('machine-identity-missing');
+      }
 
       const countTd = document.createElement('td');
       countTd.dataset.cleaningCountCell = 'true';
