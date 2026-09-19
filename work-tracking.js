@@ -66,7 +66,7 @@
     };
 
     try {
-      const events = buildWorkHistoryEvents(items);
+      const events = await buildWorkHistoryEvents(items);
       historyResult.attempted = events.length;
 
       if (events.length) {
@@ -115,24 +115,33 @@
     return String(value ?? '').replace(/\s+/g, ' ').trim().toUpperCase();
   }
 
-  function resolveCurrentMachine(locationId) {
-    const resolver = window.CompMachineResolver;
+  function resolveCurrentMachine(locationId, records = []) {
     const target = normalizeLocation(locationId);
-    if (!target || !resolver?.loadStoredRecords) return null;
+    if (!target || !Array.isArray(records)) return null;
 
-    const records = resolver.loadStoredRecords();
     const matches = records.filter(record => normalizeLocation(record?.locationId) === target);
-
     if (matches.length !== 1) return null;
 
     const serialNumber = String(matches[0]?.serialNumber || '').trim();
     return serialNumber ? { serialNumber } : null;
   }
 
-  function buildWorkHistoryEvents(items) {
+  async function buildWorkHistoryEvents(items) {
     const resolver = window.CompMachineResolver;
     const rows = Object.values(items || {});
     const fallbackTimestamp = new Date().toISOString();
+
+    // Use the same current Machine List source that powers the Serial Number
+    // shown in IP Repeat Analyzer. This prevents a stale/empty localStorage
+    // snapshot from causing Work History to lose the Serial Number.
+    let currentRecords = [];
+    try {
+      if (resolver?.loadCurrentRecords) {
+        currentRecords = await resolver.loadCurrentRecords();
+      }
+    } catch (error) {
+      console.warn('Machine List Current gagal dimuat saat menyimpan Work History:', error);
+    }
 
     return rows.map(item => {
       const timestamp = String(item?.timestamp || fallbackTimestamp).trim() || fallbackTimestamp;
@@ -149,19 +158,16 @@
         } else {
           resolution = resolver.resolve(locationId, timestamp);
 
-          // Machine List Current normally has no installation dates. In that
-          // case the historical resolver cannot establish a time range even
-          // though the current Location ID has exactly one machine. For a new
-          // work event, use the current snapshot as the authoritative identity.
-          if (!resolution?.serialNumber) {
-            const currentMachine = resolveCurrentMachine(locationId);
-            if (currentMachine) {
-              resolution = {
-                status: 'resolved',
-                serialNumber: currentMachine.serialNumber,
-                message: 'Serial Number ditemukan dari Machine List Current.'
-              };
-            }
+          // Prefer the current Machine List when resolving a new work event.
+          // This is also the fallback when the historical resolver cannot
+          // resolve because installation dates are unavailable.
+          const currentMachine = resolveCurrentMachine(locationId, currentRecords);
+          if (currentMachine) {
+            resolution = {
+              status: 'resolved',
+              serialNumber: currentMachine.serialNumber,
+              message: 'Serial Number ditemukan dari Machine List Current.'
+            };
           }
         }
       } else {
