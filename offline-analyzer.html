@@ -42,14 +42,39 @@
       </section>
       <section class="hub-card offline-card input-card">
         <div class="offline-card-heading"><div><h2>Input Data</h2></div></div>
-        <div class="offline-section">
-          <div class="step-header"><span class="step-number">1</span><div><h3>Masukkan IP Offline</h3><p>Daftar IP offline, satu IP per baris.</p></div></div>
-          <div class="input-group"><textarea id="offlineIpInput" ></textarea></div>
-        </div>
-        <div class="offline-divider"></div>
-        <div class="offline-section">
-          <div class="step-header"><span class="step-number">2</span><div><h3>Upload Data Excel</h3><p>Upload file MinerPlus/Dashboard yang memiliki kolom <code>location_id</code>.</p></div></div>
-          <div class="compact-upload-area" id="fileUploadArea"><div class="upload-content"><i class="fas fa-cloud-arrow-up"></i><div class="upload-text-wrapper"><h4>Klik untuk memilih file atau seret ke sini</h4><p>Format .xls, .xlsx</p></div></div><input type="file" id="excelFile" class="file-input" accept=".xls,.xlsx"></div>
+        <div class="offline-input-grid">
+          <div class="upload-box offline-input-box">
+            <div class="offline-box-heading">
+              <div class="offline-box-icon"><i class="fas fa-list"></i></div>
+              <div>
+                <h3>IP Offline</h3>
+                <p>Masukkan daftar IP offline, satu IP per baris.</p>
+              </div>
+            </div>
+            <div class="input-group">
+              <textarea id="offlineIpInput"></textarea>
+            </div>
+          </div>
+
+          <div class="upload-box offline-input-box">
+            <div class="offline-box-heading">
+              <div class="offline-box-icon excel-icon"><i class="fas fa-file-excel"></i></div>
+              <div>
+                <h3>Upload Data Excel</h3>
+                <p>File MinerPlus/Dashboard dengan kolom <code>location_id</code>.</p>
+              </div>
+            </div>
+            <div class="compact-upload-area" id="fileUploadArea">
+              <div class="upload-content">
+                <i class="fas fa-cloud-arrow-up"></i>
+                <div class="upload-text-wrapper">
+                  <h4>Klik untuk memilih file atau seret ke sini</h4>
+                  <p>Format .xls, .xlsx</p>
+                </div>
+              </div>
+              <input type="file" id="excelFile" class="file-input" accept=".xls,.xlsx">
+            </div>
+          </div>
         </div>
       </section>
       <div id="loading" class="loading-container"><div class="loading-spinner"></div><p>Memproses data, harap tunggu...</p></div>
