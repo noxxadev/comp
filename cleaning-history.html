@@ -45,7 +45,7 @@
         <a class="active" href="cleaning-history.html"><i class="fas fa-clock-rotate-left"></i><span>Cleaning History</span></a>
         <a href="machine-list.html"><i class="fas fa-server"></i><span>Machine List</span></a>
       </nav>
-      <div class="hub-meta"><strong>WORK ITEMS</strong><span>Current cleaning work list</span></div>
+      <div class="hub-meta"><strong>WORK HISTORY</strong><span>Permanent cleaning event archive</span></div>
     </aside>
 
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
@@ -56,14 +56,14 @@
           <div>
             <div class="hub-kicker">COMP / Machine Cleaning</div>
             <h1 class="hub-title">Cleaning History</h1>
-            <p class="hub-desc">Daftar pekerjaan saat ini yang tersimpan pada Google Sheets</p>
+            <p class="hub-desc">Riwayat pekerjaan yang tersimpan pada Google Sheets</p>
           </div>
           <button class="history-menu-toggle" id="menuToggle" type="button" aria-label="Toggle menu" aria-controls="sidebar" aria-expanded="false"><i class="fas fa-bars"></i></button>
         </section>
 
         <section class="hub-card history-card">
           <div class="history-toolbar">
-            <div><p id="historySummary" class="history-summary">Memuat Work Items...</p><div id="historyStatus" class="history-status">Memuat...</div></div>
+            <div><p id="historySummary" class="history-summary">Memuat Work History...</p><div id="historyStatus" class="history-status">Memuat...</div></div>
             <button id="refreshHistoryBtn" class="history-refresh" type="button"><i class="fas fa-rotate"></i> Refresh</button>
           </div>
           <div class="history-table-wrap">
@@ -71,7 +71,7 @@
               <thead><tr><th>IP</th><th>Nama DC</th><th>Zona</th><th>Repeat Zero</th><th>Serial Number</th><th>Cleaning Count</th><th>Worker / Engineer</th><th>Status</th><th>Timestamp</th><th>Catatan</th></tr></thead>
               <tbody id="historyBody"></tbody>
             </table>
-            <div id="historyEmpty" class="history-empty" hidden><i class="fas fa-list-check"></i><p>Belum ada Work Item.</p></div>
+            <div id="historyEmpty" class="history-empty" hidden><i class="fas fa-list-check"></i><p>Belum ada riwayat pekerjaan.</p></div>
           </div>
         </section>
       </div>
