@@ -15,7 +15,7 @@
     .history-status { font-size:.85rem; opacity:.75; }
     .history-refresh { border:0; border-radius:10px; padding:10px 14px; cursor:pointer; }
     .history-table-wrap { overflow:auto; }
-    .history-table { width:100%; border-collapse:collapse; min-width:1200px; }
+    .history-table { width:100%; border-collapse:collapse; min-width:1100px; }
     .history-table th, .history-table td { padding:11px 12px; border-bottom:1px solid rgba(127,127,127,.18); text-align:left; white-space:nowrap; }
     .history-table th { font-size:.8rem; text-transform:uppercase; letter-spacing:.04em; }
     .history-empty { padding:36px 16px; text-align:center; opacity:.7; }
@@ -65,7 +65,7 @@
           </div>
           <div class="history-table-wrap">
             <table class="history-table">
-              <thead><tr><th>Event ID</th><th>Timestamp</th><th>IP</th><th>Serial Number</th><th>Location ID</th><th>Zona</th><th>Repeat Zero</th><th>Engineer ID</th><th>Status</th><th>Catatan</th><th>Resolution Status</th></tr></thead>
+              <thead><tr><th>Timestamp</th><th>IP</th><th>Serial Number</th><th>Location ID</th><th>Zona</th><th>Repeat Zero</th><th>Engineer ID</th><th>Status</th><th>Catatan</th><th>Resolution Status</th></tr></thead>
               <tbody id="historyBody"></tbody>
             </table>
             <div id="historyEmpty" class="history-empty" hidden><i class="fas fa-list-check"></i><p>Belum ada riwayat pekerjaan.</p></div>
@@ -75,7 +75,7 @@
     </main>
   </div>
   <script src="google-sheets-config.js?v=20260901-2"></script>
-  <script src="cleaning-history.js?v=20260920-2"></script>
+  <script src="cleaning-history.js?v=20260920-3"></script>
   <script src="theme-toggle.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
