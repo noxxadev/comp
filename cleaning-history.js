@@ -48,10 +48,39 @@
         '<td>' + escapeHtml(row.resolutionStatus || '-') + '</td>';
       body.appendChild(tr);
     });
+    updateStats(rows);
     const selectedSerial = getSelectedSerial();
     summary.textContent = selectedSerial
       ? 'Menampilkan ' + rows.length.toLocaleString('id-ID') + ' event untuk SN ' + selectedSerial + ' dari ' + Number(total || 0).toLocaleString('id-ID') + ' total event.'
       : 'Menampilkan ' + rows.length.toLocaleString('id-ID') + ' event dari ' + Number(total || 0).toLocaleString('id-ID') + ' total event.';
+  }
+
+  function updateStats(rows) {
+    const countValues = values => {
+      const counts = new Map();
+      values.forEach(value => {
+        const key = String(value ?? '').trim();
+        if (!key || key === '-') return;
+        counts.set(key, (counts.get(key) || 0) + 1);
+      });
+      return [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0] || null;
+    };
+
+    const zoneTop = countValues(rows.map(row => row.zone));
+    const locationTop = countValues(rows.map(row => row.locationId));
+    const ipCount = rows.filter(row => String(row.ip ?? '').trim() && String(row.ip).trim() !== '-').length;
+
+    const zone = document.getElementById('historyTopZone');
+    const zoneCount = document.getElementById('historyTopZoneCount');
+    const location = document.getElementById('historyTopLocation');
+    const locationCount = document.getElementById('historyTopLocationCount');
+    const ip = document.getElementById('historyIpCount');
+
+    if (zone) zone.textContent = zoneTop?.[0] || '-';
+    if (zoneCount) zoneCount.textContent = (zoneTop?.[1] || 0).toLocaleString('id-ID') + ' kali';
+    if (location) location.textContent = locationTop?.[0] || '-';
+    if (locationCount) locationCount.textContent = (locationTop?.[1] || 0).toLocaleString('id-ID') + ' kali';
+    if (ip) ip.textContent = ipCount.toLocaleString('id-ID');
   }
 
   function updateFilterState() {
