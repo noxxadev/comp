@@ -58,26 +58,63 @@
           <div>
             <h2>Upload Data</h2>
           </div>
-          <div class="master-status">Master Data: <span id="masterDataStatus">Loading...</span><br>Shared Data: <span id="sharedDataStatus">Memuat...</span></div>
         </div>
 
-        <div class="repeat-upload-area" id="fileUploadArea">
-          <input type="file" id="excelFile" accept=".xls,.xlsx" aria-label="Upload file Excel">
-          <div class="repeat-upload-content">
-            <div class="repeat-upload-icon"><i class="fas fa-file-excel"></i></div>
-            <div>
-              <h3>Drop file Excel di sini</h3>
-              <p>atau klik untuk memilih file • .xls / .xlsx</p>
-              <span id="fileName">Belum ada file</span>
+        <div class="repeat-upload-grid">
+          <div class="upload-box repeat-upload-box">
+            <div class="repeat-box-heading">
+              <div class="repeat-box-icon"><i class="fas fa-file-excel"></i></div>
+              <div>
+                <h3>Upload Data Excel</h3>
+                <p>Upload file MinerPlus untuk dianalisis.</p>
+              </div>
+            </div>
+
+            <div class="repeat-upload-area" id="fileUploadArea">
+              <input type="file" id="excelFile" accept=".xls,.xlsx" aria-label="Upload file Excel">
+              <div class="repeat-upload-content">
+                <div class="repeat-upload-icon"><i class="fas fa-cloud-arrow-up"></i></div>
+                <div>
+                  <h3>Drop file Excel di sini</h3>
+                  <p>atau klik untuk memilih file • .xls / .xlsx</p>
+                  <span id="fileName">Belum ada file</span>
+                </div>
+              </div>
+            </div>
+
+            <div id="uploadError" class="repeat-message error-message" role="alert"></div>
+
+            <div class="repeat-actions">
+              <div class="repeat-info"><i class="fas fa-circle-info"></i></div>
+              <button id="processBtn" class="repeat-primary-btn" type="button" disabled><i class="fas fa-play"></i> Proses Data</button>
             </div>
           </div>
-        </div>
 
-        <div id="uploadError" class="repeat-message error-message" role="alert"></div>
+          <div class="upload-box repeat-info-box">
+            <div class="repeat-box-heading">
+              <div class="repeat-box-icon connection-icon"><i class="fas fa-database"></i></div>
+              <div>
+                <h3>Data Connection</h3>
+                <p>Status sumber data yang digunakan analyzer.</p>
+              </div>
+            </div>
 
-        <div class="repeat-actions">
-          <div class="repeat-info"><i class="fas fa-circle-info"></i></div>
-          <button id="processBtn" class="repeat-primary-btn" type="button" disabled><i class="fas fa-play"></i> Proses Data</button>
+            <div class="repeat-status-list">
+              <div class="repeat-status-item">
+                <span class="repeat-status-label">Master Data</span>
+                <span id="masterDataStatus" class="repeat-status-value">Loading...</span>
+              </div>
+              <div class="repeat-status-item">
+                <span class="repeat-status-label">Shared Data</span>
+                <span id="sharedDataStatus" class="repeat-status-value">Memuat...</span>
+              </div>
+            </div>
+
+            <div class="repeat-analysis-info">
+              <span class="repeat-status-label">Analysis Results</span>
+              <p id="resultSummary">Belum ada analisis.</p>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -90,7 +127,6 @@
         <div class="repeat-card-heading results-heading">
           <div>
             <h2>Analysis Results</h2>
-            <p id="resultSummary"></p>
           </div>
         </div>
 
