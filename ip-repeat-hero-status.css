@@ -56,7 +56,7 @@
 .repeat-system-status {
   display: flex;
   align-items: center;
-  gap: .8rem;
+  justify-content: center;
   min-width: 190px;
   padding: .75rem .9rem;
   border: 1px solid var(--glass-border);
@@ -64,38 +64,13 @@
   background: rgba(255,255,255,.035);
 }
 
-.repeat-system-icon {
-  width: 38px;
-  height: 38px;
-  flex: 0 0 38px;
-  display: grid;
-  place-items: center;
-  border-radius: 11px;
-  color: var(--blue, #3B82F6);
-  background: rgba(59,130,246,.1);
-  border: 1px solid rgba(59,130,246,.16);
-}
-
-.repeat-system-meta {
-  display: flex;
-  flex-direction: column;
-  gap: .18rem;
-}
-
-.repeat-system-label {
-  color: var(--slate);
-  font-size: .62rem;
-  font-weight: 600;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-}
-
 .repeat-system-value {
   display: inline-flex;
   align-items: center;
-  gap: .38rem;
+  gap: .5rem;
   color: var(--emerald);
   font: 600 .78rem 'JetBrains Mono', monospace;
+  letter-spacing: .08em;
   text-transform: uppercase;
 }
 
@@ -134,7 +109,5 @@
   .repeat-hero-system { min-height: 104px; gap: 1rem; }
   .repeat-hero-copy strong { font-size: 1.2rem; }
   .repeat-system-status { min-width: 0; padding: .6rem .7rem; }
-  .repeat-system-icon { width: 32px; height: 32px; flex-basis: 32px; }
-  .repeat-system-label { font-size: .55rem; }
   .repeat-system-value { font-size: .68rem; }
 }
