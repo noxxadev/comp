@@ -15,7 +15,7 @@
     .history-status { font-size:.85rem; opacity:.75; }
     .history-refresh { border:0; border-radius:10px; padding:10px 14px; cursor:pointer; }
     .history-table-wrap { overflow:auto; }
-    .history-table { width:100%; border-collapse:collapse; min-width:1100px; }
+    .history-table { width:100%; border-collapse:collapse; min-width:1200px; }
     .history-table th, .history-table td { padding:11px 12px; border-bottom:1px solid rgba(127,127,127,.18); text-align:left; white-space:nowrap; }
     .history-table th { font-size:.8rem; text-transform:uppercase; letter-spacing:.04em; }
     .history-empty { padding:36px 16px; text-align:center; opacity:.7; }
@@ -47,20 +47,17 @@
       </nav>
       <div class="hub-meta"><strong>WORK HISTORY</strong><span>Permanent cleaning event archive</span></div>
     </aside>
-
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
-
     <main class="hub-main">
       <div class="hub-container history-page">
         <section class="hub-top">
           <div>
             <div class="hub-kicker">COMP / Machine Cleaning</div>
             <h1 class="hub-title">Cleaning History</h1>
-            <p class="hub-desc">Riwayat pekerjaan yang tersimpan pada Google Sheets</p>
+            <p class="hub-desc">Riwayat pekerjaan dari Work History Google Sheets</p>
           </div>
           <button class="history-menu-toggle" id="menuToggle" type="button" aria-label="Toggle menu" aria-controls="sidebar" aria-expanded="false"><i class="fas fa-bars"></i></button>
         </section>
-
         <section class="hub-card history-card">
           <div class="history-toolbar">
             <div><p id="historySummary" class="history-summary">Memuat Work History...</p><div id="historyStatus" class="history-status">Memuat...</div></div>
@@ -68,7 +65,7 @@
           </div>
           <div class="history-table-wrap">
             <table class="history-table">
-              <thead><tr><th>IP</th><th>Nama DC</th><th>Zona</th><th>Repeat Zero</th><th>Serial Number</th><th>Cleaning Count</th><th>Worker / Engineer</th><th>Status</th><th>Timestamp</th><th>Catatan</th></tr></thead>
+              <thead><tr><th>Event ID</th><th>Timestamp</th><th>IP</th><th>Serial Number</th><th>Location ID</th><th>Zona</th><th>Repeat Zero</th><th>Engineer ID</th><th>Status</th><th>Catatan</th><th>Resolution Status</th></tr></thead>
               <tbody id="historyBody"></tbody>
             </table>
             <div id="historyEmpty" class="history-empty" hidden><i class="fas fa-list-check"></i><p>Belum ada riwayat pekerjaan.</p></div>
@@ -77,25 +74,16 @@
       </div>
     </main>
   </div>
-
   <script src="google-sheets-config.js?v=20260901-2"></script>
-  <script src="cleaning-history.js?v=20260920-1"></script>
+  <script src="cleaning-history.js?v=20260920-2"></script>
   <script src="theme-toggle.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       const menuToggle = document.getElementById('menuToggle');
       const sidebar = document.getElementById('sidebar');
       const overlay = document.getElementById('sidebarOverlay');
-      const closeSidebar = () => {
-        sidebar?.classList.remove('active');
-        overlay?.classList.remove('active');
-        menuToggle?.setAttribute('aria-expanded', 'false');
-      };
-      menuToggle?.addEventListener('click', () => {
-        const open = sidebar?.classList.toggle('active');
-        overlay?.classList.toggle('active', open);
-        menuToggle?.setAttribute('aria-expanded', String(Boolean(open)));
-      });
+      const closeSidebar = () => { sidebar?.classList.remove('active'); overlay?.classList.remove('active'); menuToggle?.setAttribute('aria-expanded', 'false'); };
+      menuToggle?.addEventListener('click', () => { const open = sidebar?.classList.toggle('active'); overlay?.classList.toggle('active', open); menuToggle?.setAttribute('aria-expanded', String(Boolean(open))); });
       overlay?.addEventListener('click', closeSidebar);
       sidebar?.querySelectorAll('a').forEach(link => link.addEventListener('click', closeSidebar));
     });
