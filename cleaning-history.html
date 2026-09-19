@@ -20,6 +20,9 @@
     .history-table th { font-size:.8rem; text-transform:uppercase; letter-spacing:.04em; }
     .history-empty { padding:36px 16px; text-align:center; opacity:.7; }
     .history-summary { margin:0; opacity:.7; font-size:.9rem; }
+    .history-filter { display:flex; align-items:center; gap:10px; margin-top:6px; font-size:.85rem; }
+    .history-filter strong { font-family:'JetBrains Mono',monospace; }
+    .history-filter-clear { border:0; background:none; padding:0; cursor:pointer; color:var(--blue,#3B82F6); text-decoration:underline; }
     .history-menu-toggle { display:none; width:38px; height:38px; border:1px solid var(--border); border-radius:10px; background:var(--surface); color:var(--text); cursor:pointer; }
     @media (max-width:700px) { .history-toolbar { align-items:flex-start; flex-direction:column; } }
     @media (max-width:780px) {
@@ -60,7 +63,7 @@
         </section>
         <section class="hub-card history-card">
           <div class="history-toolbar">
-            <div><p id="historySummary" class="history-summary">Memuat Work History...</p><div id="historyStatus" class="history-status">Memuat...</div></div>
+            <div><p id="historySummary" class="history-summary">Memuat Work History...</p><div id="historyStatus" class="history-status">Memuat...</div><div id="historyFilter" class="history-filter" hidden>Serial Number: <strong id="historyFilterSerial"></strong><button id="clearHistoryFilter" class="history-filter-clear" type="button">Tampilkan Semua</button></div></div>
             <button id="refreshHistoryBtn" class="history-refresh" type="button"><i class="fas fa-rotate"></i> Refresh</button>
           </div>
           <div class="history-table-wrap">
