@@ -14,3 +14,89 @@
 .output-card{overflow:hidden}.output-container{overflow-x:auto}.tab-pane-header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 0;border-bottom:1px solid var(--border)}.tab-pane-description{margin:0;color:var(--muted);font-size:11px}.tab-pane-body{padding:0}.tab-table{width:100%;min-width:560px;border-collapse:collapse;font-size:11px}.tab-table th{padding:10px 11px;text-align:left;color:var(--muted);background:var(--surface-2);border-bottom:1px solid var(--border);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em}.tab-table td{padding:10px 11px;border-bottom:1px solid var(--border-soft);color:#4f556b}.tab-table tbody tr:hover{background:#fafbfe}.tab-table tr:last-child td{border-bottom:0}.tab-empty-state{padding:38px 16px;text-align:center;color:var(--muted)}.tab-empty-state i{display:block;margin-bottom:10px;font-size:22px}.tab-empty-state p{margin:0;font-size:11px}.empty-state{padding:54px 20px;text-align:center;color:var(--muted)}.empty-state i{width:58px;height:58px;margin:0 auto 14px;border-radius:14px;display:grid;place-items:center;background:var(--brand-soft);color:var(--brand);font-size:22px}.empty-state h3{margin:0 0 6px;color:var(--text);font-size:16px}.empty-state p{max-width:480px;margin:0 auto;font-size:12px;line-height:1.55}.btn-copy-small{display:inline-flex;align-items:center;gap:5px;min-height:30px;padding:0 9px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text);font-size:10px;font-weight:600;cursor:pointer}.btn-copy-small:hover{border-color:#cfd4ed;background:var(--brand-soft);color:var(--brand)}.btn-copy-small.copy-success{background:var(--success-soft);border-color:#b7ebce;color:#087443}
 @media(max-width:780px){.input-card{display:block}.input-card>.offline-divider{width:100%;height:1px;min-height:0;margin:22px 0}.offline-menu-toggle{display:grid;place-items:center}.offline-sidebar{transform:translateX(-100%);transition:transform .18s ease}.offline-sidebar.active{transform:translateX(0)}.offline-main{margin-left:0}.offline-top{align-items:flex-start}.export-action{flex-direction:column;align-items:stretch}#exportToValidatorBtn{width:100%}}
 @media(max-width:560px){.offline-main{padding-left:16px;padding-right:16px}.offline-card{padding:16px}.offline-hero{padding:20px}.offline-hero-icon{display:none}.hub-title{font-size:28px}.upload-content{align-items:flex-start}.compact-upload-area{min-height:110px}.analyzer-tabs{overflow-x:auto;flex-wrap:nowrap;padding-bottom:2px}.analyzer-tabs .tab-btn{flex:0 0 auto}}
+
+/* Input Data split layout — matches the internal two-box pattern used by Data Matcher. */
+.offline-input-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 1rem;
+  padding: 1.15rem 1.5rem 1.5rem;
+}
+
+.offline-input-grid .upload-box {
+  min-width: 0;
+  padding: 1rem;
+  border: 1px solid var(--glass-border);
+  border-radius: 14px;
+  background: rgba(255,255,255,0.025);
+}
+
+.offline-box-heading {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  margin-bottom: .9rem;
+}
+
+.offline-box-heading h3 {
+  margin: 0 0 .2rem;
+  color: var(--white);
+  font: 600 .95rem 'Outfit', sans-serif;
+}
+
+.offline-box-heading p {
+  margin: 0;
+  color: var(--slate);
+  font-size: .72rem;
+  line-height: 1.45;
+}
+
+.offline-box-icon {
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: rgba(59,130,246,.1);
+  color: var(--blue);
+  font-size: .95rem;
+}
+
+.offline-box-icon.excel-icon {
+  background: rgba(16,185,129,.1);
+  color: var(--emerald);
+}
+
+.offline-input-box .input-group textarea {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 120px;
+}
+
+.offline-input-box .compact-upload-area {
+  max-width: none;
+  min-height: 120px;
+  box-sizing: border-box;
+  padding: 1rem;
+  margin: 0;
+  display: grid;
+  place-items: center;
+}
+
+[data-theme="dark"] .offline-input-grid .upload-box {
+  background: var(--surface-2);
+  border-color: var(--border);
+}
+
+@media (max-width: 768px) {
+  .offline-input-grid {
+    grid-template-columns: 1fr;
+    padding: .8rem 1rem 1rem;
+  }
+
+  .offline-input-grid .upload-box {
+    padding: .85rem;
+  }
+}
