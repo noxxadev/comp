@@ -305,3 +305,12 @@
     padding: .85rem;
   }
 }
+
+/* Serial Number navigation link. */
+.machine-identity-link {
+  color: var(--blue, #3B82F6);
+  text-decoration: none;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+}
+.machine-identity-link:hover { text-decoration: underline; }
