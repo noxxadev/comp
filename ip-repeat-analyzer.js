@@ -29,7 +29,6 @@
   const searchInput = $('searchInput');
   const sortBtn = $('sortBtn');
   const zoneFilter = $('zoneFilter');
-  const exportBtn = $('exportBtn');
   const resultSummary = $('resultSummary');
   const masterDataStatus = $('masterDataStatus');
   const sharedDataStatus = $('sharedDataStatus');
@@ -40,7 +39,6 @@
   const selectAllBtn = $('selectAllBtn');
   const clearSelectionBtn = $('clearSelectionBtn');
   const engineerSelect = $('engineerSelect');
-  const workTargetCount = $('workTargetCount');
   const workStatus = $('workStatus');
   const workNote = $('workNote');
   const saveWorkBtn = $('saveWorkBtn');
@@ -269,7 +267,6 @@
 
   function updateWorkUi() {
     const targetCount = state.selectedIps.size;
-    workTargetCount.textContent = `${targetCount.toLocaleString('id-ID')} IP target`;
     saveWorkBtn.disabled = targetCount === 0 || !state.engineerId;
   }
 
