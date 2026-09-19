@@ -56,7 +56,7 @@
 .repeat-work-heading h3 { margin: 0 0 .2rem; font: 600 1rem 'Outfit', sans-serif; color: var(--white); }
 .repeat-work-heading p { margin: 0; color: var(--slate); font-size: .76rem; }
 .repeat-work-heading > span { color: var(--emerald); font: 600 .72rem 'JetBrains Mono', monospace; white-space: nowrap; }
-.repeat-work-grid { display: grid; grid-template-columns: minmax(170px, .7fr) minmax(240px, 1.6fr) auto; align-items: end; gap: .75rem; }
+.repeat-work-grid { display: grid; grid-template-columns: 150px 190px minmax(0, 1fr) 180px; align-items: end; gap: .75rem; }
 .repeat-work-grid label { display: flex; flex-direction: column; gap: .35rem; }
 .repeat-work-grid label > span { color: var(--slate); font-size: .68rem; font-weight: 600; }
 .repeat-work-grid select, .repeat-work-grid input { width: 100%; height: 40px; padding: 0 .75rem; border: 1px solid var(--glass-border); border-radius: 10px; background: rgba(255,255,255,.04); color: var(--white); font: 400 .78rem 'Inter', sans-serif; }
