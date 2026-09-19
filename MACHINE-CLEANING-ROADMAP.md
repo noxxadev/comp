@@ -816,3 +816,83 @@ Every phase must be tested before the next phase is implemented.
 - Supabase is not required for this architecture.
 
 **Implementation status:** Phase 3 code implemented; user validation pending.
+
+
+---
+
+# Phase 11 — Shared IP Repeat Dataset
+
+**Status: IMPLEMENTED IN REPO / DEPLOYMENT + USER VALIDATION PENDING**
+
+## Objective
+
+Make the uploaded MinerPlus IP Repeat dataset shared between users in the same way as the current Machine List.
+
+## Implementation
+
+A new Google Sheets snapshot is used:
+
+`IP Repeat Current`
+
+The shared flow is:
+
+```
+User uploads MinerPlus file
+        ↓
+Existing IP Repeat analysis logic
+        ↓
+IP + Nama DC + Zona + Repeat Zero
+        ↓
+Google Sheets — IP Repeat Current
+        ↓
+Other users load the same current dataset
+```
+
+The existing MinerPlus parsing/counting logic remains unchanged. The shared layer stores the already-normalized analysis result rather than the original Excel binary file.
+
+## Backend actions
+
+```
+GET  ?action=getIpRepeat
+POST { action: "replaceIpRepeat", rows: [...], sourceFileName: "..." }
+```
+
+## Replacement strategy
+
+The current IP Repeat snapshot is replaced atomically under `LockService` after complete validation.
+
+If validation fails, the existing shared dataset remains unchanged.
+
+## Shared-user behavior
+
+- User A uploads and processes a MinerPlus file.
+- The normalized IP Repeat result is saved to `IP Repeat Current`.
+- User B opens/refeshes `ip-repeat-analyzer.html` and receives the same current dataset.
+- User B does not need to upload the same MinerPlus file.
+- The page identifies whether the displayed dataset came from Google Sheets or the local upload.
+
+## Stored fields
+
+`IP`, `Nama DC`, `Zona`, `Repeat Zero`
+
+Serial Number and Cleaning Count are intentionally not duplicated here; those remain part of the Work Items / Machine List workflow.
+
+## Important
+
+This does not upload or expose the original Excel file itself. Google Sheets stores the normalized analysis result needed by the application.
+
+The deployed Apps Script Web App must be updated to the current `Code.gs` before end-to-end testing.
+
+## Phase 11 validation checklist
+
+1. Deploy the updated `Code.gs`.
+2. User A uploads a MinerPlus Excel file.
+3. Confirm the analysis result is saved to `IP Repeat Current`.
+4. Open `ip-repeat-analyzer.html` from another browser/user.
+5. Confirm the same IP Repeat dataset loads without uploading the Excel file again.
+6. Confirm the shared status identifies Google Sheets as the source.
+7. Upload a second valid file and confirm the shared snapshot is replaced.
+8. Confirm an invalid upload does not replace the previous shared snapshot.
+9. Confirm Work Items and Machine List behavior remain unchanged.
+
+Phase 11 will be marked **COMPLETED** after user confirms the end-to-end tests pass.
