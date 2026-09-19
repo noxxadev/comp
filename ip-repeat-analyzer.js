@@ -345,10 +345,6 @@
       });
       selection.appendChild(checkbox);
 
-      const no = document.createElement('td');
-      no.className = 'col-no';
-      no.textContent = String(index + 1);
-
       const ip = document.createElement('td');
       ip.className = 'ip-cell';
       ip.textContent = row.ip;
@@ -365,7 +361,7 @@
       zone.className = row.isMaster && row.zone !== '-' ? 'zone-cell' : 'zone-cell not-master';
       zone.textContent = row.zone;
 
-      tr.append(selection, no, ip, repeat, name, zone);
+      tr.append(selection, ip, repeat, name, zone);
       fragment.appendChild(tr);
     });
 
@@ -543,8 +539,7 @@
         if (diff !== 0) return diff;
         return a.ip.localeCompare(b.ip, undefined, { numeric: true });
       })
-      .map((row, index) => ({
-        No: index + 1,
+      .map(row => ({
         IP: row.ip,
         'Repeat Zero': row.repeat,
         'Nama DC': row.name,
@@ -553,7 +548,6 @@
 
     const worksheet = XLSX.utils.json_to_sheet(exportRows);
     worksheet['!cols'] = [
-      { wch: 7 },
       { wch: 18 },
       { wch: 16 },
       { wch: 24 },
