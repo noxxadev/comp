@@ -11,6 +11,11 @@
   <style>
     .history-page { padding: 28px 0 48px; }
     .history-card { overflow: hidden; }
+    .history-stats { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:14px; margin-bottom:18px; }
+    .history-stat { min-width:0; padding:16px 18px; border:1px solid var(--border, rgba(127,127,127,.18)); border-radius:14px; background:var(--surface, rgba(127,127,127,.04)); box-shadow:0 2px 8px rgba(20,24,45,.04); }
+    .history-stat-label { display:block; margin-bottom:8px; font-size:.76rem; font-weight:600; text-transform:uppercase; letter-spacing:.05em; opacity:.65; }
+    .history-stat-value { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:1.1rem; line-height:1.35; font-family:'JetBrains Mono',monospace; }
+    .history-stat-detail { display:block; margin-top:5px; font-size:.8rem; opacity:.6; }
     .history-toolbar { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:18px; }
     .history-status { font-size:.85rem; opacity:.75; }
     .history-refresh { border:0; border-radius:10px; padding:10px 14px; cursor:pointer; }
@@ -24,7 +29,10 @@
     .history-filter strong { font-family:'JetBrains Mono',monospace; }
     .history-filter-clear { border:0; background:none; padding:0; cursor:pointer; color:var(--blue,#3B82F6); text-decoration:underline; }
     .history-menu-toggle { display:none; width:38px; height:38px; border:1px solid var(--border); border-radius:10px; background:var(--surface); color:var(--text); cursor:pointer; }
-    @media (max-width:700px) { .history-toolbar { align-items:flex-start; flex-direction:column; } }
+    @media (max-width:700px) {
+      .history-toolbar { align-items:flex-start; flex-direction:column; }
+      .history-stats { grid-template-columns:1fr; }
+    }
     @media (max-width:780px) {
       .history-sidebar { width:240px !important; height:100vh !important; position:fixed !important; inset:0 auto 0 0 !important; padding:20px 12px !important; border-right:1px solid var(--border) !important; border-bottom:0 !important; overflow-y:auto !important; transform:translateX(-100%); transition:transform .18s ease,box-shadow .18s ease !important; z-index:100 !important; }
       .history-sidebar.active { transform:translateX(0); box-shadow:8px 0 28px rgba(20,24,45,.12); }
