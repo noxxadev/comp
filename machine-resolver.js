@@ -207,7 +207,7 @@
 
     // Fallback only for the existing rendered Nama DC column.
     const cells = Array.from(row.children);
-    return normalizeLocationId(cells[4]?.textContent);
+    return normalizeLocationId(cells[3]?.textContent);
   }
 
   function ensureHeader(table) {
