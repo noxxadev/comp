@@ -8,6 +8,9 @@
     sortDesc: true,
     zoneFilter: 'all',
     sourceColumn: '',
+    sourceFileName: '',
+    loadedAt: '',
+    dataSource: 'none',
     selectedIps: new Set(),
     engineerId: ''
   };
@@ -29,6 +32,7 @@
   const exportBtn = $('exportBtn');
   const resultSummary = $('resultSummary');
   const masterDataStatus = $('masterDataStatus');
+  const sharedDataStatus = $('sharedDataStatus');
   const menuToggle = $('menuToggle');
   const sidebar = $('sidebar');
   const sidebarOverlay = $('sidebarOverlay');
@@ -84,6 +88,146 @@
     uploadError.textContent = '';
     uploadError.classList.remove('visible');
   }
+
+
+  function getSheetsConfig() {
+    return window.CompGoogleSheetsConfig || { webAppUrl: '', requestKey: '' };
+  }
+
+  function updateSharedDataStatus() {
+    if (!sharedDataStatus) return;
+
+    if (!state.rows.length) {
+      sharedDataStatus.textContent = 'Belum ada dataset';
+      return;
+    }
+
+    const stamp = state.loadedAt ? new Date(state.loadedAt) : null;
+    const stampText = stamp && !Number.isNaN(stamp.getTime())
+      ? ` • ${stamp.toLocaleString('id-ID')}`
+      : '';
+
+    const source = state.dataSource === 'remote'
+      ? 'Google Sheets'
+      : 'Lokal';
+
+    sharedDataStatus.textContent =
+      `${state.rows.length.toLocaleString('id-ID')} IP • ${source}${stampText}`;
+  }
+
+  async function getSharedIpRepeat() {
+    const config = getSheetsConfig();
+    const baseUrl = String(config.webAppUrl || '').trim();
+    if (!baseUrl) throw new Error('Google Sheets belum dikonfigurasi.');
+
+    const params = new URLSearchParams({ action: 'getIpRepeat' });
+    if (config.requestKey) params.set('requestKey', String(config.requestKey));
+
+    const response = await fetch(
+      `${baseUrl}${baseUrl.includes('?') ? '&' : '?'}${params.toString()}`,
+      { method: 'GET', cache: 'no-store' }
+    );
+
+    const text = await response.text();
+    let result;
+    try {
+      result = JSON.parse(text);
+    } catch (_) {
+      throw new Error(`Google Apps Script mengembalikan response tidak valid (HTTP ${response.status}).`);
+    }
+
+    if (!response.ok || !result?.ok) {
+      throw new Error(result?.error || `Gagal membaca IP Repeat bersama (HTTP ${response.status}).`);
+    }
+
+    return result;
+  }
+
+  async function saveSharedIpRepeat(rows, sourceFileName) {
+    const config = getSheetsConfig();
+    const baseUrl = String(config.webAppUrl || '').trim();
+    if (!baseUrl) throw new Error('Google Sheets belum dikonfigurasi.');
+
+    const response = await fetch(baseUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+      body: JSON.stringify({
+        action: 'replaceIpRepeat',
+        rows,
+        sourceFileName,
+        requestKey: String(config.requestKey || '')
+      })
+    });
+
+    const text = await response.text();
+    let result;
+    try {
+      result = JSON.parse(text);
+    } catch (_) {
+      throw new Error(`Google Apps Script mengembalikan response tidak valid (HTTP ${response.status}).`);
+    }
+
+    if (!response.ok || !result?.ok) {
+      throw new Error(result?.error || `Gagal menyimpan IP Repeat bersama (HTTP ${response.status}).`);
+    }
+
+    if (Number(result.saved || 0) !== rows.length) {
+      throw new Error(`Google Sheets menyimpan ${result.saved || 0} dari ${rows.length} IP.`);
+    }
+
+    state.sourceFileName = sourceFileName || '';
+    state.loadedAt = result.updatedAt || new Date().toISOString();
+    state.dataSource = 'remote';
+    updateSharedDataStatus();
+    return result;
+  }
+
+  function applySharedRows(result) {
+    const rows = Array.isArray(result?.rows) ? result.rows : [];
+    state.rows = rows
+      .filter(row => isIpv4(String(row?.ip || '').trim()))
+      .map(row => ({
+        ip: String(row.ip).trim(),
+        repeat: Number(row.repeat || 0),
+        name: String(row.name || 'Bukan IP DC').trim() || 'Bukan IP DC',
+        isMaster: String(row.name || '').trim() !== '' && String(row.name || '').trim() !== 'Bukan IP DC',
+        zone: String(row.zone || '-').trim() || '-'
+      }));
+
+    state.sourceColumn = 'IP';
+    state.sourceFileName = String(result?.sourceFileName || '').trim();
+    state.loadedAt = result?.updatedAt || new Date().toISOString();
+    state.dataSource = 'remote';
+    state.selectedIps.clear();
+
+    resultSummary.textContent =
+      `${state.rows.length.toLocaleString('id-ID')} IP unik dari dataset bersama${state.sourceFileName ? ` • ${state.sourceFileName}` : ''}.`;
+
+    resultsSection.hidden = false;
+    searchInput.value = '';
+    if (zoneFilter) zoneFilter.value = 'all';
+    state.zoneFilter = 'all';
+    state.sortDesc = true;
+    sortBtn.dataset.order = 'desc';
+    sortBtn.innerHTML = '<i class="fas fa-arrow-down-wide-short"></i><span>Repeat Terbanyak</span>';
+    render();
+    updateSharedDataStatus();
+  }
+
+  async function loadSharedIpRepeat() {
+    try {
+      const result = await getSharedIpRepeat();
+      if (!Array.isArray(result?.rows) || !result.rows.length) {
+        updateSharedDataStatus();
+        return;
+      }
+      applySharedRows(result);
+    } catch (error) {
+      console.warn('IP Repeat shared dataset tidak tersedia:', error);
+      updateSharedDataStatus();
+    }
+  }
+
 
   function setFile(file) {
     clearError();
@@ -297,6 +441,10 @@
       });
 
       state.selectedIps.clear();
+      state.sourceFileName = state.file.name;
+      state.loadedAt = '';
+      state.dataSource = 'local';
+      updateSharedDataStatus();
       showWorkMessage('');
       resultSummary.textContent =
         `${validIpRows.toLocaleString('id-ID')} data IP valid dari kolom "${state.sourceColumn}" → ${state.rows.length.toLocaleString('id-ID')} IP unik.`;
@@ -309,6 +457,24 @@
       sortBtn.dataset.order = 'desc';
       sortBtn.innerHTML = '<i class="fas fa-arrow-down-wide-short"></i><span>Repeat Terbanyak</span>';
       render();
+
+      try {
+        showWorkMessage('Menyimpan dataset IP Repeat ke Google Sheets untuk dibagikan ke user lain...');
+        const sharedRows = state.rows.map(row => ({
+          ip: row.ip,
+          name: row.name,
+          zone: row.zone,
+          repeat: row.repeat
+        }));
+        await saveSharedIpRepeat(sharedRows, state.sourceFileName);
+        showWorkMessage('Dataset IP Repeat berhasil dibagikan ke Google Sheets.');
+      } catch (shareError) {
+        console.error(shareError);
+        showWorkMessage(
+          `Analisis lokal berhasil, tetapi dataset belum berhasil dibagikan: ${shareError.message || 'error'}`,
+          true
+        );
+      }
     } catch (error) {
       console.error(error);
       showError(error.message || 'Gagal memproses file Excel.');
@@ -496,4 +662,6 @@
 
   loadEngineerCatalog();
   updateSelectionUi();
+  updateSharedDataStatus();
+  loadSharedIpRepeat();
 })();
