@@ -820,6 +820,28 @@ Every phase must be tested before the next phase is implemented.
 
 ---
 
+## 2026-09-20 — IP Repeat UI simplification
+
+**Change:** Simplified the IP Repeat Analyzer work-tracking interface without changing the existing analysis, selection, saving, Machine List, or Cleaning History logic.
+
+**UI changes:**
+- Removed the obsolete **Export .xlsx** button from Analysis Results.
+- Removed the duplicate **IP target** counter because it represented the same selected-IP set already shown by **IP dipilih**.
+- Moved the **Engineer** selector into the Work Tracking controls, directly below **Status**.
+- The existing save-button behavior still uses the selected IP count and selected engineer ID.
+
+**Scope protection:**
+- master-data.js was not changed.
+- MinerPlus IP Repeat calculation/parsing logic was not changed.
+- Google Sheets persistence logic was not changed.
+- Cleaning History and Cleaning Count calculation logic was not changed.
+
+**Cleaning Count note:** The current IP Repeat Analyzer source does not contain a Cleaning Count value in its Analysis Results header/table. No new calculation or guessed value was introduced in this UI cleanup. Cleaning Count remains sourced from the existing Work Items / Cleaning History pipeline.
+
+**Commits:**
+- 7f4f3aaa3044d84a4a621b3022b9db1a02c8919a — HTML UI cleanup.
+- b0721b1a6c148dd78342ef3cec70f8feebc3e390 — JS cleanup for removed UI elements.
+
 # Phase 11 — Shared IP Repeat Dataset
 
 **Status: IMPLEMENTED IN REPO / DEPLOYMENT + USER VALIDATION PENDING**
