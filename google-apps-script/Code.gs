@@ -3,6 +3,8 @@ const WORK_SHEET_NAME = 'Work Items';
 const HISTORY_SHEET_NAME = 'Work History';
 const MACHINE_LIST_SHEET_NAME = 'Machine List Current';
 const MACHINE_LIST_META_KEY = 'comp.machineList.meta';
+const IP_REPEAT_SHEET_NAME = 'IP Repeat Current';
+const IP_REPEAT_META_KEY = 'comp.ipRepeat.meta';
 
 // Optional lightweight request key. This is NOT a secret when the frontend is public.
 // Keep both this value and google-sheets-config.js requestKey empty to disable it.
@@ -39,6 +41,7 @@ function doGet(e) {
     if (SPREADSHEET_ID === 'PASTE_YOUR_GOOGLE_SHEET_ID_HERE') {
       return jsonResponse({ ok: false, error: 'Spreadsheet ID is not configured.' });
     }
+    if (action === 'getIpRepeat') return getIpRepeat();
     if (action === 'getWorkItems') return getWorkItems(e);
     if (action === 'getWorkHistory') return getWorkHistory(e);
     if (action === 'getMachineList') return getMachineList();
@@ -63,6 +66,7 @@ function doPost(e) {
     if (SPREADSHEET_ID === 'PASTE_YOUR_GOOGLE_SHEET_ID_HERE') {
       return jsonResponse({ ok: false, error: 'Spreadsheet ID is not configured.' });
     }
+    if (payload.action === 'replaceIpRepeat') return replaceIpRepeat(payload.rows, payload.sourceFileName);
     if (payload.action === 'upsertWorkItems') return upsertWorkItems(payload.items);
     if (payload.action === 'appendWorkHistory') return appendWorkHistory(payload.events);
     if (payload.action === 'replaceMachineList') return replaceMachineList(payload.records, payload.sourceFileName);
@@ -71,6 +75,161 @@ function doPost(e) {
     console.error(error);
     return jsonResponse({ ok: false, error: error.message || 'Unknown server error.' });
   }
+}
+
+
+function getIpRepeat() {
+  const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const sheet = spreadsheet.getSheetByName(IP_REPEAT_SHEET_NAME);
+  const meta = readIpRepeatMeta();
+  if (!sheet || sheet.getLastRow() <= 1) {
+    return jsonResponse({
+      ok: true,
+      rows: [],
+      total: 0,
+      returned: 0,
+      updatedAt: meta.updatedAt || null,
+      sourceFileName: meta.sourceFileName || ''
+    });
+  }
+
+  ensureIpRepeatSchema(sheet);
+  const data = sheet.getDataRange().getValues();
+  const rows = [];
+
+  for (let r = 1; r < data.length; r++) {
+    rows.push({
+      ip: String(data[r][0] || '').trim(),
+      name: String(data[r][1] || '').trim(),
+      zone: String(data[r][2] || '-').trim() || '-',
+      repeat: Number(data[r][3] || 0)
+    });
+  }
+
+  return jsonResponse({
+    ok: true,
+    rows,
+    total: rows.length,
+    returned: rows.length,
+    updatedAt: meta.updatedAt || null,
+    sourceFileName: meta.sourceFileName || ''
+  });
+}
+
+function replaceIpRepeat(rows, sourceFileName) {
+  const items = Array.isArray(rows) ? rows : [];
+  if (!items.length) return jsonResponse({ ok: false, error: 'IP Repeat kosong. Dataset lama tidak diubah.' });
+  if (items.length > 20000) return jsonResponse({ ok: false, error: 'IP Repeat terlalu besar. Maksimum 20.000 IP unik.' });
+
+  const normalizedRows = [];
+  const seenIps = new Set();
+
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i] || {};
+    const ip = String(item.ip || '').trim();
+    const name = String(item.name || '').trim();
+    const zone = String(item.zone || '-').trim() || '-';
+    const repeat = Number(item.repeat || 0);
+
+    if (!isValidIpv4(ip)) {
+      return jsonResponse({ ok: false, error: `IP tidak valid pada record ke-${i + 1}: ${ip}. Dataset lama tidak diubah.` });
+    }
+    if (seenIps.has(ip)) {
+      return jsonResponse({ ok: false, error: `IP duplikat pada record ke-${i + 1}: ${ip}. Dataset lama tidak diubah.` });
+    }
+    if (!Number.isFinite(repeat) || repeat < 1) {
+      return jsonResponse({ ok: false, error: `Repeat Zero tidak valid pada IP ${ip}. Dataset lama tidak diubah.` });
+    }
+    if (name.length > 200 || zone.length > 50) {
+      return jsonResponse({ ok: false, error: `Data IP Repeat terlalu panjang pada record ke-${i + 1}. Dataset lama tidak diubah.` });
+    }
+
+    seenIps.add(ip);
+    normalizedRows.push([ip, name, zone, repeat]);
+  }
+
+  const lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+  try {
+    const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
+    let sheet = spreadsheet.getSheetByName(IP_REPEAT_SHEET_NAME);
+    if (!sheet) sheet = spreadsheet.insertSheet(IP_REPEAT_SHEET_NAME);
+
+    sheet.clearContents();
+    sheet.getRange(1, 1, 1, 4).setValues([['IP', 'Nama DC', 'Zona', 'Repeat Zero']]);
+    sheet.setFrozenRows(1);
+    sheet.getRange(2, 1, normalizedRows.length, 4).setValues(normalizedRows);
+    SpreadsheetApp.flush();
+
+    const updatedAt = new Date();
+    writeIpRepeatMeta({
+      updatedAt: updatedAt.toISOString(),
+      sourceFileName: normalizeMachineText(sourceFileName).slice(0, 200),
+      rowCount: normalizedRows.length
+    });
+
+    return jsonResponse({
+      ok: true,
+      action: 'replaceIpRepeat',
+      saved: normalizedRows.length,
+      sourceFileName: normalizeMachineText(sourceFileName).slice(0, 200),
+      updatedAt: updatedAt.toISOString(),
+      sheet: IP_REPEAT_SHEET_NAME
+    });
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function ensureIpRepeatSchema(sheet) {
+  const headers = ['IP', 'Nama DC', 'Zona', 'Repeat Zero'];
+  const lastColumn = sheet.getLastColumn();
+  const lastRow = sheet.getLastRow();
+
+  if (!lastColumn || lastRow === 0) {
+    sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+    sheet.setFrozenRows(1);
+    return;
+  }
+
+  const currentHeaders = sheet.getRange(1, 1, 1, lastColumn).getValues()[0].map(value => String(value || '').trim());
+  const sameSchema = headers.length === currentHeaders.length && headers.every((header, index) => header === currentHeaders[index]);
+  if (sameSchema) return;
+
+  const headerIndex = new Map();
+  currentHeaders.forEach((header, index) => {
+    if (header) headerIndex.set(header, index);
+  });
+
+  const rows = lastRow > 1 ? sheet.getRange(2, 1, lastRow - 1, lastColumn).getValues() : [];
+  const migratedRows = rows.map(row => headers.map(header => {
+    const index = headerIndex.get(header);
+    return index === undefined ? '' : row[index];
+  }));
+
+  sheet.clearContents();
+  sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+  if (migratedRows.length) {
+    sheet.getRange(2, 1, migratedRows.length, headers.length).setValues(migratedRows);
+  }
+  sheet.setFrozenRows(1);
+  SpreadsheetApp.flush();
+}
+
+function readIpRepeatMeta() {
+  try {
+    const raw = PropertiesService.getScriptProperties().getProperty(IP_REPEAT_META_KEY);
+    if (!raw) return {};
+    const meta = JSON.parse(raw);
+    return meta && typeof meta === 'object' ? meta : {};
+  } catch (error) {
+    console.warn('Gagal membaca metadata IP Repeat:', error);
+    return {};
+  }
+}
+
+function writeIpRepeatMeta(meta) {
+  PropertiesService.getScriptProperties().setProperty(IP_REPEAT_META_KEY, JSON.stringify(meta));
 }
 
 function upsertWorkItems(items) {
