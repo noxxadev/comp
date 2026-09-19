@@ -10,7 +10,7 @@
     const baseUrl = String(config.webAppUrl || '').trim();
     if (!baseUrl) throw new Error('Google Sheets belum dikonfigurasi.');
 
-    const params = new URLSearchParams({ action: 'getWorkItems', limit: String(limit) });
+    const params = new URLSearchParams({ action: 'getWorkHistory', limit: String(limit) });
     if (config.requestKey) params.set('requestKey', String(config.requestKey));
 
     const separator = baseUrl.includes('?') ? '&' : '?';
@@ -26,11 +26,11 @@
     try {
       result = JSON.parse(text);
     } catch (_) {
-      throw new Error(`Response Work Items tidak valid (HTTP ${response.status}).`);
+      throw new Error(`Response Work History tidak valid (HTTP ${response.status}).`);
     }
 
     if (!response.ok || !result?.ok) {
-      throw new Error(result?.error || `Gagal membaca Work Items (HTTP ${response.status}).`);
+      throw new Error(result?.error || `Gagal membaca Work History (HTTP ${response.status}).`);
     }
 
     return result;
@@ -64,7 +64,7 @@
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td>${escapeHtml(row.ip || '-')}</td>
-        <td>${escapeHtml(row.name || '-')}</td>
+        <td>${escapeHtml(row.locationId || '-')}</td>
         <td>${escapeHtml(row.zone || '-')}</td>
         <td>${escapeHtml(String(row.repeat ?? '-'))}</td>
         <td><strong>${escapeHtml(row.serialNumber || '-')}</strong></td>
@@ -77,7 +77,7 @@
       body.appendChild(tr);
     });
 
-    summary.textContent = `Menampilkan ${rows.length.toLocaleString('id-ID')} Work Item dari ${Number(total || 0).toLocaleString('id-ID')} total item.`;
+    summary.textContent = `Menampilkan ${rows.length.toLocaleString('id-ID')} event dari ${Number(total || 0).toLocaleString('id-ID')} total event.`;
   }
 
   async function refresh() {
@@ -89,7 +89,7 @@
     try {
       const result = await loadHistory();
       render(Array.isArray(result.rows) ? result.rows : [], result.total);
-      if (status) status.textContent = 'Google Sheets — Work Items';
+      if (status) status.textContent = 'Google Sheets — Work History';
     } catch (error) {
       console.error('Cleaning History:', error);
       render([], 0);
