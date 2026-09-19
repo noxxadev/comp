@@ -61,7 +61,23 @@
           </div>
           <button class="history-menu-toggle" id="menuToggle" type="button" aria-label="Toggle menu" aria-controls="sidebar" aria-expanded="false"><i class="fas fa-bars"></i></button>
         </section>
-        <section class="hub-card history-card">
+        <section class="hub-card history-card">\n          <div class="history-stats" aria-label="Ringkasan Cleaning History">
+              <div class="history-stat">
+                <span class="history-stat-label">Zona Terbanyak</span>
+                <strong id="historyTopZone" class="history-stat-value">-</strong>
+                <span id="historyTopZoneCount" class="history-stat-detail">0 kali</span>
+              </div>
+              <div class="history-stat">
+                <span class="history-stat-label">Location ID Terbanyak</span>
+                <strong id="historyTopLocation" class="history-stat-value">-</strong>
+                <span id="historyTopLocationCount" class="history-stat-detail">0 kali</span>
+              </div>
+              <div class="history-stat">
+                <span class="history-stat-label">IP Muncul</span>
+                <strong id="historyIpCount" class="history-stat-value">0</strong>
+                <span class="history-stat-detail">kemunculan</span>
+              </div>
+            </div>
           <div class="history-toolbar">
             <div><p id="historySummary" class="history-summary">Memuat Work History...</p><div id="historyStatus" class="history-status">Memuat...</div><div id="historyFilter" class="history-filter" hidden>Serial Number: <strong id="historyFilterSerial"></strong><button id="clearHistoryFilter" class="history-filter-clear" type="button">Tampilkan Semua</button></div></div>
             <button id="refreshHistoryBtn" class="history-refresh" type="button"><i class="fas fa-rotate"></i> Refresh</button>
