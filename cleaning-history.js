@@ -32,8 +32,7 @@
     body.innerHTML = ''; empty.hidden = rows.length > 0;
     rows.forEach(row => {
       const tr = document.createElement('tr');
-      tr.innerHTML = '<td>' + escapeHtml(row.eventId || '-') + '</td>' +
-        '<td>' + escapeHtml(row.timestamp || '-') + '</td>' +
+      tr.innerHTML = '<td>' + escapeHtml(row.timestamp || '-') + '</td>' +
         '<td>' + escapeHtml(row.ip || '-') + '</td>' +
         '<td><strong>' + escapeHtml(row.serialNumber || '-') + '</strong></td>' +
         '<td>' + escapeHtml(row.locationId || '-') + '</td>' +
