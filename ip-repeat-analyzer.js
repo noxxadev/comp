@@ -634,7 +634,6 @@
   workNote?.addEventListener('input', () => showWorkMessage(''));
   saveWorkBtn?.addEventListener('click', saveWorkForSelected);
 
-  exportBtn.addEventListener('click', exportResults);
 
   menuToggle?.addEventListener('click', () => {
     sidebar.classList.toggle('active');
