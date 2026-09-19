@@ -1,18 +1,20 @@
-# Change Log — Cleaning History uses Work Items
+# Change Log — Cleaning History uses Work History
 
-Date: 2026-09-06
+Date: 2026-09-20
 
 ## Change
 
-`cleaning-history.html` / `cleaning-history.js` no longer read the `Work History` sheet for the displayed list.
+`cleaning-history.html` / `cleaning-history.js` now read the permanent `Work History` sheet for the displayed list.
 
-The page now reads the current `Work Items` sheet through the Google Apps Script endpoint:
+The page now reads:
 
 ```text
-GET ?action=getWorkItems
+GET ?action=getWorkHistory
 ```
 
-## Displayed Work Items fields
+## Displayed fields
+
+The existing table structure is retained:
 
 ```text
 IP
@@ -27,32 +29,32 @@ Timestamp
 Catatan
 ```
 
-`Resolution Status` is no longer displayed on this page because that field belongs to the permanent `Work History` record and is not part of `Work Items`.
+For Work History records, `Nama DC` is displayed from `Location ID`, because the permanent history schema stores the location identifier rather than the Work Items `Nama DC` field.
 
-## Backend
-
-`google-apps-script/Code.gs` now exposes `getWorkItems()` through `doGet()`.
-
-The endpoint reads the shared `Work Items` sheet and returns the current rows using the current Work Items schema.
+`Cleaning Count` remains available from the backend's historical count calculation keyed by Serial Number.
 
 ## Data-role separation
 
 ```text
 Work Items
-  → current / active work list
-  → source for cleaning-history.html display
+  → current / active work state
+  → not the source for Cleaning History
 
 Work History
-  → permanent append-only cleaning archive
+  → permanent append-only cleaning event archive
+  → source for cleaning-history.html
   → source for historical Cleaning Count calculation
 ```
 
-The `Work History` sheet is not deleted or disabled. It continues to be written by completed work events and remains the permanent archive.
+This allows the page to show multiple cleaning events for the same Serial Number instead of only the latest/current Work Item.
 
 ## Scope protection
 
 No changes were made to:
 
+- `ip-repeat-analyzer.html`
+- `ip-repeat-analyzer.js`
+- `machine-resolver.js`
 - `master-data.js`
 - MinerPlus calculation logic
 - Machine List schema
@@ -60,4 +62,6 @@ No changes were made to:
 
 ## Deployment requirement
 
-Because `google-apps-script/Code.gs` is deployed separately from GitHub Pages, the current Apps Script version must be redeployed before testing the new `getWorkItems` endpoint from the live site.
+No new Apps Script endpoint is required because `getWorkHistory` already exists.
+
+The live Apps Script deployment must contain the existing `getWorkHistory` function before testing.
