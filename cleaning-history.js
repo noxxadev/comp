@@ -20,6 +20,10 @@
     return result;
   }
 
+  function normalizeSerial(value) { return String(value ?? '').replace(/\s+/g, '').trim().toUpperCase(); }
+
+  function getSelectedSerial() { return new URLSearchParams(window.location.search).get('serial') || ''; }
+
   function escapeHtml(value) {
     return String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\"/g, '&quot;').replace(/'/g, '&#039;');
   }
@@ -44,7 +48,19 @@
         '<td>' + escapeHtml(row.resolutionStatus || '-') + '</td>';
       body.appendChild(tr);
     });
-    summary.textContent = 'Menampilkan ' + rows.length.toLocaleString('id-ID') + ' event dari ' + Number(total || 0).toLocaleString('id-ID') + ' total event.';
+    const selectedSerial = getSelectedSerial();
+    summary.textContent = selectedSerial
+      ? 'Menampilkan ' + rows.length.toLocaleString('id-ID') + ' event untuk SN ' + selectedSerial + ' dari ' + Number(total || 0).toLocaleString('id-ID') + ' total event.'
+      : 'Menampilkan ' + rows.length.toLocaleString('id-ID') + ' event dari ' + Number(total || 0).toLocaleString('id-ID') + ' total event.';
+  }
+
+  function updateFilterState() {
+    const selectedSerial = getSelectedSerial();
+    const filter = document.getElementById('historyFilter');
+    const filterSerial = document.getElementById('historyFilterSerial');
+    if (!filter || !filterSerial) return;
+    filter.hidden = !selectedSerial;
+    filterSerial.textContent = selectedSerial;
   }
 
   async function refresh() {
@@ -52,11 +68,24 @@
     const refreshButton = document.getElementById('refreshHistoryBtn');
     if (status) status.textContent = 'Memuat...';
     if (refreshButton) refreshButton.disabled = true;
-    try { const result = await loadHistory(); render(Array.isArray(result.rows) ? result.rows : [], result.total); if (status) status.textContent = 'Google Sheets — Work History'; }
+    try {
+      const result = await loadHistory();
+      const allRows = Array.isArray(result.rows) ? result.rows : [];
+      const selectedSerial = normalizeSerial(getSelectedSerial());
+      const rows = selectedSerial ? allRows.filter(row => normalizeSerial(row.serialNumber) === selectedSerial) : allRows;
+      render(rows, result.total);
+      updateFilterState();
+      if (status) status.textContent = 'Google Sheets — Work History';
+    }
     catch (error) { console.error('Cleaning History:', error); render([], 0); if (status) status.textContent = 'Gagal: ' + (error.message || 'tidak tersedia'); }
     finally { if (refreshButton) refreshButton.disabled = false; }
   }
 
   window.CompCleaningHistory = { loadHistory, refresh };
-  document.addEventListener('DOMContentLoaded', () => { document.getElementById('refreshHistoryBtn')?.addEventListener('click', refresh); refresh(); }, { once: true });
+  document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('refreshHistoryBtn')?.addEventListener('click', refresh);
+    document.getElementById('clearHistoryFilter')?.addEventListener('click', () => { window.location.href = 'cleaning-history.html'; });
+    updateFilterState();
+    refresh();
+  }, { once: true });
 })();
