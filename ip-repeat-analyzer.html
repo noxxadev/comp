@@ -96,13 +96,6 @@
             <h2>Analysis Results</h2>
             <p id="resultSummary"></p>
           </div>
-          <div class="repeat-identity-control">
-            <label for="engineerSelect">Engineer</label>
-            <select id="engineerSelect" aria-label="Pilih engineer">
-              <option value="">Pilih engineer</option>
-            </select>
-          </div>
-          <button id="exportBtn" class="repeat-export-btn" type="button"><i class="fas fa-file-export"></i> Export .xlsx</button>
         </div>
 
         <div class="repeat-selection-bar">
@@ -122,7 +115,6 @@
               <h3>Work Tracking</h3>
               <p>Terapkan data pekerjaan ke IP yang sedang dipilih.</p>
             </div>
-            <span id="workTargetCount">0 IP target</span>
           </div>
           <div class="repeat-work-grid">
             <label>
@@ -133,6 +125,12 @@
                 <option value="Selesai">Selesai</option>
                 <option value="Problem">Problem</option>
                 <option value="Skipped">Skipped</option>
+              </select>
+            </label>
+            <label>
+              <span>Engineer</span>
+              <select id="engineerSelect" aria-label="Pilih engineer">
+                <option value="">Pilih engineer</option>
               </select>
             </label>
             <label>
