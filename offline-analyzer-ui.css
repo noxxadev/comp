@@ -17,13 +17,14 @@
 .offline-input-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 1rem;
-  padding: 1.15rem 1.5rem 1.5rem;
+  gap: 16px;
+  padding: 0;
 }
 
 .offline-input-grid .upload-box {
   min-width: 0;
-  padding: 1rem;
+  min-height: 178px;
+  padding: 16px;
   border: 1px solid var(--glass-border);
   border-radius: 14px;
   background: rgba(255,255,255,0.025);
