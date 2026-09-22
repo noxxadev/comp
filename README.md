@@ -356,30 +356,40 @@ Protect internal COMP pages and data from unauthorized access while preserving t
 
 Target architecture:
 
-`User → Google Login → Authentication → Tools Hub/Internal Pages → Apps Script API → Google Sheets`
+`User → Login Page → Authentication → Tools Hub/Internal Pages → Apps Script API → Google Sheets`
 
-Security work is maintained separately from the feature roadmap above. Each security phase follows the same rule: audit → implementation plan → explicit approval → implementation → testing → README update.
+The selected authentication direction is intentionally simple:
+- User credentials are managed in a dedicated Google Sheet.
+- Passwords must be stored as hashes, not plaintext.
+- Google Apps Script remains the authentication/backend layer.
+- The Apps Script Web App must remain reachable by legitimate browser users; changing deployment access to owner-only (`Only myself`) is not used as a shortcut when it would block normal application users.
+- Authentication and page protection are separate from backend API protection.
+- Existing application logic must remain unchanged unless explicitly approved.
 
-## Security Phase 1 — Google Authentication
+Security work is maintained separately from the feature roadmap. Each security phase follows: audit → implementation plan → explicit approval → implementation → testing → README update.
+
+## Security Phase 1 — Simple Authentication
 Status: PLANNED
 
 Goal:
-- Establish a verifiable Google-based user identity.
-- Use Google authentication rather than custom username/password storage.
-- Prepare an authenticated identity that can be verified by the backend in later phases.
+- Add a simple username/password login without introducing Google OAuth.
+- Use Google Sheets as the user database.
+- Keep credential validation on the Apps Script/backend side.
+- Establish a session mechanism that can later be checked by protected API requests.
 - Keep existing tool logic unchanged.
 
 Planned work:
-- Audit the most suitable Google authentication mechanism for GitHub Pages + Apps Script.
-- Define authentication/session architecture.
-- Add the login entry point and Google Sign-In integration.
-- Establish a reusable authentication module.
-- Define how authenticated identity will be passed to the backend.
-- Do not place backend secrets in public frontend JavaScript.
+- Define the user-sheet schema, including User ID, Username, Password Hash, Role and Status.
+- Implement password hashing/verification; never store plaintext passwords.
+- Add a dedicated login page.
+- Add a reusable authentication/session module.
+- Implement login success/failure handling.
+- Define session creation, storage and expiration behavior.
+- Do not expose the user database or password hashes to the public frontend.
 
 Important scope note:
-- Phase 1 establishes the authentication foundation.
-- Full backend data protection is completed in Security Phase 3, not by a frontend login screen alone.
+- Phase 1 creates the authentication foundation.
+- It does not by itself make every internal page or Apps Script action secure; those controls are completed in Phases 2 and 3.
 
 ## Security Phase 2 — Page Protection
 Status: PLANNED
@@ -390,9 +400,10 @@ Goal:
 Planned work:
 - Protect internal pages such as Machine List, IP Repeat, Work Tracking and Work History.
 - Redirect unauthenticated users to the login page.
-- Handle logout and session expiry consistently.
+- Handle logout and session expiration consistently.
 - Review browser cache/localStorage behavior, especially the Machine List cache under `comp.machineList.v1`.
 - Ensure sensitive cached data is not unnecessarily retained after logout.
+- Preserve the existing functionality of protected pages after authentication.
 
 ## Security Phase 3 — Apps Script / API Authentication
 Status: PLANNED
@@ -401,7 +412,7 @@ Goal:
 - Prevent anonymous browsers from directly reading or modifying internal Google Sheets data through the Apps Script Web App.
 
 Planned work:
-- Verify authenticated user identity in Apps Script.
+- Validate the session/authentication proof in Apps Script.
 - Reject requests without valid authentication.
 - Protect both `doGet` and `doPost`.
 - Protect sensitive actions including:
@@ -412,10 +423,9 @@ Planned work:
   - `replaceMachineList`
   - `appendWorkHistory`
   - `upsertWorkItems`
-- Review Apps Script deployment configuration as part of the authenticated architecture.
-
-Important rule:
-- Do not change the Apps Script deployment to an owner-only mode as a shortcut if that would prevent legitimate browser users from accessing the application.
+- Review Apps Script deployment configuration after authentication is implemented.
+- Keep `Execute as: Me` where required for the backend to operate on the spreadsheet, while authentication controls which application requests are accepted.
+- Do not rely on `Only myself` if it prevents legitimate browser users from reaching the backend.
 
 ## Security Phase 4 — Authorization & Roles
 Status: PLANNED
@@ -438,7 +448,7 @@ Potential permission areas:
 - Engineer management
 - Security/admin settings
 
-Final roles and permissions will be defined only after the authentication architecture is working and the actual operational requirements are confirmed.
+Final roles and permissions will be defined only after the authentication mechanism is working and the actual operational requirements are confirmed.
 
 ## Security Phase 5 — Security Hardening & Final Audit
 Status: PLANNED
@@ -450,13 +460,15 @@ Audit areas:
 - Direct URL access.
 - Anonymous API access.
 - GET/POST endpoint protection.
-- Authentication token/session handling.
+- Password hashing and credential handling.
+- Authentication session/token handling.
 - Logout and session expiration.
 - Browser cache, localStorage and sessionStorage.
 - Public JavaScript exposure.
 - Apps Script deployment.
 - Google Sheets permissions.
 - Error messages and sensitive data exposure.
+- Brute-force/login abuse considerations.
 - Request manipulation and replay considerations.
 - Relevant browser/network security behavior.
 
@@ -490,6 +502,20 @@ Final outcome:
 22. Security work is maintained as a separate roadmap and must not silently change existing feature logic.
 23. No security implementation is performed without explicit approval after its implementation plan has been reviewed.
 24. Frontend-only login must not be treated as complete backend data protection.
+
+
+25. Security authentication uses the simple username/password model with the user database managed in Google Sheets unless explicitly revised.
+26. Passwords must never be stored or exposed as plaintext.
+27. Apps Script deployment must not be changed to owner-only as a shortcut when legitimate browser users need the Web App.
+
+# Detailed Change Log
+- Replaced the Google Authentication/OAuth direction with a simpler username/password authentication model backed by a Google Sheet user database.
+- Defined password hashes rather than plaintext credential storage.
+- Defined Apps Script as the authentication/backend layer.
+- Recorded that Apps Script owner-only access (`Only myself`) is not a shortcut when it would block legitimate browser users.
+- Preserved the five security phases: Simple Authentication, Page Protection, Apps Script/API Authentication, Authorization & Roles, and Security Hardening.
+- No application feature logic was changed.
+- No authentication code was implemented in this roadmap update.
 
 # Detailed Change Log
 
@@ -629,7 +655,7 @@ Final outcome:
 
 | Security Phase | Status |
 |---|---|
-| Security Phase 1 — Google Authentication | PLANNED |
+| Security Phase 1 — Simple Authentication | PLANNED |
 | Security Phase 2 — Page Protection | PLANNED |
 | Security Phase 3 — Apps Script / API Authentication | PLANNED |
 | Security Phase 4 — Authorization & Roles | PLANNED |
