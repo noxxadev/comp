@@ -333,3 +333,72 @@
   width: 1%;
   white-space: nowrap;
 }
+
+
+/* Light theme refinement for the Upload Data inner cards. */
+html:not([data-theme="dark"]) .repeat-upload-grid .upload-box {
+  background: var(--surface-2, #f8f9fc);
+  border-color: var(--border, #e6e8f0);
+  box-shadow: 0 4px 14px rgba(20,24,45,.035);
+}
+
+html:not([data-theme="dark"]) .repeat-box-heading h3 {
+  color: var(--text, #171a2a);
+}
+
+html:not([data-theme="dark"]) .repeat-box-heading p,
+html:not([data-theme="dark"]) .repeat-status-label {
+  color: var(--muted, #74798a);
+}
+
+html:not([data-theme="dark"]) .repeat-upload-area {
+  background: var(--surface, #fff);
+  border-color: #d7dbe6;
+}
+
+html:not([data-theme="dark"]) .repeat-upload-area:hover,
+html:not([data-theme="dark"]) .repeat-upload-area.drag-over {
+  background: #f7faff;
+  border-color: rgba(37,99,235,.5);
+}
+
+html:not([data-theme="dark"]) .repeat-upload-content h3 {
+  color: var(--text, #171a2a);
+}
+
+html:not([data-theme="dark"]) .repeat-upload-content p,
+html:not([data-theme="dark"]) .repeat-upload-content span {
+  color: var(--muted, #74798a);
+}
+
+html:not([data-theme="dark"]) .repeat-upload-content span {
+  font-weight: 500;
+}
+
+html:not([data-theme="dark"]) .repeat-status-item {
+  background: var(--surface, #fff);
+  border-color: var(--border, #e6e8f0);
+}
+
+html:not([data-theme="dark"]) .repeat-status-value {
+  color: #059669;
+}
+
+html:not([data-theme="dark"]) .repeat-analysis-info {
+  background: var(--brand-soft, #eff6ff);
+  border-color: #dbeafe;
+}
+
+html:not([data-theme="dark"]) .repeat-analysis-info p {
+  color: var(--text, #171a2a);
+}
+
+html:not([data-theme="dark"]) .repeat-primary-btn {
+  background: var(--brand, #2563eb);
+  color: #fff;
+  box-shadow: 0 6px 16px rgba(37,99,235,.16);
+}
+
+html:not([data-theme="dark"]) .repeat-primary-btn:hover:not(:disabled) {
+  box-shadow: 0 10px 22px rgba(37,99,235,.22);
+}
