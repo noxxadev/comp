@@ -648,6 +648,13 @@ Final outcome:
 - Viewer does not write to or modify Work History.
 - Phase 6D implementation is complete; live validation is pending Apps Script redeployment and user verification.
 
+## 2026-09-22 — Security Phase 1 backend authentication fix
+- Audited the GitHub `google-apps-script/Code.gs` and found the authentication constants and `doGet`/`doPost` routes were present, but the referenced authentication functions were missing.
+- Restored the complete Phase 1 backend authentication functions for user provisioning, password hashing, login, session creation, session validation and logout/revocation.
+- Kept the existing Work Tracking, Machine List, IP Repeat and Work History feature functions unchanged.
+- No credential values were added to the repository.
+- Phase 1 remains **LIVE VALIDATION PENDING** until the corrected `Code.gs` is deployed and the first user is created/tested.
+
 ## 2026-09-22 — Security Phase 1 implementation
 - Added `login.html`, `login.css` and `login.js` for the new username/password login page.
 - Added `auth.js` as the reusable client authentication/session module.
