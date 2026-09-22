@@ -246,8 +246,30 @@
     uploadArea.classList.add('has-file');
   }
 
-  function loadEngineerCatalog() {
-    const catalog = Array.isArray(window.engineerData) ? window.engineerData : [];
+  async function loadEngineerCatalog() {
+    const fallbackCatalog = Array.isArray(window.engineerData) ? window.engineerData : [];
+    let catalog = fallbackCatalog;
+
+    try {
+      const config = getSheetsConfig();
+      const baseUrl = String(config.webAppUrl || '').trim();
+      if (baseUrl) {
+        const params = new URLSearchParams({ action: 'getEngineers' });
+        if (config.requestKey) params.set('requestKey', String(config.requestKey));
+
+        const response = await fetch(
+          baseUrl + (baseUrl.includes('?') ? '&' : '?') + params.toString(),
+          { method: 'GET', cache: 'no-store' }
+        );
+        const result = await response.json();
+        if (response.ok && result?.ok && Array.isArray(result.rows) && result.rows.length) {
+          catalog = result.rows;
+        }
+      }
+    } catch (error) {
+      console.warn('Engineer Master Google Sheets tidak tersedia, memakai catalog lokal:', error);
+    }
+
     engineerSelect.innerHTML = '<option value="">Pilih engineer</option>';
 
     catalog.forEach(engineer => {
@@ -263,6 +285,8 @@
       state.engineerId = storedId;
       engineerSelect.value = storedId;
     }
+
+    updateWorkUi();
   }
 
   function updateWorkUi() {
