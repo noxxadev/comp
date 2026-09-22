@@ -42,7 +42,7 @@
         '<td>' + escapeHtml(row.locationId || '-') + '</td>' +
         '<td>' + escapeHtml(row.zone || '-') + '</td>' +
         '<td>' + escapeHtml(String(row.repeat ?? '-')) + '</td>' +
-        '<td>' + escapeHtml(row.engineerId || '-') + '</td>' +
+        '<td>' + escapeHtml(row.engineerName || row.engineerId || '-') + '</td>' +
         '<td>' + escapeHtml(row.status || '-') + '</td>' +
         '<td>' + escapeHtml(row.note || '-') + '</td>' +
         '<td>' + escapeHtml(row.resolutionStatus || '-') + '</td>';
