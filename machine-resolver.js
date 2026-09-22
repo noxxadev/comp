@@ -418,7 +418,7 @@
       }
 
       [250, 750, 1500].forEach(delay => {
-        setTimeout(() => augmentIpRepeatTable(records, cleaningCounts), delay);
+        setTimeout(() => augmentIpRepeatTable(records, cleaningCounts, lastCleaningMap), delay);
       });
     } catch (error) {
       console.error('Gagal menghubungkan Serial Number / Cleaning Count ke IP Repeat:', error);
