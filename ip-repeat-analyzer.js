@@ -12,7 +12,8 @@
     loadedAt: '',
     dataSource: 'none',
     selectedIps: new Set(),
-    engineerId: ''
+    engineerId: '',
+    engineerCatalog: []
   };
 
   const $ = (id) => document.getElementById(id);
@@ -270,9 +271,11 @@
       console.warn('Engineer Master Google Sheets tidak tersedia, memakai catalog lokal:', error);
     }
 
+    state.engineerCatalog = catalog.filter(engineer => engineer?.id && engineer?.displayName);
+
     engineerSelect.innerHTML = '<option value="">Pilih engineer</option>';
 
-    catalog.forEach(engineer => {
+    state.engineerCatalog.forEach(engineer => {
       if (!engineer?.id || !engineer?.displayName) return;
       const option = document.createElement('option');
       option.value = engineer.id;
@@ -281,7 +284,7 @@
     });
 
     const storedId = window.localStorage?.getItem(ENGINEER_STORAGE_KEY) || '';
-    if (catalog.some(engineer => engineer?.id === storedId)) {
+    if (state.engineerCatalog.some(engineer => engineer?.id === storedId)) {
       state.engineerId = storedId;
       engineerSelect.value = storedId;
     }
@@ -529,7 +532,7 @@
         zone: row.zone,
         repeat: row.repeat,
         engineerId: state.engineerId,
-        engineerName: String(window.engineerData?.find(engineer => engineer?.id === state.engineerId)?.displayName || '').trim(),
+        engineerName: String(state.engineerCatalog.find(engineer => engineer?.id === state.engineerId)?.displayName || '').trim(),
         status: workStatus.value,
         timestamp,
         note: workNote.value.trim()
