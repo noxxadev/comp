@@ -509,6 +509,8 @@ Final outcome:
 27. Apps Script deployment must not be changed to owner-only as a shortcut when legitimate browser users need the Web App.
 
 # Detailed Change Log
+
+## 2026-09-22 — Security roadmap revised after technical audit
 - Replaced the Google Authentication/OAuth direction with a simpler username/password authentication model backed by a Google Sheet user database.
 - Defined password hashes rather than plaintext credential storage.
 - Defined Apps Script as the authentication/backend layer.
@@ -517,7 +519,6 @@ Final outcome:
 - No application feature logic was changed.
 - No authentication code was implemented in this roadmap update.
 
-# Detailed Change Log
 
 ## 2026-09-01 — Roadmap established
 - Requirement freeze and Phase 0–9 roadmap created.
