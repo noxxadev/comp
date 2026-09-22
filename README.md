@@ -176,11 +176,6 @@ Purpose:
 - Show a preview of the normalized dataset (up to the first 200 records).
 - Allow the stored Machine List dataset to be cleared.
 
-New Phase 6A files:
-- `machine-list.html`
-- `machine-list.css`
-- `machine-list.js`
-
 Realtime snapshot rule:
 - Each newly processed Machine List replaces the active local dataset under `comp.machineList.v1`.
 - The active Machine List cache must represent one current/realtime snapshot, not an appended collection of old snapshots.
@@ -294,7 +289,7 @@ Implemented components:
 - History is displayed newest-first based on the append order returned by the backend.
 - Resolution state and resolution message are visible so unresolved/ambiguous identity is not hidden.
 - `index.html` now exposes Work History in the Tools Hub.
-- `machine-list.html` now links to Work History from the shared sidebar.
+- `machine-list.html` now links to Work History from the shared sidebar navigation.
 
 Backend read endpoint:
 - `doGet` now supports `action=getWorkHistory`.
@@ -354,6 +349,122 @@ Future Shift Report can use history for:
 - Work by engineer.
 - Outstanding machines/work items.
 
+# Security Roadmap
+
+Purpose:
+Protect internal COMP pages and data from unauthorized access while preserving the existing application logic.
+
+Target architecture:
+
+`User → Google Login → Authentication → Tools Hub/Internal Pages → Apps Script API → Google Sheets`
+
+Security work is maintained separately from the feature roadmap above. Each security phase follows the same rule: audit → implementation plan → explicit approval → implementation → testing → README update.
+
+## Security Phase 1 — Google Authentication
+Status: PLANNED
+
+Goal:
+- Establish a verifiable Google-based user identity.
+- Use Google authentication rather than custom username/password storage.
+- Prepare an authenticated identity that can be verified by the backend in later phases.
+- Keep existing tool logic unchanged.
+
+Planned work:
+- Audit the most suitable Google authentication mechanism for GitHub Pages + Apps Script.
+- Define authentication/session architecture.
+- Add the login entry point and Google Sign-In integration.
+- Establish a reusable authentication module.
+- Define how authenticated identity will be passed to the backend.
+- Do not place backend secrets in public frontend JavaScript.
+
+Important scope note:
+- Phase 1 establishes the authentication foundation.
+- Full backend data protection is completed in Security Phase 3, not by a frontend login screen alone.
+
+## Security Phase 2 — Page Protection
+Status: PLANNED
+
+Goal:
+- Prevent unauthenticated users from opening internal pages directly by URL.
+
+Planned work:
+- Protect internal pages such as Machine List, IP Repeat, Work Tracking and Work History.
+- Redirect unauthenticated users to the login page.
+- Handle logout and session expiry consistently.
+- Review browser cache/localStorage behavior, especially the Machine List cache under `comp.machineList.v1`.
+- Ensure sensitive cached data is not unnecessarily retained after logout.
+
+## Security Phase 3 — Apps Script / API Authentication
+Status: PLANNED
+
+Goal:
+- Prevent anonymous browsers from directly reading or modifying internal Google Sheets data through the Apps Script Web App.
+
+Planned work:
+- Verify authenticated user identity in Apps Script.
+- Reject requests without valid authentication.
+- Protect both `doGet` and `doPost`.
+- Protect sensitive actions including:
+  - `getMachineList`
+  - `getWorkHistory`
+  - `getWorkItems`
+  - `getIpRepeat`
+  - `replaceMachineList`
+  - `appendWorkHistory`
+  - `upsertWorkItems`
+- Review Apps Script deployment configuration as part of the authenticated architecture.
+
+Important rule:
+- Do not change the Apps Script deployment to an owner-only mode as a shortcut if that would prevent legitimate browser users from accessing the application.
+
+## Security Phase 4 — Authorization & Roles
+Status: PLANNED
+
+Goal:
+- Distinguish authentication (who the user is) from authorization (what the user may do).
+
+Potential roles:
+- Engineer
+- Supervisor
+- Admin
+
+Potential permission areas:
+- Tools Hub
+- Machine List
+- IP Repeat
+- Work Tracking
+- Work History
+- Machine List upload
+- Engineer management
+- Security/admin settings
+
+Final roles and permissions will be defined only after the authentication architecture is working and the actual operational requirements are confirmed.
+
+## Security Phase 5 — Security Hardening & Final Audit
+Status: PLANNED
+
+Goal:
+- Perform a complete security review after authentication, page protection and API authorization are implemented.
+
+Audit areas:
+- Direct URL access.
+- Anonymous API access.
+- GET/POST endpoint protection.
+- Authentication token/session handling.
+- Logout and session expiration.
+- Browser cache, localStorage and sessionStorage.
+- Public JavaScript exposure.
+- Apps Script deployment.
+- Google Sheets permissions.
+- Error messages and sensitive data exposure.
+- Request manipulation and replay considerations.
+- Relevant browser/network security behavior.
+
+Final outcome:
+- Security findings are documented.
+- Remaining risks are explicitly recorded.
+- No security change is silently applied without approval.
+
 # Fixed Architecture Rules
 1. Existing application logic must remain unchanged unless explicitly agreed.
 2. Each phase is tested before moving to the next.
@@ -376,6 +487,9 @@ Future Shift Report can use history for:
 19. The active Machine List browser cache represents one realtime snapshot; a newer upload replaces the previous active snapshot.
 20. Work History is never deleted as a side effect of replacing the active Machine List snapshot.
 21. Phase 6D is read-only with respect to Work History; the viewer must never mutate historical rows.
+22. Security work is maintained as a separate roadmap and must not silently change existing feature logic.
+23. No security implementation is performed without explicit approval after its implementation plan has been reviewed.
+24. Frontend-only login must not be treated as complete backend data protection.
 
 # Detailed Change Log
 
@@ -486,6 +600,16 @@ Future Shift Report can use history for:
 - Viewer does not write to or modify Work History.
 - Phase 6D implementation is complete; live validation is pending Apps Script redeployment and user verification.
 
+## 2026-09-19 — Security audit baseline
+- Audited the current authentication and data-access architecture before any security implementation.
+- Confirmed there is currently no Google authentication system.
+- Confirmed internal pages can currently be opened directly without login.
+- Confirmed the Apps Script Web App currently does not verify user identity for its `doGet`/`doPost` actions.
+- Confirmed `REQUEST_KEY` is empty in the audited configuration, so it is not currently providing request authentication.
+- Confirmed the Machine List browser cache under `comp.machineList.v1` must be considered when implementing logout/page protection.
+- No application code was changed during the audit.
+- Established the separate Security Roadmap with five phases: Google Authentication, Page Protection, Apps Script/API Authentication, Authorization & Roles, and Security Hardening & Final Audit.
+
 # Current Status
 
 | Phase | Status |
@@ -500,5 +624,15 @@ Future Shift Report can use history for:
 | Phase 7 — Multi-user / Google Sheets Hardening | PLANNED |
 | Phase 8 — Work Export | PLANNED |
 | Phase 9 — Shift Report Integration | PLANNED |
+
+## Security Status
+
+| Security Phase | Status |
+|---|---|
+| Security Phase 1 — Google Authentication | PLANNED |
+| Security Phase 2 — Page Protection | PLANNED |
+| Security Phase 3 — Apps Script / API Authentication | PLANNED |
+| Security Phase 4 — Authorization & Roles | PLANNED |
+| Security Phase 5 — Security Hardening & Final Audit | PLANNED |
 
 Rule: before declaring a phase complete, record the exact changes, affected files, validation result and remaining issues here.
