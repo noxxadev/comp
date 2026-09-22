@@ -505,6 +505,7 @@
         zone: row.zone,
         repeat: row.repeat,
         engineerId: state.engineerId,
+        engineerName: String(window.engineerData?.find(engineer => engineer?.id === state.engineerId)?.displayName || '').trim(),
         status: workStatus.value,
         timestamp,
         note: workNote.value.trim()
