@@ -317,3 +317,12 @@
 
 /* Hide the unused info icon beside the Process Data button. */
 .repeat-info i { display: none; }
+
+/* Keep numeric count columns compact — values contain only short numbers. */
+.repeat-table th:nth-child(3),
+.repeat-table td.repeat-cell,
+.repeat-table th[data-cleaning-count-header="true"],
+.repeat-table td[data-cleaning-count-cell="true"] {
+  width: 1%;
+  white-space: nowrap;
+}
