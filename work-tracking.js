@@ -188,6 +188,7 @@
         zone: String(item?.zone || '-').trim() || '-',
         repeat: Number(item?.repeat || 0),
         engineerId: String(item?.engineerId || '').trim(),
+        engineerName: String(item?.engineerName || '').trim(),
         status: String(item?.status || '').trim(),
         note: String(item?.note || '').trim(),
         resolutionStatus: String(resolution?.status || 'unresolved').trim(),
