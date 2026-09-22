@@ -314,3 +314,6 @@
   font-weight: 600;
 }
 .machine-identity-link:hover { text-decoration: underline; }
+
+/* Hide the unused info icon beside the Process Data button. */
+.repeat-info i { display: none; }
