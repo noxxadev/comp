@@ -185,6 +185,62 @@
     return counts;
   }
 
+  function parseHistoryTimestamp(value) {
+    if (value === null || value === undefined || value === '') return null;
+    if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value;
+
+    const text = String(value).trim();
+    if (!text) return null;
+
+    const direct = new Date(text);
+    if (!Number.isNaN(direct.getTime())) return direct;
+
+    const match = text.match(/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{4})(?:[ T](\d{1,2}):(\d{2})(?::(\d{2}))?)?$/);
+    if (!match) return null;
+
+    const parsed = new Date(
+      Number(match[3]),
+      Number(match[2]) - 1,
+      Number(match[1]),
+      Number(match[4] || 0),
+      Number(match[5] || 0),
+      Number(match[6] || 0)
+    );
+
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }
+
+  function buildLastCleaningMap(historyRows) {
+    const lastCleaning = new Map();
+
+    (Array.isArray(historyRows) ? historyRows : []).forEach(row => {
+      if (normalizeStatus(row?.status) !== 'selesai') return;
+
+      const serial = normalizeSerialNumber(row?.serialNumber);
+      const timestamp = parseHistoryTimestamp(row?.timestamp);
+      if (!serial || !timestamp) return;
+
+      const current = lastCleaning.get(serial);
+      if (!current || timestamp.getTime() > current.getTime()) {
+        lastCleaning.set(serial, timestamp);
+      }
+    });
+
+    return lastCleaning;
+  }
+
+  function formatLastCleaning(value) {
+    if (!(value instanceof Date) || Number.isNaN(value.getTime())) return '-';
+    return value.toLocaleString('id-ID', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    }).replace(',', '');
+  }
+
   function buildLocationMap(records) {
     const locationMap = new Map();
     records.forEach(record => {
@@ -235,12 +291,25 @@
     headerRow.appendChild(th);
   }
 
-  function augmentIpRepeatTable(records, cleaningCounts = new Map()) {
+  function ensureLastCleaningHeader(table) {
+    const headerRow = table.querySelector('thead tr');
+    if (!headerRow) return;
+    if (headerRow.querySelector('[data-last-cleaning-header="true"]')) return;
+
+    const th = document.createElement('th');
+    th.scope = 'col';
+    th.textContent = 'Last Cleaning';
+    th.dataset.lastCleaningHeader = 'true';
+    headerRow.appendChild(th);
+  }
+
+  function augmentIpRepeatTable(records, cleaningCounts = new Map(), lastCleaningMap = new Map()) {
     const table = document.querySelector('.repeat-table');
     if (!table) return;
 
     ensureHeader(table);
     ensureCleaningCountHeader(table);
+    ensureLastCleaningHeader(table);
 
     const locationMap = buildLocationMap(records);
     const body = table.querySelector('#resultsBody') || table.querySelector('tbody');
@@ -249,10 +318,13 @@
     body.querySelectorAll('tr').forEach(row => {
       row.querySelector('[data-machine-identity-cell="true"]')?.remove();
       row.querySelector('[data-cleaning-count-cell="true"]')?.remove();
+      row.querySelector('[data-last-cleaning-cell="true"]')?.remove();
 
       const location = getLocationFromRow(row);
       const serial = locationMap.get(location) || '';
-      const count = serial ? (cleaningCounts.get(normalizeSerialNumber(serial)) || 0) : 0;
+      const normalizedSerial = normalizeSerialNumber(serial);
+      const count = serial ? (cleaningCounts.get(normalizedSerial) || 0) : 0;
+      const lastCleaning = serial ? lastCleaningMap.get(normalizedSerial) : null;
 
       const serialTd = document.createElement('td');
       serialTd.dataset.machineIdentityCell = 'true';
@@ -274,8 +346,14 @@
       countTd.className = 'cleaning-count-cell';
       countTd.textContent = serial ? String(count) : '-';
 
+      const lastCleaningTd = document.createElement('td');
+      lastCleaningTd.dataset.lastCleaningCell = 'true';
+      lastCleaningTd.className = 'last-cleaning-cell';
+      lastCleaningTd.textContent = formatLastCleaning(lastCleaning);
+
       row.appendChild(serialTd);
       row.appendChild(countTd);
+      row.appendChild(lastCleaningTd);
     });
 
     const summary = document.getElementById('resultSummary');
@@ -310,17 +388,19 @@
 
     let records = [];
     let cleaningCounts = new Map();
+    let lastCleaningMap = new Map();
 
     try {
       // Load Machine List independently so the Phase 6 SN feature remains
       // available even if the history endpoint temporarily fails.
       records = await loadCurrentRecords();
-      augmentIpRepeatTable(records, cleaningCounts);
+      augmentIpRepeatTable(records, cleaningCounts, lastCleaningMap);
 
       try {
         const historyRows = await loadCleaningHistory();
         cleaningCounts = buildCleaningCountMap(historyRows);
-        augmentIpRepeatTable(records, cleaningCounts);
+        lastCleaningMap = buildLastCleaningMap(historyRows);
+        augmentIpRepeatTable(records, cleaningCounts, lastCleaningMap);
       } catch (historyError) {
         console.error('Gagal membaca Cleaning History:', historyError);
         const countStatus = document.getElementById('cleaningCountStatus');
@@ -332,7 +412,7 @@
 
       const body = table.querySelector('#resultsBody') || table.querySelector('tbody');
       if (body && !body.dataset.machineIdentityObserver) {
-        const observer = new MutationObserver(() => augmentIpRepeatTable(records, cleaningCounts));
+        const observer = new MutationObserver(() => augmentIpRepeatTable(records, cleaningCounts, lastCleaningMap));
         observer.observe(body, { childList: true });
         body.dataset.machineIdentityObserver = 'true';
       }
