@@ -7,6 +7,14 @@ const IP_REPEAT_SHEET_NAME = 'IP Repeat Current';
 const IP_REPEAT_META_KEY = 'comp.ipRepeat.meta';
 const ENGINEER_SHEET_NAME = 'Engineers';
 const ENGINEER_HEADERS = ['Engineer ID', 'Nama', 'Status'];
+const USER_SHEET_NAME = 'Users';
+const USER_HEADERS = ['User ID', 'Username', 'Password Hash', 'Salt', 'Role', 'Status'];
+const SESSION_SHEET_NAME = 'Sessions';
+const SESSION_HEADERS = ['Session Hash', 'User ID', 'Created At', 'Expires At', 'Status'];
+const PASSWORD_HASH_ITERATIONS = 10000;
+const SESSION_TTL_HOURS = 8;
+const AUTH_ERROR = 'Username atau password salah.';
+
 
 // Optional lightweight request key. This is NOT a secret when the frontend is public.
 // Keep both this value and google-sheets-config.js requestKey empty to disable it.
@@ -43,6 +51,9 @@ function doGet(e) {
     if (SPREADSHEET_ID === 'PASTE_YOUR_GOOGLE_SHEET_ID_HERE') {
       return jsonResponse({ ok: false, error: 'Spreadsheet ID is not configured.' });
     }
+    if (action === 'login') return loginUser(e);
+    if (action === 'validateSession') return validateSession(e);
+    if (action === 'logout') return logoutUser(e);
     if (action === 'getIpRepeat') return getIpRepeat();
     if (action === 'getWorkItems') return getWorkItems(e);
     if (action === 'getWorkHistory') return getWorkHistory(e);
@@ -69,6 +80,9 @@ function doPost(e) {
     if (SPREADSHEET_ID === 'PASTE_YOUR_GOOGLE_SHEET_ID_HERE') {
       return jsonResponse({ ok: false, error: 'Spreadsheet ID is not configured.' });
     }
+    if (payload.action === 'login') return loginUserPayload(payload);
+    if (payload.action === 'validateSession') return validateSessionPayload(payload);
+    if (payload.action === 'logout') return logoutUserPayload(payload);
     if (payload.action === 'replaceIpRepeat') return replaceIpRepeat(payload.rows, payload.sourceFileName);
     if (payload.action === 'upsertWorkItems') return upsertWorkItems(payload.items);
     if (payload.action === 'appendWorkHistory') return appendWorkHistory(payload.events);
