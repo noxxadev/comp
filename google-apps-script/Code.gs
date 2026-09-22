@@ -12,12 +12,12 @@ const REQUEST_KEY = '';
 
 const HEADERS = [
   'IP', 'Nama DC', 'Zona', 'Repeat Zero', 'Serial Number', 'Cleaning Count',
-  'Engineer ID', 'Status', 'Timestamp', 'Catatan'
+  'Engineer ID', 'Engineer Name', 'Status', 'Timestamp', 'Catatan'
 ];
 
 const HISTORY_HEADERS = [
   'Event ID', 'Timestamp', 'IP', 'Serial Number', 'Location ID', 'Zona',
-  'Repeat Zero', 'Engineer ID', 'Status', 'Catatan', 'Resolution Status'
+  'Repeat Zero', 'Engineer ID', 'Engineer Name', 'Status', 'Catatan', 'Resolution Status'
 ];
 
 const MACHINE_LIST_HEADERS = [
@@ -262,6 +262,7 @@ function upsertWorkItems(items) {
       const zone = String(item?.zone || '-').trim() || '-';
       const repeat = Number(item?.repeat || 0);
       const engineerId = String(item?.engineerId || '').trim();
+      const engineerName = String(item?.engineerName || '').trim();
       const status = String(item?.status || '').trim();
       const note = String(item?.note || '').trim();
 
@@ -275,7 +276,7 @@ function upsertWorkItems(items) {
 
       const values = [[
         ip, name, zone, repeat, serialNumber, cleaningCount,
-        engineerId, status, now, note
+        engineerId, engineerName, status, now, note
       ]];
       const existingRow = rowByIp.get(ip);
 
@@ -325,6 +326,7 @@ function appendWorkHistory(events) {
       const zone = String(event?.zone || '-').trim() || '-';
       const repeat = Number(event?.repeat || 0);
       const engineerId = String(event?.engineerId || '').trim();
+      const engineerName = String(event?.engineerName || '').trim();
       const status = String(event?.status || '').trim();
       const note = String(event?.note || '').trim();
       const resolutionStatus = String(event?.resolutionStatus || '').trim();
@@ -340,7 +342,7 @@ function appendWorkHistory(events) {
 
       values.push([
         eventId, timestamp, ip, serialNumber, locationId, zone, repeat,
-        engineerId, status, note, resolutionStatus
+        engineerId, engineerName, status, note, resolutionStatus
       ]);
       savedEvents.push({ eventId, ip, serialNumber, status });
       seenRequestIds.add(eventId);
@@ -375,9 +377,10 @@ function getWorkItems(e) {
       serialNumber: String(row[4] || '').trim(),
       cleaningCount: row[5] === '' || row[5] === null || row[5] === undefined ? '-' : (Number.isFinite(Number(row[5])) ? Number(row[5]) : String(row[5]).trim()),
       engineerId: String(row[6] || '').trim(),
-      status: String(row[7] || '').trim(),
-      timestamp: row[8] instanceof Date ? row[8].toISOString() : String(row[8] || '').trim(),
-      note: String(row[9] || '').trim()
+      engineerName: String(row[7] || '').trim(),
+      status: String(row[8] || '').trim(),
+      timestamp: row[9] instanceof Date ? row[8].toISOString() : String(row[8] || '').trim(),
+      note: String(row[10] || '').trim()
     });
   }
   return jsonResponse({ ok: true, rows, total: Math.max(data.length - 1, 0), returned: rows.length });
@@ -407,9 +410,10 @@ function getWorkHistory(e) {
       zone: String(row[5] || '-').trim() || '-',
       repeat: Number(row[6] || 0),
       engineerId: String(row[7] || '').trim(),
-      status: String(row[8] || '').trim(),
-      note: String(row[9] || '').trim(),
-      resolutionStatus: String(row[10] || '').trim()
+      engineerName: String(row[8] || '').trim(),
+      status: String(row[9] || '').trim(),
+      note: String(row[10] || '').trim(),
+      resolutionStatus: String(row[11] || '').trim()
     });
   }
   return jsonResponse({ ok: true, rows, total: Math.max(data.length - 1, 0), returned: rows.length });
