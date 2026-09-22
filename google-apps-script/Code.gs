@@ -95,6 +95,424 @@ function doPost(e) {
 }
 
 
+
+function loginUser(e) {
+  const username = normalizeAuthText(e?.parameter?.username);
+  const password = String(e?.parameter?.password ?? '');
+  return loginUserPayload({ username, password });
+}
+
+function loginUserPayload(payload) {
+  const username = normalizeAuthText(payload?.username);
+  const password = String(payload?.password ?? '');
+
+  if (!username || !password || username.length > 100 || password.length > 200) {
+    return jsonResponse({ ok: false, error: AUTH_ERROR });
+  }
+
+  const userSheet = getUserSheet();
+  const data = userSheet.getDataRange().getValues();
+  let matchedUser = null;
+
+  for (let r = 1; r < data.length; r++) {
+    const rowUsername = normalizeAuthText(data[r][1]);
+    const status = String(data[r][5] || '').trim();
+    if (rowUsername !== username || status.toLowerCase() !== 'active') continue;
+
+    matchedUser = {
+      row: r + 1,
+      id: String(data[r][0] || '').trim(),
+      username: String(data[r][1] || '').trim(),
+      passwordHash: String(data[r][2] || '').trim(),
+      salt: String(data[r][3] || '').trim(),
+      role: String(data[r][4] || 'Engineer').trim() || 'Engineer',
+      status
+    };
+    break;
+  }
+
+  if (!matchedUser || !matchedUser.id || !matchedUser.passwordHash || !matchedUser.salt) {
+    return jsonResponse({ ok: false, error: AUTH_ERROR });
+  }
+
+  const suppliedHash = hashPassword(password, matchedUser.salt);
+  if (!constantTimeEqual(suppliedHash, matchedUser.passwordHash)) {
+    return jsonResponse({ ok: false, error: AUTH_ERROR });
+  }
+
+  const session = createSession(matchedUser.id);
+  return jsonResponse({
+    ok: true,
+    authenticated: true,
+    session,
+    user: {
+      id: matchedUser.id,
+      username: matchedUser.username,
+      role: matchedUser.role,
+      status: matchedUser.status
+    }
+  });
+}
+
+function validateSession(e) {
+  return validateSessionPayload({
+    session: String(e?.parameter?.session || '')
+  });
+}
+
+function validateSessionPayload(payload) {
+  const token = String(payload?.session || '').trim();
+  if (!token || token.length > 500) {
+    return jsonResponse({ ok: true, authenticated: false });
+  }
+
+  const session = getValidSession(token);
+  if (!session) {
+    return jsonResponse({ ok: true, authenticated: false });
+  }
+
+  return jsonResponse({
+    ok: true,
+    authenticated: true,
+    user: {
+      id: session.user.id,
+      username: session.user.username,
+      role: session.user.role,
+      status: session.user.status
+    }
+  });
+}
+
+function logoutUser(e) {
+  return logoutUserPayload({
+    session: String(e?.parameter?.session || '')
+  });
+}
+
+function logoutUserPayload(payload) {
+  const token = String(payload?.session || '').trim();
+  if (token) revokeSession(token);
+  return jsonResponse({ ok: true, authenticated: false });
+}
+
+function getUserSheet() {
+  const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
+  let sheet = spreadsheet.getSheetByName(USER_SHEET_NAME);
+
+  if (!sheet) {
+    sheet = spreadsheet.insertSheet(USER_SHEET_NAME);
+    sheet.getRange(1, 1, 1, USER_HEADERS.length).setValues([USER_HEADERS]);
+    sheet.setFrozenRows(1);
+    SpreadsheetApp.flush();
+    return sheet;
+  }
+
+  const lastColumn = sheet.getLastColumn();
+  const lastRow = sheet.getLastRow();
+  if (!lastColumn || lastRow === 0) {
+    sheet.getRange(1, 1, 1, USER_HEADERS.length).setValues([USER_HEADERS]);
+    sheet.setFrozenRows(1);
+    SpreadsheetApp.flush();
+    return sheet;
+  }
+
+  const headers = sheet.getRange(1, 1, 1, lastColumn).getValues()[0]
+    .map(value => String(value || '').trim());
+
+  const sameSchema = USER_HEADERS.length === headers.length &&
+    USER_HEADERS.every((header, index) => header === headers[index]);
+
+  if (!sameSchema) {
+    const headerIndex = new Map();
+    headers.forEach((header, index) => {
+      if (header) headerIndex.set(header, index);
+    });
+
+    const rows = lastRow > 1
+      ? sheet.getRange(2, 1, lastRow - 1, lastColumn).getValues()
+      : [];
+
+    const migratedRows = rows.map(row => USER_HEADERS.map(header => {
+      const index = headerIndex.get(header);
+      return index === undefined ? '' : row[index];
+    }));
+
+    sheet.clearContents();
+    sheet.getRange(1, 1, 1, USER_HEADERS.length).setValues([USER_HEADERS]);
+    if (migratedRows.length) {
+      sheet.getRange(2, 1, migratedRows.length, USER_HEADERS.length).setValues(migratedRows);
+    }
+    sheet.setFrozenRows(1);
+    SpreadsheetApp.flush();
+  }
+
+  return sheet;
+}
+
+function getSessionSheet() {
+  const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
+  let sheet = spreadsheet.getSheetByName(SESSION_SHEET_NAME);
+
+  if (!sheet) {
+    sheet = spreadsheet.insertSheet(SESSION_SHEET_NAME);
+    sheet.getRange(1, 1, 1, SESSION_HEADERS.length).setValues([SESSION_HEADERS]);
+    sheet.setFrozenRows(1);
+    SpreadsheetApp.flush();
+    return sheet;
+  }
+
+  const lastColumn = sheet.getLastColumn();
+  const lastRow = sheet.getLastRow();
+  if (!lastColumn || lastRow === 0) {
+    sheet.getRange(1, 1, 1, SESSION_HEADERS.length).setValues([SESSION_HEADERS]);
+    sheet.setFrozenRows(1);
+    SpreadsheetApp.flush();
+  }
+
+  return sheet;
+}
+
+function createUser(username, password, role, status) {
+  const normalizedUsername = normalizeAuthText(username);
+  const rawPassword = String(password ?? '');
+  const normalizedRole = String(role || 'Engineer').trim() || 'Engineer';
+  const normalizedStatus = String(status || 'Active').trim() || 'Active';
+
+  if (!normalizedUsername || normalizedUsername.length > 100) {
+    throw new Error('Username tidak valid.');
+  }
+  if (!rawPassword || rawPassword.length > 200) {
+    throw new Error('Password tidak valid.');
+  }
+  if (normalizedRole.length > 50 || normalizedStatus.length > 30) {
+    throw new Error('Role atau status tidak valid.');
+  }
+
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+
+  try {
+    const sheet = getUserSheet();
+    const data = sheet.getDataRange().getValues();
+
+    for (let r = 1; r < data.length; r++) {
+      if (normalizeAuthText(data[r][1]) === normalizedUsername) {
+        throw new Error('Username sudah terdaftar.');
+      }
+    }
+
+    const userId = 'USR-' + Utilities.getUuid().replace(/-/g, '').slice(0, 12).toUpperCase();
+    const salt = Utilities.getUuid().replace(/-/g, '');
+    const passwordHash = hashPassword(rawPassword, salt);
+
+    sheet.getRange(sheet.getLastRow() + 1, 1, 1, USER_HEADERS.length).setValues([[
+      userId,
+      normalizedUsername,
+      passwordHash,
+      salt,
+      normalizedRole,
+      normalizedStatus
+    ]]);
+    SpreadsheetApp.flush();
+
+    return {
+      ok: true,
+      userId,
+      username: normalizedUsername,
+      role: normalizedRole,
+      status: normalizedStatus
+    };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function hashPassword(password, salt) {
+  const rawPassword = String(password ?? '');
+  const rawSalt = String(salt ?? '');
+
+  let bytes = Utilities.computeDigest(
+    Utilities.DigestAlgorithm.SHA_256,
+    rawSalt + ':' + rawPassword,
+    Utilities.Charset.UTF_8
+  );
+
+  for (let i = 1; i < PASSWORD_HASH_ITERATIONS; i++) {
+    bytes = Utilities.computeDigest(
+      Utilities.DigestAlgorithm.SHA_256,
+      bytesToHex(bytes) + ':' + rawSalt,
+      Utilities.Charset.UTF_8
+    );
+  }
+
+  return bytesToHex(bytes);
+}
+
+function bytesToHex(bytes) {
+  return bytes.map(byte => {
+    const value = byte < 0 ? byte + 256 : byte;
+    return value.toString(16).padStart(2, '0');
+  }).join('');
+}
+
+function constantTimeEqual(a, b) {
+  const left = String(a ?? '');
+  const right = String(b ?? '');
+  const maxLength = Math.max(left.length, right.length);
+  let difference = left.length ^ right.length;
+
+  for (let i = 0; i < maxLength; i++) {
+    const leftCode = i < left.length ? left.charCodeAt(i) : 0;
+    const rightCode = i < right.length ? right.charCodeAt(i) : 0;
+    difference |= leftCode ^ rightCode;
+  }
+
+  return difference === 0;
+}
+
+function createSession(userId) {
+  const id = String(userId || '').trim();
+  if (!id) throw new Error('User ID tidak valid.');
+
+  const token = Utilities.getUuid().replace(/-/g, '') + Utilities.getUuid().replace(/-/g, '');
+  const sessionHash = hashSessionToken(token);
+  const createdAt = new Date();
+  const expiresAt = new Date(createdAt.getTime() + SESSION_TTL_HOURS * 60 * 60 * 1000);
+
+  const sheet = getSessionSheet();
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+
+  try {
+    sheet.getRange(sheet.getLastRow() + 1, 1, 1, SESSION_HEADERS.length).setValues([[
+      sessionHash,
+      id,
+      createdAt,
+      expiresAt,
+      'Active'
+    ]]);
+    SpreadsheetApp.flush();
+  } finally {
+    lock.releaseLock();
+  }
+
+  return token;
+}
+
+function getValidSession(token) {
+  const sessionToken = String(token || '').trim();
+  if (!sessionToken) return null;
+
+  const sessionHash = hashSessionToken(sessionToken);
+  const sheet = getSessionSheet();
+  const data = sheet.getDataRange().getValues();
+  const now = new Date();
+  let matchedRow = -1;
+  let matchedSession = null;
+
+  for (let r = 1; r < data.length; r++) {
+    const storedHash = String(data[r][0] || '').trim();
+    if (!constantTimeEqual(storedHash, sessionHash)) continue;
+
+    matchedRow = r + 1;
+    const userId = String(data[r][1] || '').trim();
+    const createdAt = data[r][2] instanceof Date ? data[r][2] : new Date(data[r][2]);
+    const expiresAt = data[r][3] instanceof Date ? data[r][3] : new Date(data[r][3]);
+    const status = String(data[r][4] || '').trim();
+
+    matchedSession = {
+      row: matchedRow,
+      userId,
+      createdAt,
+      expiresAt,
+      status
+    };
+    break;
+  }
+
+  if (!matchedSession || matchedSession.status.toLowerCase() !== 'active') return null;
+
+  if (Number.isNaN(matchedSession.expiresAt.getTime()) || matchedSession.expiresAt <= now) {
+    sheet.getRange(matchedRow, 5).setValue('Expired');
+    SpreadsheetApp.flush();
+    return null;
+  }
+
+  const user = findActiveUserById(matchedSession.userId);
+  if (!user) {
+    sheet.getRange(matchedRow, 5).setValue('Revoked');
+    SpreadsheetApp.flush();
+    return null;
+  }
+
+  return {
+    row: matchedRow,
+    user: {
+      id: user.id,
+      username: user.username,
+      role: user.role,
+      status: user.status
+    },
+    createdAt: matchedSession.createdAt,
+    expiresAt: matchedSession.expiresAt
+  };
+}
+
+function hashSessionToken(token) {
+  return bytesToHex(Utilities.computeDigest(
+    Utilities.DigestAlgorithm.SHA_256,
+    String(token || ''),
+    Utilities.Charset.UTF_8
+  ));
+}
+
+function findActiveUserById(userId) {
+  const id = String(userId || '').trim();
+  if (!id) return null;
+
+  const sheet = getUserSheet();
+  const data = sheet.getDataRange().getValues();
+
+  for (let r = 1; r < data.length; r++) {
+    const rowId = String(data[r][0] || '').trim();
+    const status = String(data[r][5] || '').trim();
+    if (rowId !== id || status.toLowerCase() !== 'active') continue;
+
+    return {
+      id: rowId,
+      username: String(data[r][1] || '').trim(),
+      role: String(data[r][4] || 'Engineer').trim() || 'Engineer',
+      status
+    };
+  }
+
+  return null;
+}
+
+function revokeSession(token) {
+  const sessionToken = String(token || '').trim();
+  if (!sessionToken) return false;
+
+  const sessionHash = hashSessionToken(sessionToken);
+  const sheet = getSessionSheet();
+  const data = sheet.getDataRange().getValues();
+
+  for (let r = 1; r < data.length; r++) {
+    const storedHash = String(data[r][0] || '').trim();
+    if (!constantTimeEqual(storedHash, sessionHash)) continue;
+
+    sheet.getRange(r + 1, 5).setValue('Revoked');
+    SpreadsheetApp.flush();
+    return true;
+  }
+
+  return false;
+}
+
+function normalizeAuthText(value) {
+  return String(value ?? '').trim().toLowerCase();
+}
+
 function getEngineers() {
   const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
   let sheet = spreadsheet.getSheetByName(ENGINEER_SHEET_NAME);
