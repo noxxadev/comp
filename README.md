@@ -369,7 +369,7 @@ The selected authentication direction is intentionally simple:
 Security work is maintained separately from the feature roadmap. Each security phase follows: audit → implementation plan → explicit approval → implementation → testing → README update.
 
 ## Security Phase 1 — Simple Authentication
-Status: PLANNED
+Status: IMPLEMENTED — LIVE VALIDATION PENDING
 
 Goal:
 - Add a simple username/password login without introducing Google OAuth.
@@ -386,6 +386,27 @@ Planned work:
 - Implement login success/failure handling.
 - Define session creation, storage and expiration behavior.
 - Do not expose the user database or password hashes to the public frontend.
+
+Implemented components:
+- `login.html` provides the username/password login page.
+- `login.css` provides the login-page styling.
+- `login.js` handles login submission and redirect after success.
+- `auth.js` provides login, session validation, logout and client-side session storage using `sessionStorage`.
+- `google-apps-script/Code.gs` now provides `login`, `validateSession` and `logout` authentication actions.
+- `Users` is created as the credential database with `User ID | Username | Password Hash | Salt | Role | Status`.
+- `Sessions` is created as the session registry with `Session Hash | User ID | Created At | Expires At | Status`.
+- Passwords are stored as salted iterative SHA-256 hashes; plaintext passwords are not stored in the sheet.
+- Session tokens are generated server-side and only the session hash is persisted in the sheet.
+- A manual `createUser(username, password, role, status)` Apps Script function was added for initial user provisioning; credentials are supplied at execution time and are not committed to GitHub.
+- Existing Work Tracking, Machine List, IP Repeat and Work History logic was not intentionally changed.
+
+Live validation required:
+- Deploy the updated `Code.gs` to the existing Apps Script Web App.
+- Create at least one active user using `createUser(...)`.
+- Verify successful and failed login behavior from `login.html`.
+- Verify a valid session can be validated and an expired/revoked session is rejected.
+- Verify logout revokes the session and clears browser session data.
+- Verify no password or password hash is returned to the frontend beyond the authentication response.
 
 Important scope note:
 - Phase 1 creates the authentication foundation.
@@ -627,6 +648,15 @@ Final outcome:
 - Viewer does not write to or modify Work History.
 - Phase 6D implementation is complete; live validation is pending Apps Script redeployment and user verification.
 
+## 2026-09-22 — Security Phase 1 implementation
+- Added `login.html`, `login.css` and `login.js` for the new username/password login page.
+- Added `auth.js` as the reusable client authentication/session module.
+- Extended `google-apps-script/Code.gs` with `Users` and `Sessions` storage plus login, session validation and logout actions.
+- Added salted iterative password hashing and server-side session token handling.
+- Added `createUser(username, password, role, status)` for controlled initial user provisioning from the Apps Script environment.
+- Kept existing application feature logic and existing public GitHub Pages architecture unchanged.
+- Phase 1 implementation is complete; live validation requires Apps Script deployment and creation of the first user.
+
 ## 2026-09-19 — Security audit baseline
 - Audited the current authentication and data-access architecture before any security implementation.
 - Confirmed there is currently no Google authentication system.
@@ -656,7 +686,7 @@ Final outcome:
 
 | Security Phase | Status |
 |---|---|
-| Security Phase 1 — Simple Authentication | PLANNED |
+| Security Phase 1 — Simple Authentication | IMPLEMENTED — live validation pending |
 | Security Phase 2 — Page Protection | PLANNED |
 | Security Phase 3 — Apps Script / API Authentication | PLANNED |
 | Security Phase 4 — Authorization & Roles | PLANNED |
