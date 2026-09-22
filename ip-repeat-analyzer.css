@@ -326,3 +326,10 @@
   width: 1%;
   white-space: nowrap;
 }
+
+/* Keep the Last Cleaning timestamp compact without affecting other columns. */
+.repeat-table th[data-last-cleaning-header="true"],
+.repeat-table td[data-last-cleaning-cell="true"] {
+  width: 1%;
+  white-space: nowrap;
+}
