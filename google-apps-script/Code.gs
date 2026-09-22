@@ -379,7 +379,7 @@ function getWorkItems(e) {
       engineerId: String(row[6] || '').trim(),
       engineerName: String(row[7] || '').trim(),
       status: String(row[8] || '').trim(),
-      timestamp: row[9] instanceof Date ? row[8].toISOString() : String(row[8] || '').trim(),
+      timestamp: row[9] instanceof Date ? row[9].toISOString() : String(row[9] || '').trim(),
       note: String(row[10] || '').trim()
     });
   }
