@@ -5,6 +5,8 @@ const MACHINE_LIST_SHEET_NAME = 'Machine List Current';
 const MACHINE_LIST_META_KEY = 'comp.machineList.meta';
 const IP_REPEAT_SHEET_NAME = 'IP Repeat Current';
 const IP_REPEAT_META_KEY = 'comp.ipRepeat.meta';
+const ENGINEER_SHEET_NAME = 'Engineers';
+const ENGINEER_HEADERS = ['Engineer ID', 'Nama', 'Status'];
 
 // Optional lightweight request key. This is NOT a secret when the frontend is public.
 // Keep both this value and google-sheets-config.js requestKey empty to disable it.
@@ -45,6 +47,7 @@ function doGet(e) {
     if (action === 'getWorkItems') return getWorkItems(e);
     if (action === 'getWorkHistory') return getWorkHistory(e);
     if (action === 'getMachineList') return getMachineList();
+    if (action === 'getEngineers') return getEngineers();
     return jsonResponse({
       ok: true,
       service: 'COMP Work Tracking',
@@ -77,6 +80,74 @@ function doPost(e) {
   }
 }
 
+
+function getEngineers() {
+  const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
+  let sheet = spreadsheet.getSheetByName(ENGINEER_SHEET_NAME);
+
+  if (!sheet) {
+    sheet = spreadsheet.insertSheet(ENGINEER_SHEET_NAME);
+    sheet.getRange(1, 1, 1, ENGINEER_HEADERS.length).setValues([ENGINEER_HEADERS]);
+    sheet.getRange(2, 1, 5, ENGINEER_HEADERS.length).setValues([
+      ['ENG-001', 'Engineer 1', 'Active'],
+      ['ENG-002', 'Engineer 2', 'Active'],
+      ['ENG-003', 'Engineer 3', 'Active'],
+      ['ENG-004', 'Engineer 4', 'Active'],
+      ['ENG-005', 'Engineer 5', 'Active']
+    ]);
+    sheet.setFrozenRows(1);
+    SpreadsheetApp.flush();
+  } else {
+    ensureEngineerSchema(sheet);
+  }
+
+  const data = sheet.getDataRange().getValues();
+  const rows = [];
+  for (let r = 1; r < data.length; r++) {
+    const id = String(data[r][0] || '').trim();
+    const name = String(data[r][1] || '').trim();
+    const status = String(data[r][2] || 'Active').trim() || 'Active';
+    if (!id || !name || status.toLowerCase() !== 'active') continue;
+    rows.push({ id, displayName: name, status });
+  }
+
+  return jsonResponse({ ok: true, rows, total: rows.length });
+}
+
+function ensureEngineerSchema(sheet) {
+  const lastColumn = sheet.getLastColumn();
+  const lastRow = sheet.getLastRow();
+
+  if (!lastColumn || lastRow === 0) {
+    sheet.getRange(1, 1, 1, ENGINEER_HEADERS.length).setValues([ENGINEER_HEADERS]);
+    sheet.setFrozenRows(1);
+    return;
+  }
+
+  const currentHeaders = sheet.getRange(1, 1, 1, lastColumn).getValues()[0].map(value => String(value || '').trim());
+  const sameSchema = ENGINEER_HEADERS.length === currentHeaders.length &&
+    ENGINEER_HEADERS.every((header, index) => header === currentHeaders[index]);
+  if (sameSchema) return;
+
+  const headerIndex = new Map();
+  currentHeaders.forEach((header, index) => {
+    if (header) headerIndex.set(header, index);
+  });
+
+  const rows = lastRow > 1 ? sheet.getRange(2, 1, lastRow - 1, lastColumn).getValues() : [];
+  const migratedRows = rows.map(row => ENGINEER_HEADERS.map(header => {
+    const index = headerIndex.get(header);
+    return index === undefined ? '' : row[index];
+  }));
+
+  sheet.clearContents();
+  sheet.getRange(1, 1, 1, ENGINEER_HEADERS.length).setValues([ENGINEER_HEADERS]);
+  if (migratedRows.length) {
+    sheet.getRange(2, 1, migratedRows.length, ENGINEER_HEADERS.length).setValues(migratedRows);
+  }
+  sheet.setFrozenRows(1);
+  SpreadsheetApp.flush();
+}
 
 function getIpRepeat() {
   const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
