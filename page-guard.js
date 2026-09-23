@@ -55,6 +55,7 @@
   }
 
   async function run() {
+    const perfStart=performance.now();
     const session=getSession();
     if(pageMode==='guest'){
       if(!session){showPage();return;}
@@ -68,6 +69,8 @@
     const result=await window.CompAuth.validateSession();
     if(!result?.authenticated){clearAuth();goLogin();return;}
     showPage();
+    console.debug(`[COMP PERF] page-guard total: ${(performance.now() - perfStart).toFixed(0)} ms (${location.pathname})`);
+    console.debug(`[COMP PERF] page-guard total: ${(performance.now() - perfStart).toFixed(0)} ms (${location.pathname})`);
     if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',addLogoutUI,{once:true});else addLogoutUI();
   }
   run().catch(()=>{clearAuth();if(pageMode==='guest')showPage();else goLogin();});
