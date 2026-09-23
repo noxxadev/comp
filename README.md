@@ -369,7 +369,7 @@ The selected authentication direction is intentionally simple:
 Security work is maintained separately from the feature roadmap. Each security phase follows: audit → implementation plan → explicit approval → implementation → testing → README update.
 
 ## Security Phase 1 — Simple Authentication
-Status: IMPLEMENTED — LIVE VALIDATION PENDING
+Status: COMPLETED — LIVE VALIDATION CONFIRMED
 
 Goal:
 - Add a simple username/password login without introducing Google OAuth.
@@ -413,7 +413,7 @@ Important scope note:
 - It does not by itself make every internal page or Apps Script action secure; those controls are completed in Phases 2 and 3.
 
 ## Security Phase 2 — Page Protection
-Status: IMPLEMENTED — LIVE VALIDATION PENDING
+Status: COMPLETED — LIVE VALIDATION CONFIRMED
 
 Goal:
 - Prevent unauthenticated users from opening COMP tool pages directly through normal browser navigation or direct URLs.
@@ -716,6 +716,16 @@ Final outcome:
 - Viewer does not write to or modify Work History.
 - Phase 6D implementation is complete; live validation is pending Apps Script redeployment and user verification.
 
+## 2026-09-23 — Security Phase 1 and Phase 2 live validation completed
+- User confirmed the implemented username/password authentication flow works in live testing.
+- User confirmed protected-page access control works in live testing.
+- User confirmed direct access to protected pages without authentication is redirected to login.
+- User confirmed authenticated navigation and logout behavior work as expected.
+- Security Phase 1 is now marked **COMPLETED — LIVE VALIDATION CONFIRMED**.
+- Security Phase 2 is now marked **COMPLETED — LIVE VALIDATION CONFIRMED**.
+- Security Phase 3 remains planned because Apps Script API endpoints still require independent server-side session enforcement.
+- No new application feature logic was changed as part of validation.
+
 ## 2026-09-22 — Security Phase 1 backend authentication fix
 - Audited the GitHub `google-apps-script/Code.gs` and found the authentication constants and `doGet`/`doPost` routes were present, but the referenced authentication functions were missing.
 - Restored the complete Phase 1 backend authentication functions for user provisioning, password hashing, login, session creation, session validation and logout/revocation.
@@ -761,8 +771,8 @@ Final outcome:
 
 | Security Phase | Status |
 |---|---|
-| Security Phase 1 — Simple Authentication | IMPLEMENTED — live validation pending |
-| Security Phase 2 — Page Protection | PLANNED |
+| Security Phase 1 — Simple Authentication | COMPLETED — live validation confirmed |
+| Security Phase 2 — Page Protection | COMPLETED — live validation confirmed |
 | Security Phase 3 — Apps Script / API Authentication | PLANNED |
 | Security Phase 4 — Authorization & Roles | PLANNED |
 | Security Phase 5 — Security Hardening & Final Audit | PLANNED |
