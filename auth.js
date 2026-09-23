@@ -27,6 +27,7 @@
   }
 
   async function request(action, payload = {}) {
+    const perfStart = performance.now();
     const config = getConfig();
     const url = String(config.webAppUrl || '').trim();
     if (!url) throw new Error('Google Apps Script belum dikonfigurasi.');
@@ -45,6 +46,7 @@
     });
 
     const raw = await response.text();
+    console.debug(`[COMP PERF] Apps Script ${action}: ${(performance.now() - perfStart).toFixed(0)} ms (HTTP ${response.status})`);
     let result;
     try { result = JSON.parse(raw); } catch (_) { throw new Error('Response authentication tidak valid.'); }
     if (!response.ok) throw new Error(result?.error || 'Authentication request gagal.');
@@ -59,14 +61,17 @@
   }
 
   async function validateSession() {
+    const perfStart = performance.now();
     const session = getSession();
     if (!session) return { ok: false, authenticated: false };
     try {
       const result = await request('validateSession', { session });
       if (!result?.authenticated) clearAuth();
       else if (result.user) sessionStorage.setItem(USER_KEY, JSON.stringify(result.user));
+      console.debug(`[COMP PERF] validateSession total: ${(performance.now() - perfStart).toFixed(0)} ms (authenticated=${Boolean(result?.authenticated)})`);
       return result;
     } catch (error) {
+      console.debug(`[COMP PERF] validateSession total: ${(performance.now() - perfStart).toFixed(0)} ms (error)`);
       return { ok: false, authenticated: false, error: error.message || 'Session tidak dapat diverifikasi.' };
     }
   }
