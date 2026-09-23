@@ -413,18 +413,86 @@ Important scope note:
 - It does not by itself make every internal page or Apps Script action secure; those controls are completed in Phases 2 and 3.
 
 ## Security Phase 2 — Page Protection
-Status: PLANNED
+Status: IMPLEMENTED — LIVE VALIDATION PENDING
 
 Goal:
-- Prevent unauthenticated users from opening internal pages directly by URL.
+- Prevent unauthenticated users from opening COMP tool pages directly through normal browser navigation or direct URLs.
+- Provide a consistent client-side session check and logout path without changing existing tool/business logic.
 
-Planned work:
-- Protect internal pages such as Machine List, IP Repeat, Work Tracking and Work History.
-- Redirect unauthenticated users to the login page.
-- Handle logout and session expiration consistently.
-- Review browser cache/localStorage behavior, especially the Machine List cache under `comp.machineList.v1`.
-- Ensure sensitive cached data is not unnecessarily retained after logout.
-- Preserve the existing functionality of protected pages after authentication.
+Phase 2A — Page inventory and classification:
+- Protected: `index.html`
+- Protected: `excel-analyzer.html`
+- Protected: `offline-analyzer.html`
+- Protected: `iplocationvalidator.html`
+- Protected: `data-matcher.html`
+- Protected: `bulk-compare.html`
+- Protected: `ip-repeat-analyzer.html`
+- Protected: `machine-list.html`
+- Protected: `cleaning-history.html`
+- Protected: `theme-preview.html`
+- Guest/public entry: `login.html`
+- `history-viewer.html` is referenced by older roadmap text but is not currently present in the `main` branch, so it was not modified or included in the active Phase 2 page list.
+
+Phase 2B — Central page guard:
+- Added `page-guard.js` as the reusable client-side page protection layer.
+- Protected pages load `google-sheets-config.js`, `auth.js`, then `page-guard.js` before their existing application scripts.
+- A missing session redirects immediately to `login.html`.
+- A present session is validated against Apps Script before the protected page is revealed.
+- Invalid, expired or revoked sessions are cleared and redirected to login.
+- Login page uses guest mode and redirects an already-authenticated user to `index.html`.
+
+Phase 2C — Flash-of-content reduction:
+- The guard temporarily hides the document while the authentication check is running.
+- This reduces visible exposure of protected UI while the session is being validated.
+
+Phase 2D — Logout:
+- The guard adds a shared Logout control to pages that expose the standard COMP sidebar.
+- Logout uses the existing `CompAuth.logout()` flow, revokes the server-side session when reachable, clears `sessionStorage`, and redirects to login.
+
+Phase 2E — Direct URL protection:
+- Direct navigation to a protected HTML page without a session is redirected to `login.html`.
+- Protection is applied consistently across the current tool pages listed in Phase 2A.
+
+Phase 2F — Login-page behavior:
+- An authenticated user opening `login.html` is redirected to `index.html`.
+- An unauthenticated user can still open and use the login form normally.
+
+Phase 2G — Session expiration:
+- Protected pages validate the existing server-side session on page entry.
+- An expired/revoked session therefore fails the page guard and returns the user to login.
+- Continuous in-page expiry handling is intentionally left for a later hardening step if required; Phase 2 does not introduce background polling.
+
+Phase 2H — Live validation required:
+1. Open each protected URL in a fresh/incognito session → must redirect to login.
+2. Login with the active user → Tools Hub opens.
+3. Navigate between protected pages → page remains accessible while the session is valid.
+4. Open a protected URL directly while authenticated → page opens.
+5. Click Logout → session is revoked/cleared and login page appears.
+6. After logout, reopen a protected URL → must redirect to login.
+7. Close/reopen the browser → session should not survive because the token is stored in `sessionStorage`; a fresh browser session should require login.
+8. Test an expired/revoked session → must redirect to login.
+9. Regression-test existing tool workflows after login/logout.
+
+Important security limitation:
+- Phase 2 is browser-side page protection on GitHub Pages; it is not server-side access control for the HTML/JavaScript assets themselves.
+- Static files such as `master-data.js` remain fetchable if their URLs are known.
+- Apps Script data endpoints are not yet protected by the page guard. Security Phase 3 is required to prevent anonymous direct API access to Google Sheets data.
+- Therefore Phase 2 should be considered the UI/page access layer, not the final data-security layer.
+
+Files added/changed in Phase 2:
+- Added: `page-guard.js`
+- Updated: `index.html`
+- Updated: `machine-list.html`
+- Updated: `ip-repeat-analyzer.html`
+- Updated: `cleaning-history.html`
+- Updated: `bulk-compare.html`
+- Updated: `data-matcher.html`
+- Updated: `excel-analyzer.html`
+- Updated: `offline-analyzer.html`
+- Updated: `iplocationvalidator.html`
+- Updated: `theme-preview.html`
+- Updated: `login.html`
+- Existing business/tool logic was not intentionally modified.
 
 ## Security Phase 3 — Apps Script / API Authentication
 Status: PLANNED
