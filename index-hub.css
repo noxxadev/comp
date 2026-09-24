@@ -20,7 +20,7 @@
   .hub-brand,.hub-subbrand,.hub-nav span,.hub-meta,.theme-toggle-wrap{opacity:1;visibility:visible;pointer-events:auto}
   .hub-logo{min-width:232px;padding-bottom:18px}.hub-mark{width:38px;height:38px;flex-basis:38px}
   .hub-nav{display:flex;flex-direction:column;gap:6px;padding-top:14px}.hub-nav a{min-width:232px;min-height:44px;padding:10px 11px}.hub-nav i{font-size:16px}.hub-nav-icon{width:20px;height:20px;flex-basis:20px}.hub-meta{display:none}
-  .hub-main,.hub-shell:has(.hub-sidebar:hover) .hub-main{margin-left:0;padding:18px 14px 30px;padding-top:70px}
-  .hub-container{width:100%}.hub-top{align-items:flex-start;flex-direction:column;gap:12px;margin-bottom:18px}.hub-title{font-size:29px}.hub-desc{font-size:13px;line-height:1.55}.hub-count{white-space:normal}.hub-grid{grid-template-columns:1fr;gap:14px}.hub-card{min-height:0;padding:16px;border-radius:14px}.hub-card-foot{align-items:flex-start;flex-direction:column;padding-top:14px}.hub-hero{padding:20px;margin-bottom:16px;border-radius:16px}
+  .hub-main,.hub-shell:has(.hub-sidebar:hover) .hub-main{margin-left:0;padding:18px 14px 30px;padding-top:58px}
+  .hub-container{width:100%}.hub-top{align-items:flex-start;flex-direction:column;gap:8px;margin-bottom:14px}.hub-title{font-size:28px;line-height:1.12}.hub-desc{font-size:13px;line-height:1.5}.hub-count{white-space:normal}.hub-grid{grid-template-columns:1fr;gap:14px}.hub-card{min-height:0;padding:16px;border-radius:14px}.hub-card-foot{align-items:flex-start;flex-direction:column;padding-top:14px}.hub-hero{padding:20px;margin-bottom:16px;border-radius:16px}
 }
-@media(max-width:480px){.hub-title{font-size:27px}.hub-card-title{font-size:16px}.hub-card-text{font-size:12.5px}.hub-main,.hub-shell:has(.hub-sidebar:hover) .hub-main{padding-left:12px;padding-right:12px;padding-top:68px}.hub-hero{padding:18px}.hub-count{width:100%}}
+@media(max-width:480px){.hub-title{font-size:26px}.hub-card-title{font-size:16px}.hub-card-text{font-size:12.5px}.hub-main,.hub-shell:has(.hub-sidebar:hover) .hub-main{padding-left:12px;padding-right:12px;padding-top:56px}.hub-hero{padding:18px}.hub-count{width:100%}}
