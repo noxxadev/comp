@@ -861,3 +861,11 @@ Rule: before declaring a phase complete, record the exact changes, affected file
 - Mobile uses a vertical initial arrangement so all workflow steps remain readable and draggable.
 - The change is limited to `index.html` and `index-hub.css`; authentication, sidebar, theme toggle, backend, Google Sheets, and existing tool-page business logic were not changed.
 - Live validation on GitHub Pages is required.
+
+
+## 2026-09-24 — Pool Vs Dashboard workflow spacing fix
+- Reduced desktop workflow node width so the Single Compare and Bulk Compare nodes no longer overlap.
+- Repositioned the Pool Vs Dashboard branch nodes to provide clear separation between the parent node and its two compare options.
+- Adjusted the tablet node sizing consistently.
+- Mobile node sizing and the draggable behavior were preserved.
+- No workflow logic, navigation logic, authentication, backend, or tool-page business logic was changed.
