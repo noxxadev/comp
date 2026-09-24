@@ -785,6 +785,16 @@ Final outcome:
 - No application code was changed during the audit.
 - Established the separate Security Roadmap with five phases: Google Authentication, Page Protection, Apps Script/API Authentication, Authorization & Roles, and Security Hardening & Final Audit.
 
+
+## 2026-09-24 — Shared authentication session across browser tabs
+- Audited the New Tab login issue and confirmed the cause: authentication state was stored in per-tab `sessionStorage`, so a newly opened tab could not see the existing session.
+- Updated `auth.js` to store the authentication session, user identity and 5-minute validation timestamp in shared `localStorage`.
+- Updated `page-guard.js` to read and clear the same shared authentication storage.
+- Existing server-side session validation, 5-minute validation cache, login flow, logout request and 8-hour server session TTL were not changed.
+- No `Code.gs`, Work Tracking, Machine List, IP Repeat Analyzer or other business logic was changed.
+- The browser-tab sharing issue is implemented; live validation is required.
+- Follow-up consideration: cross-tab logout synchronization can be added separately if needed.
+
 # Current Status
 
 | Phase | Status |
