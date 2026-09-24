@@ -242,14 +242,28 @@
             });
         };
 
-        const sync = () => {
-            nodes.forEach(node => {
-                if (!node.style.left) {
+        const applyInitialPositions = () => {
+            if (canvas.dataset.initialized === '1') return;
+            const mobile = window.innerWidth <= 780;
+            if (mobile) {
+                const gap = canvas.dataset.workflow === 'offline' ? 118 : 126;
+                nodes.forEach((node, index) => {
+                    const x = 12;
+                    const y = 18 + index * gap;
+                    setNodePosition(node, x, y);
+                });
+            } else {
+                nodes.forEach(node => {
                     const x = parseFloat(node.dataset.initialX) / 100 * canvas.clientWidth;
                     const y = parseFloat(node.dataset.initialY) / 100 * canvas.clientHeight;
                     setNodePosition(node, x, y);
-                }
-            });
+                });
+            }
+            canvas.dataset.initialized = '1';
+        };
+
+        const sync = () => {
+            applyInitialPositions();
             draw();
         };
 
@@ -298,7 +312,7 @@
             });
         });
 
-        window.addEventListener('resize', sync);
+        window.addEventListener('resize', draw);
         requestAnimationFrame(sync);
     };
 
