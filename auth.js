@@ -5,29 +5,30 @@
   const USER_KEY = 'comp.auth.user';
   const SESSION_VALIDATED_AT_KEY = 'comp.auth.sessionValidatedAt';
   const SESSION_VALIDATION_TTL_MS = 5 * 60 * 1000;
+  const authStorage = window.localStorage;
 
   function getConfig() {
     return window.CompGoogleSheetsConfig || { webAppUrl: '', requestKey: '' };
   }
 
   function getSession() {
-    return sessionStorage.getItem(SESSION_KEY) || '';
+    return authStorage.getItem(SESSION_KEY) || '';
   }
 
   function getUser() {
-    try { return JSON.parse(sessionStorage.getItem(USER_KEY) || 'null'); } catch (_) { return null; }
+    try { return JSON.parse(authStorage.getItem(USER_KEY) || 'null'); } catch (_) { return null; }
   }
 
   function setAuth(session, user) {
-    sessionStorage.setItem(SESSION_KEY, session);
-    sessionStorage.setItem(USER_KEY, JSON.stringify(user || null));
-    sessionStorage.removeItem(SESSION_VALIDATED_AT_KEY);
+    authStorage.setItem(SESSION_KEY, session);
+    authStorage.setItem(USER_KEY, JSON.stringify(user || null));
+    authStorage.removeItem(SESSION_VALIDATED_AT_KEY);
   }
 
   function clearAuth() {
-    sessionStorage.removeItem(SESSION_KEY);
-    sessionStorage.removeItem(USER_KEY);
-    sessionStorage.removeItem(SESSION_VALIDATED_AT_KEY);
+    authStorage.removeItem(SESSION_KEY);
+    authStorage.removeItem(USER_KEY);
+    authStorage.removeItem(SESSION_VALIDATED_AT_KEY);
   }
 
   async function request(action, payload = {}) {
@@ -65,7 +66,7 @@
   }
 
   function isSessionValidationFresh() {
-    const value = Number(sessionStorage.getItem(SESSION_VALIDATED_AT_KEY) || 0);
+    const value = Number(authStorage.getItem(SESSION_VALIDATED_AT_KEY) || 0);
     return Number.isFinite(value) && value > 0 && (Date.now() - value) < SESSION_VALIDATION_TTL_MS;
   }
 
@@ -80,8 +81,8 @@
       const result = await request('validateSession', { session });
       if (!result?.authenticated) clearAuth();
       else {
-        if (result.user) sessionStorage.setItem(USER_KEY, JSON.stringify(result.user));
-        sessionStorage.setItem(SESSION_VALIDATED_AT_KEY, String(Date.now()));
+        if (result.user) authStorage.setItem(USER_KEY, JSON.stringify(result.user));
+        authStorage.setItem(SESSION_VALIDATED_AT_KEY, String(Date.now()));
       }
       console.debug(`[COMP PERF] validateSession total: ${(performance.now() - perfStart).toFixed(0)} ms (authenticated=${Boolean(result?.authenticated)})`);
       return result;
