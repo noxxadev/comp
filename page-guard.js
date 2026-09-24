@@ -2,14 +2,15 @@
   'use strict';
   const SESSION_KEY = 'comp.auth.session';
   const USER_KEY = 'comp.auth.user';
+  const authStorage = window.localStorage;
   const pageMode = document.documentElement.getAttribute('data-auth-page') || 'protected';
   document.documentElement.style.visibility = 'hidden';
 
   const getSession = () => {
-    try { return sessionStorage.getItem(SESSION_KEY) || ''; } catch (_) { return ''; }
+    try { return authStorage.getItem(SESSION_KEY) || ''; } catch (_) { return ''; }
   };
   const clearAuth = () => {
-    try { sessionStorage.removeItem(SESSION_KEY); sessionStorage.removeItem(USER_KEY); } catch (_) {}
+    try { authStorage.removeItem(SESSION_KEY); authStorage.removeItem(USER_KEY); } catch (_) {}
   };
   const goLogin = () => {
     if (!location.pathname.endsWith('/login.html') && !location.pathname.endsWith('login.html')) location.replace('login.html');
@@ -23,7 +24,7 @@
     const sidebar = document.getElementById('sidebar');
     if (!sidebar || sidebar.querySelector('[data-comp-logout]')) return;
     let user = null;
-    try { user = JSON.parse(sessionStorage.getItem(USER_KEY) || 'null'); } catch (_) {}
+    try { user = JSON.parse(authStorage.getItem(USER_KEY) || 'null'); } catch (_) {}
     const wrap = document.createElement('div');
     wrap.className = 'comp-logout-wrap';
     wrap.style.cssText='margin:16px 0 0;padding:12px;border-top:1px solid var(--border,rgba(127,127,127,.2));display:flex;flex-direction:column;gap:8px;';
