@@ -16,7 +16,7 @@
     .history-stat-label { display:block; margin-bottom:8px; font-size:.76rem; font-weight:600; text-transform:uppercase; letter-spacing:.05em; opacity:.65; }
     .history-stat-value { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:1.1rem; line-height:1.35; font-family:'JetBrains Mono',monospace; }
     .history-stat-detail { display:block; margin-top:5px; font-size:.8rem; opacity:.6; }
-    .history-toolbar { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:18px; }
+    .history-toolbar { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:18px; }\n    .history-search { display:flex; align-items:flex-end; flex-wrap:wrap; gap:12px; margin-bottom:18px; padding:14px; border:1px solid var(--border, rgba(127,127,127,.18)); border-radius:12px; background:var(--surface, rgba(127,127,127,.03)); }\n    .history-search-field { display:flex; flex-direction:column; gap:6px; min-width:220px; }\n    .history-search-field label { font-size:.76rem; font-weight:600; text-transform:uppercase; letter-spacing:.04em; opacity:.65; }\n    .history-search-field input { height:40px; padding:0 11px; border:1px solid var(--border, rgba(127,127,127,.22)); border-radius:9px; background:var(--surface, rgba(127,127,127,.06)); color:var(--text); font:inherit; }\n    .history-search-field input:focus { outline:2px solid var(--blue,#3B82F6); outline-offset:1px; }\n    .history-search-hint { align-self:center; font-size:.78rem; opacity:.6; }
     .history-status { font-size:.85rem; opacity:.75; }
     .history-refresh { border:0; border-radius:10px; padding:10px 14px; cursor:pointer; }
     .history-table-wrap { overflow:auto; }
@@ -94,7 +94,7 @@
                 <span class="history-stat-detail">kemunculan</span>
               </div>
             </div>
-          <div class="history-toolbar">
+          <div class="history-search" aria-label="Filter Cleaning History">\n            <div class="history-search-field">\n              <label for="engineerSearch">Engineer</label>\n              <input id="engineerSearch" type="text" autocomplete="off" placeholder="Cari nama Engineer...">\n            </div>\n            <div class="history-search-field">\n              <label for="historyDate">Tanggal</label>\n              <input id="historyDate" type="date">\n            </div>\n            <span class="history-search-hint">Kosongkan tanggal untuk menggunakan tanggal hari ini.</span>\n          </div>\n          <div class="history-toolbar">
             <div><p id="historySummary" class="history-summary">Memuat Work History...</p><div id="historyStatus" class="history-status">Memuat...</div><div id="historyFilter" class="history-filter" hidden>Serial Number: <strong id="historyFilterSerial"></strong><button id="clearHistoryFilter" class="history-filter-clear" type="button">Tampilkan Semua</button></div></div>
             <button id="refreshHistoryBtn" class="history-refresh" type="button"><i class="fas fa-rotate"></i> Refresh</button>
           </div>
@@ -110,7 +110,7 @@
     </main>
   </div>
   <script src="google-sheets-config.js?v=20260901-2"></script>
-  <script src="cleaning-history.js?v=20260922-2"></script>
+  <script src="cleaning-history.js?v=20260924-1"></script>
   <script src="theme-toggle.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
