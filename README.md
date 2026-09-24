@@ -830,3 +830,14 @@ Final outcome:
 
 Rule: before declaring a phase complete, record the exact changes, affected files, validation result and remaining issues here.
 \n\n## Cleaning History — Engineer & Date Search\n- **Status:** IMPLEMENTED — pending live validation\n- Engineer search uses manual text input, case-insensitive, with partial-name matching.\n- Date filter defaults to the current local date when empty.\n- Selecting a date shows only Work History events from that date.\n- Engineer and date filters can be combined.\n- Cleaning History now displays Timestamp as `M/D/YYYY`, matching the date format shown in Google Sheets instead of the raw ISO timestamp.\n
+
+## 2026-09-24 — Tools Hub system map redesign
+- Changed the `index.html` main content from a simple collection of tool-link cards into an informational operational workflow diagram.
+- Added the primary flow: **MinerPlus Data → IP & Location → Machine Identity → Work Tracking → Cleaning History**.
+- Each primary workflow node remains clickable and opens the existing relevant page.
+- Added a machine-identity explanation: **IP → Location ID → Serial Number → Work History**, emphasizing Serial Number as the physical-machine identity used for history.
+- Kept the four supporting tools visible in a separate compact section: Sub Account, Offline Analyzer, Pool vs Dashboard, and Bulk Compare.
+- Preserved the existing sidebar navigation, authentication/page guard, theme toggle, mobile hamburger behavior, and all existing tool-page logic.
+- Added responsive desktop/tablet/mobile styling in `index-hub.css`; on mobile the main workflow becomes a vertical flow.
+- No backend, Google Sheets, Work Tracking, Machine List, IP Repeat Analyzer, or Cleaning History business logic was changed.
+- Live validation of the new index layout is required.
