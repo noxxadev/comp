@@ -92,8 +92,6 @@ Implemented and live-validated:
 - Engineer selection does not alter analyzer logic.
 - No password login or IP locking.
 
-Affected files include `engineer-data.js`, `ip-repeat-analyzer.html`, `ip-repeat-analyzer.js`, and `ip-repeat-analyzer.css`.
-
 ## Phase 5 — Work Tracking + Google Sheets Persistence
 Status: COMPLETED
 
@@ -182,8 +180,6 @@ Machine List is a separate input from the MinerPlus upload. Confirmed columns in
 - `uninstalled_date`
 - `opname_date`
 
-The supplied Notion representation confirms the normal Machine List structure. A malformed third sample row was identified as an export-data bug; the normal schema is represented by the correctly aligned rows, and the parser must not silently repair or shift malformed data.
-
 ### Phase 6A — Machine List import / reading / normalization
 Status: COMPLETED — LIVE VALIDATION CONFIRMED
 
@@ -200,20 +196,6 @@ Purpose:
 - Show a preview of the normalized dataset (up to the first 200 records).
 - Allow the stored Machine List dataset to be cleared.
 
-Realtime snapshot rule:
-- Each newly processed Machine List replaces the active local dataset under `comp.machineList.v1`.
-- The active Machine List cache must represent one current/realtime snapshot, not an appended collection of old snapshots.
-- Replacing the active snapshot does not delete any append-only `Work History` events already stored in Google Sheets.
-
-Live validation completed 2026-09-03:
-- User confirmed `machine-list.html` successfully reads Serial Number, Location ID, Installed Date and Uninstalled Date from the real Machine List file used operationally.
-- Phase 6A is therefore considered complete.
-
-Phase 6A does **not** yet:
-- Persist machine history to Google Sheets.
-- Replace the Phase 5 Work Items schema.
-- Merge IP into machine identity.
-
 ### Phase 6B — Time-aware location-to-machine resolution
 Status: IMPLEMENTED — PARTIALLY LIVE-VALIDATED
 
@@ -227,36 +209,7 @@ Implemented components:
 - Matching uses exact normalized `location_id` equality.
 - Installation/removal periods are evaluated as a half-open interval: `installed_date <= event_timestamp < uninstalled_date`.
 - A blank `uninstalled_date` is treated as open-ended only when the value is genuinely blank.
-- An unparseable non-blank `uninstalled_date` is not treated as open-ended, preventing unsafe identity guesses.
-
-Resolution outcomes:
-- Exactly 1 match → `RESOLVED` and return Serial Number.
-- 0 matches → `UNRESOLVED`.
-- More than 1 match → `AMBIGUOUS` and no Serial Number is returned.
-- Missing Location ID → `MISSING LOCATION`.
-- Invalid event timestamp → `INVALID TIME`.
-
-Rules:
-- Never assume the current Serial Number was always the historical Serial Number of a location.
-- Never carry forward an old Serial Number after a location becomes unassigned.
-- Never guess a Serial Number when the Machine List cannot resolve it.
-- Ambiguous or missing resolution must remain explicitly unresolved.
-- Reused IP must never merge different machines' histories.
-
-Live validation completed 2026-09-03:
-- User successfully tested a currently occupied Location ID and confirmed that the resolver returns the expected Serial Number.
-- User successfully tested a timestamp after the machine's `uninstalled_date` and confirmed that the resolver returns an unresolved result rather than incorrectly carrying forward the machine identity.
-- The historical replacement scenario could not be directly tested from the current operational Machine List because the Machine List is a **realtime snapshot**, not a historical dataset. A single current Machine List file therefore does not contain both the old and replacement Serial Numbers for a location that has already changed machines.
-- This is a data-source limitation, not a failed resolver test.
-- The replacement scenario remains a validation item for when historical Machine List records become available, or when sufficient Work History has been accumulated by the application itself.
-
-Important data-source clarification:
-- Machine List represents the current/realtime machine state.
-- Machine List should not be treated as a permanent historical record of every machine previously occupying a location.
-- Historical machine identity must progressively be captured by the application's append-only Work History once Phase 6C is implemented.
-- Until historical evidence exists, the resolver must continue to return unresolved/ambiguous rather than invent a previous Serial Number.
-
-Phase 6B intentionally does **not** yet write Serial Number into Google Sheets. This kept resolution validation separate from Phase 6C persistence and protected the already-validated Phase 5 Work Items behavior.
+- An unparseable non-blank `uninstalled_date` is not treated as open-ended.
 
 ### Phase 6C — Append-only Work History
 Status: IMPLEMENTED — VALIDATION PENDING
@@ -264,114 +217,27 @@ Status: IMPLEMENTED — VALIDATION PENDING
 `Work Items`
 - Latest operational/current state.
 - Existing Phase 5 IP-keyed upsert remains intact.
-- Updating an IP continues to replace the current-state row rather than create a duplicate.
 
 `Work History`
 - Separate append-only event log in the same Google Spreadsheet.
 - Each saved work event receives a unique `Event ID`.
 - Serial Number is the preferred machine-history identity when Phase 6B resolves it.
-- IP, Location ID and Nama DC are contextual snapshots and are never used as the historical identity key.
-- `Resolution Status` and `Resolution Message` preserve unresolved/ambiguous identity instead of guessing.
-- History events are appended and are not updated by IP.
-
-History schema:
-`Event ID | Timestamp | IP | Serial Number | Location ID | Nama DC | Zona | Repeat Zero | Engineer ID | Status | Catatan | Resolution Status | Resolution Message | Source`
-
-Save flow:
-1. Existing Phase 5 `Work Items` upsert runs first.
-2. The same work payload is converted into append-only history events.
-3. Phase 6B resolver determines Serial Number using the saved event timestamp and local Machine List cache.
-4. A resolved event stores Serial Number; unresolved/ambiguous/missing-location cases remain explicit.
-5. History events are appended to `Work History`.
-6. Failure of the history append does not invalidate the already-successful `Work Items` save. The frontend logs the history failure; partial history saves are also reported by the backend response for diagnostics.
-
-Backend safeguards:
-- `appendWorkHistory` is a separate Apps Script action and does not change `upsertWorkItems` semantics.
-- Event IDs are checked to avoid duplicate append of the same event.
-- Apps Script uses a script lock around history append operations to reduce concurrent-write collisions.
-- The repository `Code.gs` remains a template; the deployed Apps Script copy must be updated and redeployed before live 6C validation.
-
-Validation required before Phase 6C is complete:
-- Updated Apps Script is deployed and reachable through the existing `/exec` URL.
-- Saving one selected IP creates one row in `Work History`.
-- Saving the same IP again creates a **new history event** rather than updating the previous history row.
-- A resolvable Location ID stores the expected Serial Number.
-- An unresolved/ambiguous Location ID keeps Serial Number blank and preserves the resolution state/message.
-- Phase 5 `Work Items` still upserts by IP without duplicate current-state rows.
+- IP, Location ID and Nama DC are contextual snapshots.
 
 ### Phase 6D — History Viewer
 Status: IMPLEMENTED — VALIDATION PENDING
 
 Purpose:
-Provide a dedicated read-only page for searching and reviewing append-only Work History without changing historical rows.
-
-Implemented components:
-- `history-viewer.html` provides the Work History page and shared COMP navigation.
-- `history-viewer.css` provides responsive filtering/table styles.
-- `history-viewer.js` loads history from the Apps Script endpoint and performs client-side filtering.
-- Search is primarily centered on Serial Number, with IP, Location ID/Nama DC, Engineer, Status and date range as additional filters.
-- History is displayed newest-first based on the append order returned by the backend.
-- Resolution state and resolution message are visible so unresolved/ambiguous identity is not hidden.
-- `index.html` now exposes Work History in the Tools Hub.
-- `machine-list.html` now links to Work History from the shared sidebar navigation.
-
-Backend read endpoint:
-- `doGet` now supports `action=getWorkHistory`.
-- The endpoint reads from `Work History` only and returns up to 5,000 events per request, with the viewer requesting 2,000 by default.
-- The backend does not update, merge or rewrite history rows.
-- Existing `doPost` behavior for Phase 5 and Phase 6C remains separate.
-
-Phase 6D validation required:
-- Redeploy the updated Apps Script `Code.gs`.
-- Open `history-viewer.html` through GitHub Pages.
-- Confirm existing Work History events load successfully.
-- Confirm Serial Number filtering returns only the expected machine history.
-- Confirm additional IP/location/engineer/status/date filters work.
-- Confirm unresolved/ambiguous events remain visible with blank Serial Number where appropriate.
-- Confirm opening or refreshing the viewer does not modify the Google Sheet.
-
-### Phase 6 validation requirements
-Before Phase 6 is marked complete:
-- Same location before/after replacement resolves to the correct different Serial Numbers when historical source data is available.
-- A removed machine with no replacement results in an unassigned state.
-- Reused IP does not merge different machines.
-- Old machine history stays attached to the old Serial Number once history is captured.
-- Missing/ambiguous Machine List resolution is visible and never guessed.
-- Phase 5 current Work Items upsert behavior remains unchanged.
-- Phase 6C and Phase 6D live validations are completed.
+Provide a dedicated read-only page for searching and reviewing append-only Work History.
 
 ## Phase 7 — Multi-user / Google Sheets Hardening
 Status: PLANNED
 
-Target:
-- Approximately 5 simultaneous engineers.
-- Shared persisted work data.
-- No IP locking.
-- Stable engineer IDs.
-- Appropriate internal-user access/write behavior.
-- Google Sheets remains the persistence layer unless explicitly revised.
-- Serial Number is the historical machine identity after Phase 6.
-
 ## Phase 8 — Work Export
 Status: PLANNED
 
-Analysis export:
-`No | IP | Repeat Zero | Nama DC | Zona`
-
-Work export:
-`No | IP | Serial Number | Repeat Zero | Nama DC | Zona | Engineer | Status | Waktu | Catatan`
-
 ## Phase 9 — Shift Report Integration
 Status: PLANNED
-
-Future Shift Report can use history for:
-- Machine/Serial Number worked per shift.
-- IP observed during the event.
-- Location/Nama DC at the event time.
-- Completed / In Progress / Problem counts.
-- Work by Line A–F.
-- Work by engineer.
-- Outstanding machines/work items.
 
 # Security Roadmap
 
@@ -382,426 +248,53 @@ Target architecture:
 
 `User → Login Page → Authentication → Tools Hub/Internal Pages → Apps Script API → Google Sheets`
 
-The selected authentication direction is intentionally simple:
-- User credentials are managed in a dedicated Google Sheet.
-- Passwords must be stored as hashes, not plaintext.
-- Google Apps Script remains the authentication/backend layer.
-- The Apps Script Web App must remain reachable by legitimate browser users; changing deployment access to owner-only (`Only myself`) is not used as a shortcut when it would block normal application users.
-- Authentication and page protection are separate from backend API protection.
-- Existing application logic must remain unchanged unless explicitly approved.
-
-Security work is maintained separately from the feature roadmap. Each security phase follows: audit → implementation plan → explicit approval → implementation → testing → README update.
-
 ## Security Phase 1 — Simple Authentication
 Status: COMPLETED — LIVE VALIDATION CONFIRMED
-
-Goal:
-- Add a simple username/password login without introducing Google OAuth.
-- Use Google Sheets as the user database.
-- Keep credential validation on the Apps Script/backend side.
-- Establish a session mechanism that can later be checked by protected API requests.
-- Keep existing tool logic unchanged.
-
-Planned work:
-- Define the user-sheet schema, including User ID, Username, Password Hash, Role and Status.
-- Implement password hashing/verification; never store plaintext passwords.
-- Add a dedicated login page.
-- Add a reusable authentication/session module.
-- Implement login success/failure handling.
-- Define session creation, storage and expiration behavior.
-- Do not expose the user database or password hashes to the public frontend.
-
-Implemented components:
-- `login.html` provides the username/password login page.
-- `login.css` provides the login-page styling.
-- `login.js` handles login submission and redirect after success.
-- `auth.js` provides login, session validation, logout and client-side session storage using `sessionStorage`.
-- `google-apps-script/Code.gs` now provides `login`, `validateSession` and `logout` authentication actions.
-- `Users` is created as the credential database with `User ID | Username | Password Hash | Salt | Role | Status`.
-- `Sessions` is created as the session registry with `Session Hash | User ID | Created At | Expires At | Status`.
-- Passwords are stored as salted iterative SHA-256 hashes; plaintext passwords are not stored in the sheet.
-- Session tokens are generated server-side and only the session hash is persisted in the sheet.
-- A manual `createUser(username, password, role, status)` Apps Script function was added for initial user provisioning; credentials are supplied at execution time and are not committed to GitHub.
-- Existing Work Tracking, Machine List, IP Repeat and Work History logic was not intentionally changed.
-
-Live validation required:
-- Deploy the updated `Code.gs` to the existing Apps Script Web App.
-- Create at least one active user using `createUser(...)`.
-- Verify successful and failed login behavior from `login.html`.
-- Verify a valid session can be validated and an expired/revoked session is rejected.
-- Verify logout revokes the session and clears browser session data.
-- Verify no password or password hash is returned to the frontend beyond the authentication response.
-
-Important scope note:
-- Phase 1 creates the authentication foundation.
-- It does not by itself make every internal page or Apps Script action secure; those controls are completed in Phases 2 and 3.
 
 ## Security Phase 2 — Page Protection
 Status: COMPLETED — LIVE VALIDATION CONFIRMED
 
-Goal:
-- Prevent unauthenticated users from opening COMP tool pages directly through normal browser navigation or direct URLs.
-- Provide a consistent client-side session check and logout path without changing existing tool/business logic.
-
-Phase 2A — Page inventory and classification:
-- Protected: `index.html`
-- Protected: `excel-analyzer.html`
-- Protected: `offline-analyzer.html`
-- Protected: `iplocationvalidator.html`
-- Protected: `data-matcher.html`
-- Protected: `bulk-compare.html`
-- Protected: `ip-repeat-analyzer.html`
-- Protected: `machine-list.html`
-- Protected: `cleaning-history.html`
-- Protected: `theme-preview.html`
-- Guest/public entry: `login.html`
-- `history-viewer.html` is referenced by older roadmap text but is not currently present in the `main` branch, so it was not modified or included in the active Phase 2 page list.
-
-Phase 2B — Central page guard:
-- Added `page-guard.js` as the reusable client-side page protection layer.
-- Protected pages load `google-sheets-config.js`, `auth.js`, then `page-guard.js` before their existing application scripts.
-- A missing session redirects immediately to `login.html`.
-- A present session is validated against Apps Script before the protected page is revealed.
-- Invalid, expired or revoked sessions are cleared and redirected to login.
-- Login page uses guest mode and redirects an already-authenticated user to `index.html`.
-
-Phase 2C — Flash-of-content reduction:
-- The guard temporarily hides the document while the authentication check is running.
-- This reduces visible exposure of protected UI while the session is being validated.
-
-Phase 2D — Logout:
-- The guard adds a shared Logout control to pages that expose the standard COMP sidebar.
-- Logout uses the existing `CompAuth.logout()` flow, revokes the server-side session when reachable, clears `sessionStorage`, and redirects to login.
-
-Phase 2E — Direct URL protection:
-- Direct navigation to a protected HTML page without a session is redirected to `login.html`.
-- Protection is applied consistently across the current tool pages listed in Phase 2A.
-
-Phase 2F — Login-page behavior:
-- An authenticated user opening `login.html` is redirected to `index.html`.
-- An unauthenticated user can still open and use the login form normally.
-
-Phase 2G — Session expiration:
-- Protected pages validate the existing server-side session on page entry.
-- An expired/revoked session therefore fails the page guard and returns the user to login.
-- Continuous in-page expiry handling is intentionally left for a later hardening step if required; Phase 2 does not introduce background polling.
-
-Phase 2H — Live validation required:
-1. Open each protected URL in a fresh/incognito session → must redirect to login.
-2. Login with the active user → Tools Hub opens.
-3. Navigate between protected pages → page remains accessible while the session is valid.
-4. Open a protected URL directly while authenticated → page opens.
-5. Click Logout → session is revoked/cleared and login page appears.
-6. After logout, reopen a protected URL → must redirect to login.
-7. Close/reopen the browser → session should not survive because the token is stored in `sessionStorage`; a fresh browser session should require login.
-8. Test an expired/revoked session → must redirect to login.
-9. Regression-test existing tool workflows after login/logout.
-
-Important security limitation:
-- Phase 2 is browser-side page protection on GitHub Pages; it is not server-side access control for the HTML/JavaScript assets themselves.
-- Static files such as `master-data.js` remain fetchable if their URLs are known.
-- Apps Script data endpoints are not yet protected by the page guard. Security Phase 3 is required to prevent anonymous direct API access to Google Sheets data.
-- Therefore Phase 2 should be considered the UI/page access layer, not the final data-security layer.
-
-Files added/changed in Phase 2:
-- Added: `page-guard.js`
-- Updated: `index.html`
-- Updated: `machine-list.html`
-- Updated: `ip-repeat-analyzer.html`
-- Updated: `cleaning-history.html`
-- Updated: `bulk-compare.html`
-- Updated: `data-matcher.html`
-- Updated: `excel-analyzer.html`
-- Updated: `offline-analyzer.html`
-- Updated: `iplocationvalidator.html`
-- Updated: `theme-preview.html`
-- Updated: `login.html`
-- Existing business/tool logic was not intentionally modified.
-
 ## Security Phase 3 — Apps Script / API Authentication
 Status: PLANNED
-
-Goal:
-- Prevent anonymous browsers from directly reading or modifying internal Google Sheets data through the Apps Script Web App.
-
-Planned work:
-- Validate the session/authentication proof in Apps Script.
-- Reject requests without valid authentication.
-- Protect both `doGet` and `doPost`.
-- Protect sensitive actions including:
-  - `getMachineList`
-  - `getWorkHistory`
-  - `getWorkItems`
-  - `getIpRepeat`
-  - `replaceMachineList`
-  - `appendWorkHistory`
-  - `upsertWorkItems`
-- Review Apps Script deployment configuration after authentication is implemented.
-- Keep `Execute as: Me` where required for the backend to operate on the spreadsheet, while authentication controls which application requests are accepted.
-- Do not rely on `Only myself` if it prevents legitimate browser users from reaching the backend.
 
 ## Security Phase 4 — Authorization & Roles
 Status: PLANNED
 
-Goal:
-- Distinguish authentication (who the user is) from authorization (what the user may do).
-
-Potential roles:
-- Engineer
-- Supervisor
-- Admin
-
-Potential permission areas:
-- Tools Hub
-- Machine List
-- IP Repeat
-- Work Tracking
-- Work History
-- Machine List upload
-- Engineer management
-- Security/admin settings
-
-Final roles and permissions will be defined only after the authentication mechanism is working and the actual operational requirements are confirmed.
-
 ## Security Phase 5 — Security Hardening & Final Audit
 Status: PLANNED
 
-Goal:
-- Perform a complete security review after authentication, page protection and API authorization are implemented.
-
-Audit areas:
-- Direct URL access.
-- Anonymous API access.
-- GET/POST endpoint protection.
-- Password hashing and credential handling.
-- Authentication session/token handling.
-- Logout and session expiration.
-- Browser cache, localStorage and sessionStorage.
-- Public JavaScript exposure.
-- Apps Script deployment.
-- Google Sheets permissions.
-- Error messages and sensitive data exposure.
-- Brute-force/login abuse considerations.
-- Request manipulation and replay considerations.
-- Relevant browser/network security behavior.
-
-Final outcome:
-- Security findings are documented.
-- Remaining risks are explicitly recorded.
-- No security change is silently applied without approval.
-
-# Fixed Architecture Rules
-1. Existing application logic must remain unchanged unless explicitly agreed.
-2. Each phase is tested before moving to the next.
-3. No IP locking.
-4. Engineer identity is initially dropdown-based.
-5. Google Sheets is the selected Work Tracking persistence layer unless explicitly revised.
-6. IP is an operational attribute, not a permanent physical-machine identity.
-7. `location_id` identifies a location/slot, not a permanent machine.
-8. Serial Number is the preferred identity for physical-machine history.
-9. Machine List is a separate source from MinerPlus input.
-10. Machine-to-location resolution must account for replacement/removal over time.
-11. Unresolved identity must never be replaced with a guessed Serial Number.
-12. Every implementation/change must be recorded in this README.
-13. Phase 6A local browser storage is an intermediate Machine List cache only; it is not the final Work Tracking persistence layer.
-14. Machine List export anomalies must not be silently corrected by shifting values between columns.
-15. Phase 6B resolution must remain separate from Phase 6C persistence until resolution is live-validated.
-16. Machine List realtime snapshots must not be assumed to contain complete historical replacement data.
-17. Work History is append-only; historical events must not be updated or merged by IP.
-18. Every Work History event requires a unique Event ID; duplicate Event IDs must not create duplicate history rows.
-19. The active Machine List browser cache represents one realtime snapshot; a newer upload replaces the previous active snapshot.
-20. Work History is never deleted as a side effect of replacing the active Machine List snapshot.
-21. Phase 6D is read-only with respect to Work History; the viewer must never mutate historical rows.
-22. Security work is maintained as a separate roadmap and must not silently change existing feature logic.
-23. No security implementation is performed without explicit approval after its implementation plan has been reviewed.
-24. Frontend-only login must not be treated as complete backend data protection.
-
-
-25. Security authentication uses the simple username/password model with the user database managed in Google Sheets unless explicitly revised.
-26. Passwords must never be stored or exposed as plaintext.
-27. Apps Script deployment must not be changed to owner-only as a shortcut when legitimate browser users need the Web App.
-
 # Detailed Change Log
-
-## 2026-09-22 — Security roadmap revised after technical audit
-- Replaced the Google Authentication/OAuth direction with a simpler username/password authentication model backed by a Google Sheet user database.
-- Defined password hashes rather than plaintext credential storage.
-- Defined Apps Script as the authentication/backend layer.
-- Recorded that Apps Script owner-only access (`Only myself`) is not a shortcut when it would block legitimate browser users.
-- Preserved the five security phases: Simple Authentication, Page Protection, Apps Script/API Authentication, Authorization & Roles, and Security Hardening.
-- No application feature logic was changed.
-- No authentication code was implemented in this roadmap update.
-
-
-## 2026-09-01 — Roadmap established
-- Requirement freeze and Phase 0–9 roadmap created.
-- Non-locking engineer workflow defined.
-- Zone rule fixed to `GBE.<letter>`.
-
-## 2026-09-01 — Phase 1 hardening
-- Improved Excel header normalization.
-- Improved master-data normalization.
-- Preserved unique-IP counting and mapping behavior.
-- Confirmed zone derivation rule.
-
-## 2026-09-01 — Sidebar maintenance
-- Shared sidebar navigation/hover/icon/theme UI refinements.
-- No application logic intentionally changed.
-
-## 2026-09-01 — Phase 2 implementation and validation
-- Added Zone filter, search and Repeat Zero sorting integration.
-- User live-validated Zone display, filters, search, sorting and numbering.
-- Phase 2 marked COMPLETED.
-
-## 2026-09-01 — Phase 3 implementation and validation
-- Added per-row selection, Select All/Cancel All, Clear and selected counter.
-- Preserved selection across filtering/search/sort.
-- User live-validated behavior and Phase 3 marked COMPLETED.
-
-## 2026-09-01 — Phase 4 implementation and validation
-- Added stable engineer IDs and dropdown-based identity.
-- Added browser persistence for selected engineer.
-- User live-validated behavior and Phase 4 marked COMPLETED.
-
-## 2026-09-01 — Phase 5 persistence revision and implementation
-- Changed persistent Work Tracking storage from browser localStorage to Google Sheets via Google Apps Script.
-- Added `google-sheets-config.js` and backend `google-apps-script/Code.gs`.
-- Implemented IP-keyed Work Items upsert.
-- Removed Supabase from the mandatory roadmap.
-
-## 2026-09-01 — Phase 5 save confirmation hardening
-- Replaced `sendBeacon()` with awaited `fetch()`.
-- Added backend JSON/`ok` validation and saved-count verification.
-
-## 2026-09-03 — Phase 5 final validation and completion
-- User verified Apps Script configuration and successful `doPost` execution.
-- User verified `Work Items` persistence.
-- User verified updates do not create duplicate IP rows.
-- Phase 5 marked COMPLETED.
-
-## 2026-09-03 — Serial Number / Machine List requirement clarified
-- Added Machine List as a separate source for machine identity.
-- Confirmed `location_id` can keep the same value while Serial Number changes after machine replacement.
-- Confirmed a location can become empty/unassigned after machine removal without replacement.
-- Revised Phase 6 so `location_id` is treated as a location/slot, not a permanent machine ID.
-- Revised Serial Number resolution to be time-aware using Machine List occupancy timing.
-- Added validation rules for replacement, removal, reused IP, ambiguous/missing matches and unresolved history.
-
-## 2026-09-03 — Phase 6A implementation
-- Added `machine-list.html` as a dedicated Machine List ingestion page.
-- Added `machine-list.css` for the Phase 6A UI.
-- Added `machine-list.js` for `.xls/.xlsx` reading, header detection, normalization and dataset preview.
-- Required fields for the Phase 6A parser: `serial_number`, `location_id`, `installed_date`, `uninstalled_date`.
-- Normalized Serial Number and location values and preserved installation/removal date values for future time-aware mapping.
-- Added browser storage key `comp.machineList.v1` as an intermediate local dataset cache for Phase 6B.
-- Added dataset clear control and persistent dataset status.
-- User live-validated the real Machine List import and confirmed Serial Number, Location ID, Installed Date and Uninstalled Date are read correctly.
-- Phase 6A marked COMPLETED.
-- No MinerPlus analyzer logic or Phase 5 Work Items behavior was intentionally modified.
-
-## 2026-09-03 — Phase 6B implementation
-- Added `machine-resolver.js` as a separate time-aware location-to-machine resolution engine.
-- Implemented exact normalized `location_id` matching.
-- Implemented installation/removal interval matching using `installed_date <= event_timestamp < uninstalled_date`.
-- Implemented explicit `resolved`, `unresolved`, `ambiguous`, missing-location and invalid-time outcomes.
-- Prevented unparseable non-blank `uninstalled_date` values from being treated as open-ended.
-- Added a Phase 6B test interface to `machine-list.html` so resolution can be live-validated without changing Phase 5 persistence.
-- Added responsive styling for the Phase 6B test interface in `machine-list.css`.
-- Phase 6B implementation is complete and has passed the currently testable realtime-data scenarios.
-
-## 2026-09-03 — Phase 6B live validation update
-- User confirmed successful resolution for a Location ID that is currently occupied by a machine.
-- User confirmed successful unresolved behavior for a Location ID queried at a timestamp after its `uninstalled_date`.
-- User could not test the machine-replacement scenario because the operational Machine List is a realtime snapshot and does not retain the previous machine in the same file after replacement.
-- Recorded this as a data-source limitation rather than a resolver failure.
-- Confirmed that the replacement scenario must not be simulated by guessing historical data.
-- Clarified that append-only Work History in Phase 6C will become the application's own historical evidence for machine identity going forward.
-- Phase 6B remains partially live-validated; Phase 6C is the next implementation stage.
-
-## 2026-09-03 — Phase 6C implementation
-- Extended `google-apps-script/Code.gs` with a separate `Work History` sheet and `appendWorkHistory` action.
-- Preserved the existing `Work Items` upsert path and schema.
-- Added append-only history fields for Event ID, event context, Serial Number and resolver status/message.
-- Added Event ID de-duplication and a script lock around history append operations.
-- Updated `work-tracking.js` so successful Work Items saves also attempt to append Work History events.
-- Integrated the Phase 6B resolver into history enrichment using the event timestamp.
-- Added explicit handling for resolved, unresolved, ambiguous and missing-location history states.
-- Updated `ip-repeat-analyzer.html` to load `machine-resolver.js` before `work-tracking.js` and refreshed the cache-buster.
-- Removed the temporary Phase 6C placeholder file created during implementation.
-- Phase 6C implementation is complete, but live validation remains required before Phase 6C is considered complete.
-
-## 2026-09-04 — Phase 6D implementation
-- Added `history-viewer.html` as a dedicated read-only Work History viewer.
-- Added `history-viewer.js` for loading up to 2,000 events and filtering by Serial Number, IP, Location ID/Nama DC, Engineer, Status and date range.
-- Added `history-viewer.css` for responsive filter controls, table layout and resolution badges.
-- Added `getWorkHistory` to `google-apps-script/Code.gs` as a read-only `doGet` action.
-- The backend returns history newest-first and caps a single request at 5,000 events.
-- Added Work History to the Tools Hub and the Machine List sidebar navigation.
-- Viewer does not write to or modify Work History.
-- Phase 6D implementation is complete; live validation is pending Apps Script redeployment and user verification.
-
-## 2026-09-24 — Multi-IP search enhancement
-- Updated `ip-repeat-analyzer.js` search filtering to accept multiple IPv4 addresses in one query.
-- Multi-IP input supports spaces, new lines, commas, and combinations of those separators.
-- Valid multi-IP input uses exact IP matching instead of substring matching, preventing unintended matches such as `10.1.1.1` also matching `10.1.1.10`.
-- Single Nama DC search remains supported with the existing search behavior.
-- Zone filtering remains independent.
-- No changes were made to IP counting, master-data mapping, engineer selection, Work Tracking, or backend logic.
-- Live validation by the user is still required.
-
-## 2026-09-23 — Security Phase 1 and Phase 2 live validation completed
-- User confirmed the implemented username/password authentication flow works in live testing.
-- User confirmed protected-page access control works in live testing.
-- User confirmed direct access to protected pages without authentication is redirected to login.
-- User confirmed authenticated navigation and logout behavior work as expected.
-- Security Phase 1 is now marked **COMPLETED — LIVE VALIDATION CONFIRMED**.
-- Security Phase 2 is now marked **COMPLETED — LIVE VALIDATION CONFIRMED**.
-- Security Phase 3 remains planned because Apps Script API endpoints still require independent server-side session enforcement.
-- No new application feature logic was changed as part of validation.
-
-## 2026-09-22 — Security Phase 1 backend authentication fix
-- Audited the GitHub `google-apps-script/Code.gs` and found the authentication constants and `doGet`/`doPost` routes were present, but the referenced authentication functions were missing.
-- Restored the complete Phase 1 backend authentication functions for user provisioning, password hashing, login, session creation, session validation and logout/revocation.
-- Kept the existing Work Tracking, Machine List, IP Repeat and Work History feature functions unchanged.
-- No credential values were added to the repository.
-- Phase 1 remains **LIVE VALIDATION PENDING** until the corrected `Code.gs` is deployed and the first user is created/tested.
-
-## 2026-09-22 — Security Phase 1 implementation
-- Added `login.html`, `login.css` and `login.js` for the new username/password login page.
-- Added `auth.js` as the reusable client authentication/session module.
-- Extended `google-apps-script/Code.gs` with `Users` and `Sessions` storage plus login, session validation and logout actions.
-- Added salted iterative password hashing and server-side session token handling.
-- Added `createUser(username, password, role, status)` for controlled initial user provisioning from the Apps Script environment.
-- Kept existing application feature logic and existing public GitHub Pages architecture unchanged.
-- Phase 1 implementation is complete; live validation requires Apps Script deployment and creation of the first user.
-
-## 2026-09-19 — Security audit baseline
-- Audited the current authentication and data-access architecture before any security implementation.
-- Confirmed there is currently no Google authentication system.
-- Confirmed internal pages can currently be opened directly without login.
-- Confirmed the Apps Script Web App currently does not verify user identity for its `doGet`/`doPost` actions.
-- Confirmed `REQUEST_KEY` is empty in the audited configuration, so it is not currently providing request authentication.
-- Confirmed the Machine List browser cache under `comp.machineList.v1` must be considered when implementing logout/page protection.
-- No application code was changed during the audit.
-- Established the separate Security Roadmap with five phases: Google Authentication, Page Protection, Apps Script/API Authentication, Authorization & Roles, and Security Hardening & Final Audit.
-
 
 ## 2026-09-24 — Mobile header spacing adjustment
 - Reduced mobile-only top spacing in the shared `index-hub.css` header area.
-- At widths up to 780px, reduced content top padding from 70px to 58px, header gap from 12px to 8px, and header bottom margin from 18px to 14px.
-- At widths up to 480px, reduced content top padding from 68px to 56px and title size from 27px to 26px.
 - Desktop header values were not changed.
 - No JavaScript, business logic, sidebar behavior, hamburger dimensions, or hero structure was changed.
-- Live validation on mobile is required.
 
 ## 2026-09-24 — Shared authentication session across browser tabs
-- Audited the New Tab login issue and confirmed the cause: authentication state was stored in per-tab `sessionStorage`, so a newly opened tab could not see the existing session.
-- Updated `auth.js` to store the authentication session, user identity and 5-minute validation timestamp in shared `localStorage`.
-- Updated `page-guard.js` to read and clear the same shared authentication storage.
-- Existing server-side session validation, 5-minute validation cache, login flow, logout request and 8-hour server session TTL were not changed.
-- No `Code.gs`, Work Tracking, Machine List, IP Repeat Analyzer or other business logic was changed.
-- The browser-tab sharing issue is implemented; live validation is required.
-- Follow-up consideration: cross-tab logout synchronization can be added separately if needed.
+- Changed the client authentication storage from per-tab `sessionStorage` to shared `localStorage`.
+- Existing server validation, login/logout behavior and session TTL were preserved.
+- Live validation is required.
+
+## 2026-09-24 — Tools Hub operational check workflows + draggable nodes
+- Added the **IP Offline Workflow**: **IP Offline → IP Validator → Pool Vs Dashboard → Sub Account → Pool Vs Dashboard → Single Compare / Bulk Compare**.
+- Added the **Cek IP Repeat Workflow**: **Machine List → IP Repeat Analyzer → Cek & Search IP → Save Pekerjaan (status wajib SELESAI) → Cleaning History**.
+- Workflow nodes were made draggable on desktop/tablet and constrained inside their workflow canvas.
+- Connector lines redraw as nodes move.
+- Normal node clicks still navigate to the existing pages.
+- No backend or business logic was changed.
+
+## 2026-09-24 — Pool Vs Dashboard workflow spacing fix
+- Reduced desktop workflow node width.
+- Repositioned the Pool Vs Dashboard branch nodes to separate Single Compare and Bulk Compare.
+- Adjusted tablet sizing consistently.
+- Mobile workflow structure remained vertical.
+
+## 2026-09-24 — Mobile workflow nodes made static
+- Disabled node dragging at widths up to 780px.
+- Mobile workflow nodes remain in the existing vertical arrangement and continue to work as normal links.
+- Changed the mobile workflow canvas from `touch-action: none` to normal touch behavior so page scrolling is not blocked.
+- Desktop/tablet dragging remains enabled.
+- No workflow navigation, authentication, backend, or business logic was changed.
 
 # Current Status
 
@@ -813,7 +306,7 @@ Final outcome:
 | Phase 3 — Engineer Selection | DONE — live validation confirmed |
 | Phase 4 — Engineer Identity | DONE — live validation confirmed |
 | Phase 5 — Work Tracking + Google Sheets Persistence | DONE — end-to-end validation and upsert verified |
-| Phase 6 — Machine Identity + Work History | IN PROGRESS — Phase 6A completed, Phase 6B partially live-validated, Phase 6C and 6D live validation pending |
+| Phase 6 — Machine Identity + Work History | IN PROGRESS |
 | Phase 7 — Multi-user / Google Sheets Hardening | PLANNED |
 | Phase 8 — Work Export | PLANNED |
 | Phase 9 — Shift Report Integration | PLANNED |
@@ -829,43 +322,3 @@ Final outcome:
 | Security Phase 5 — Security Hardening & Final Audit | PLANNED |
 
 Rule: before declaring a phase complete, record the exact changes, affected files, validation result and remaining issues here.
-\n\n## Cleaning History — Engineer & Date Search\n- **Status:** IMPLEMENTED — pending live validation\n- Engineer search uses manual text input, case-insensitive, with partial-name matching.\n- Date filter defaults to the current local date when empty.\n- Selecting a date shows only Work History events from that date.\n- Engineer and date filters can be combined.\n- Cleaning History now displays Timestamp as `M/D/YYYY`, matching the date format shown in Google Sheets instead of the raw ISO timestamp.\n
-
-## 2026-09-24 — Tools Hub system map redesign
-- Changed the `index.html` main content from a simple collection of tool-link cards into an informational operational workflow diagram.
-- Added the primary flow: **MinerPlus Data → IP & Location → Machine Identity → Work Tracking → Cleaning History**.
-- Each primary workflow node remains clickable and opens the existing relevant page.
-- Added a machine-identity explanation: **IP → Location ID → Serial Number → Work History**, emphasizing Serial Number as the physical-machine identity used for history.
-- Kept the four supporting tools visible in a separate compact section: Sub Account, Offline Analyzer, Pool vs Dashboard, and Bulk Compare.
-- Preserved the existing sidebar navigation, authentication/page guard, theme toggle, mobile hamburger behavior, and all existing tool-page logic.
-- Added responsive desktop/tablet/mobile styling in `index-hub.css`; on mobile the main workflow becomes a vertical flow.
-- No backend, Google Sheets, Work Tracking, Machine List, IP Repeat Analyzer, or Cleaning History business logic was changed.
-- Live validation of the new index layout is required.
-
-
-## 2026-09-24 — Tools Hub diagram visual fix
-- Memperbaiki pemuatan CSS index dengan cache-busting pada stylesheet agar perubahan visual tidak tertahan cache browser/CDN.
-- Mempertahankan shell, authentication, sidebar, navigation, theme toggle, dan seluruh business logic yang sudah berjalan.
-- Memperkuat visual System Map: connector line, node hierarchy, icon anchor, spacing, dan alur mobile vertikal.
-- Tidak mengubah backend, endpoint, data source, atau logic tool lain.
-- Live validation pada GitHub Pages tetap diperlukan setelah deployment.
-
-
-## 2026-09-24 — Tools Hub operational check workflows + draggable nodes
-- Replaced the previous Machine Identity information card on the Tools Hub with an operational **IP Offline Workflow**: **IP Offline → IP Validator → Pool Vs Dashboard → Sub Account → Pool Vs Dashboard → Single Compare / Bulk Compare**.
-- Added explicit links for Single Compare (`data-matcher.html`) and Bulk Compare (`bulk-compare.html`).
-- Added a new **Cek IP Repeat Workflow**: **Machine List (Upload Machine List On Rack) → IP Repeat Analyzer (Upload History MinerPlus Today) → Cek & Search IP → Save Pekerjaan (status wajib SELESAI) → Cleaning History**.
-- Converted the workflow areas into draggable diagram canvases. Nodes can be moved with mouse or touch, but remain constrained inside their workflow canvas.
-- Connector lines are redrawn as nodes move.
-- Dragging a node does not navigate; a normal click/tap still opens the linked page.
-- Mobile uses a vertical initial arrangement so all workflow steps remain readable and draggable.
-- The change is limited to `index.html` and `index-hub.css`; authentication, sidebar, theme toggle, backend, Google Sheets, and existing tool-page business logic were not changed.
-- Live validation on GitHub Pages is required.
-
-
-## 2026-09-24 — Pool Vs Dashboard workflow spacing fix
-- Reduced desktop workflow node width so the Single Compare and Bulk Compare nodes no longer overlap.
-- Repositioned the Pool Vs Dashboard branch nodes to provide clear separation between the parent node and its two compare options.
-- Adjusted the tablet node sizing consistently.
-- Mobile node sizing and the draggable behavior were preserved.
-- No workflow logic, navigation logic, authentication, backend, or tool-page business logic was changed.
