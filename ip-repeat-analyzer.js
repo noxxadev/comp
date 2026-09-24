@@ -330,7 +330,7 @@
     const raw = String(value || '').trim();
     if (!raw) return [];
 
-    const tokens = raw.split(/[\\s,]+/).map(token => token.trim()).filter(Boolean);
+    const tokens = raw.split(/[\s,]+/).map(token => token.trim()).filter(Boolean);
     if (!tokens.length || !tokens.every(isIpv4)) return [];
 
     return [...new Set(tokens)];
