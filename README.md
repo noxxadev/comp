@@ -841,3 +841,11 @@ Rule: before declaring a phase complete, record the exact changes, affected file
 - Added responsive desktop/tablet/mobile styling in `index-hub.css`; on mobile the main workflow becomes a vertical flow.
 - No backend, Google Sheets, Work Tracking, Machine List, IP Repeat Analyzer, or Cleaning History business logic was changed.
 - Live validation of the new index layout is required.
+
+
+## 2026-09-24 — Tools Hub diagram visual fix
+- Memperbaiki pemuatan CSS index dengan cache-busting pada stylesheet agar perubahan visual tidak tertahan cache browser/CDN.
+- Mempertahankan shell, authentication, sidebar, navigation, theme toggle, dan seluruh business logic yang sudah berjalan.
+- Memperkuat visual System Map: connector line, node hierarchy, icon anchor, spacing, dan alur mobile vertikal.
+- Tidak mengubah backend, endpoint, data source, atau logic tool lain.
+- Live validation pada GitHub Pages tetap diperlukan setelah deployment.
