@@ -786,6 +786,14 @@ Final outcome:
 - Established the separate Security Roadmap with five phases: Google Authentication, Page Protection, Apps Script/API Authentication, Authorization & Roles, and Security Hardening & Final Audit.
 
 
+## 2026-09-24 — Mobile header spacing adjustment
+- Reduced mobile-only top spacing in the shared `index-hub.css` header area.
+- At widths up to 780px, reduced content top padding from 70px to 58px, header gap from 12px to 8px, and header bottom margin from 18px to 14px.
+- At widths up to 480px, reduced content top padding from 68px to 56px and title size from 27px to 26px.
+- Desktop header values were not changed.
+- No JavaScript, business logic, sidebar behavior, hamburger dimensions, or hero structure was changed.
+- Live validation on mobile is required.
+
 ## 2026-09-24 — Shared authentication session across browser tabs
 - Audited the New Tab login issue and confirmed the cause: authentication state was stored in per-tab `sessionStorage`, so a newly opened tab could not see the existing session.
 - Updated `auth.js` to store the authentication session, user identity and 5-minute validation timestamp in shared `localStorage`.
