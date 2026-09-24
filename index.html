@@ -17,7 +17,6 @@
 <body>
 <div class="hub-shell">
     <div class="hub-sidebar-overlay" id="sidebarOverlay" aria-hidden="true"></div>
-
     <aside class="hub-sidebar" id="sidebar">
         <div class="hub-logo">
             <div class="hub-mark">CP</div>
@@ -62,38 +61,31 @@
                 <div class="hub-flow-canvas" data-workflow="offline" aria-label="Alur pengecekan IP offline">
                     <svg class="hub-flow-lines" aria-hidden="true"></svg>
                     <a class="hub-flow-node" data-node="offline" href="offline-analyzer.html" style="--x:2;--y:20">
-                        <span class="hub-flow-index">01</span>
-                        <span class="hub-flow-icon"><i class="fas fa-power-off"></i></span>
+                        <span class="hub-flow-index">01</span><span class="hub-flow-icon"><i class="fas fa-power-off"></i></span>
                         <span class="hub-flow-content"><span class="hub-flow-label">START</span><strong>IP Offline</strong><span>Mulai dari IP yang terdeteksi offline.</span></span>
                     </a>
                     <a class="hub-flow-node" data-node="validator" href="iplocationvalidator.html" style="--x:20;--y:20">
-                        <span class="hub-flow-index">02</span>
-                        <span class="hub-flow-icon"><i class="fas fa-location-dot"></i></span>
+                        <span class="hub-flow-index">02</span><span class="hub-flow-icon"><i class="fas fa-location-dot"></i></span>
                         <span class="hub-flow-content"><span class="hub-flow-label">CHECK</span><strong>IP Validator</strong><span>Validasi IP, DC, dan zona.</span></span>
                     </a>
                     <a class="hub-flow-node" data-node="pool-1" href="data-matcher.html" style="--x:38;--y:20">
-                        <span class="hub-flow-index">03</span>
-                        <span class="hub-flow-icon"><i class="fas fa-link"></i></span>
+                        <span class="hub-flow-index">03</span><span class="hub-flow-icon"><i class="fas fa-link"></i></span>
                         <span class="hub-flow-content"><span class="hub-flow-label">COMPARE</span><strong>Pool Vs Dashboard</strong><span>Bandingkan data pool dengan dashboard.</span></span>
                     </a>
                     <a class="hub-flow-node" data-node="subaccount" href="excel-analyzer.html" style="--x:56;--y:20">
-                        <span class="hub-flow-index">04</span>
-                        <span class="hub-flow-icon"><i class="fas fa-file-excel"></i></span>
+                        <span class="hub-flow-index">04</span><span class="hub-flow-icon"><i class="fas fa-file-excel"></i></span>
                         <span class="hub-flow-content"><span class="hub-flow-label">CHECK</span><strong>Sub Account</strong><span>Periksa informasi Sub Account yang terkait.</span></span>
                     </a>
                     <div class="hub-flow-node hub-flow-node-static" data-node="pool-2" style="--x:68;--y:8">
-                        <span class="hub-flow-index">05</span>
-                        <span class="hub-flow-icon"><i class="fas fa-code-compare"></i></span>
+                        <span class="hub-flow-index">05</span><span class="hub-flow-icon"><i class="fas fa-code-compare"></i></span>
                         <span class="hub-flow-content"><span class="hub-flow-label">COMPARE</span><strong>Pool Vs Dashboard</strong><span>Pilih metode compare sesuai kebutuhan data.</span></span>
                     </div>
                     <a class="hub-flow-node" data-node="single" href="data-matcher.html" style="--x:68;--y:50">
-                        <span class="hub-flow-index">05A</span>
-                        <span class="hub-flow-icon"><i class="fas fa-arrow-right-arrow-left"></i></span>
+                        <span class="hub-flow-index">05A</span><span class="hub-flow-icon"><i class="fas fa-arrow-right-arrow-left"></i></span>
                         <span class="hub-flow-content"><span class="hub-flow-label">SINGLE</span><strong>Single Compare</strong><span>Gunakan <code>data-matcher.html</code> untuk compare satu data.</span></span>
                     </a>
                     <a class="hub-flow-node" data-node="bulk" href="bulk-compare.html" style="--x:84;--y:50">
-                        <span class="hub-flow-index">05B</span>
-                        <span class="hub-flow-icon"><i class="fas fa-scale-balanced"></i></span>
+                        <span class="hub-flow-index">05B</span><span class="hub-flow-icon"><i class="fas fa-scale-balanced"></i></span>
                         <span class="hub-flow-content"><span class="hub-flow-label">BULK</span><strong>Bulk Compare</strong><span>Gunakan <code>bulk-compare.html</code> untuk compare massal.</span></span>
                     </a>
                 </div>
@@ -109,40 +101,17 @@
                 </div>
                 <div class="hub-flow-canvas hub-flow-canvas-repeat" data-workflow="repeat" aria-label="Cek IP Repeat Workflow">
                     <svg class="hub-flow-lines" aria-hidden="true"></svg>
-                    <a class="hub-flow-node" data-node="machine-list" href="machine-list.html" style="--x:2;--y:22">
-                        <span class="hub-flow-index">01</span>
-                        <span class="hub-flow-icon"><i class="fas fa-server"></i></span>
-                        <span class="hub-flow-content"><span class="hub-flow-label">SOURCE</span><strong>Machine List</strong><span>Upload <b>Machine List On Rack</b>.</span></span>
-                    </a>
-                    <a class="hub-flow-node" data-node="repeat-analyzer" href="ip-repeat-analyzer.html" style="--x:22;--y:22">
-                        <span class="hub-flow-index">02</span>
-                        <span class="hub-flow-icon"><i class="fas fa-repeat"></i></span>
-                        <span class="hub-flow-content"><span class="hub-flow-label">UPLOAD</span><strong>IP Repeat Analyzer</strong><span>Upload <b>History MinerPlus Today</b>.</span></span>
-                    </a>
-                    <a class="hub-flow-node" data-node="search-ip" href="ip-repeat-analyzer.html" style="--x:42;--y:22">
-                        <span class="hub-flow-index">03</span>
-                        <span class="hub-flow-icon"><i class="fas fa-magnifying-glass"></i></span>
-                        <span class="hub-flow-content"><span class="hub-flow-label">CHECK</span><strong>Cek &amp; Search IP</strong><span>Cari IP yang perlu dikerjakan di IP Repeat Analyzer.</span></span>
-                    </a>
-                    <a class="hub-flow-node hub-flow-required" data-node="save-done" href="ip-repeat-analyzer.html" style="--x:62;--y:22">
-                        <span class="hub-flow-index">04</span>
-                        <span class="hub-flow-icon"><i class="fas fa-circle-check"></i></span>
-                        <span class="hub-flow-content"><span class="hub-flow-label">REQUIRED</span><strong>Save Pekerjaan</strong><span>Status <b>WAJIB SELESAI</b> sebelum pekerjaan dianggap selesai.</span></span>
-                    </a>
-                    <a class="hub-flow-node" data-node="cleaning-history" href="cleaning-history.html" style="--x:82;--y:22">
-                        <span class="hub-flow-index">05</span>
-                        <span class="hub-flow-icon"><i class="fas fa-clock-rotate-left"></i></span>
-                        <span class="hub-flow-content"><span class="hub-flow-label">VERIFY</span><strong>Cleaning History</strong><span>Cek data pekerjaan yang sudah dikerjakan.</span></span>
-                    </a>
+                    <a class="hub-flow-node" data-node="machine-list" href="machine-list.html" style="--x:2;--y:22"><span class="hub-flow-index">01</span><span class="hub-flow-icon"><i class="fas fa-server"></i></span><span class="hub-flow-content"><span class="hub-flow-label">SOURCE</span><strong>Machine List</strong><span>Upload <b>Machine List On Rack</b>.</span></span></a>
+                    <a class="hub-flow-node" data-node="repeat-analyzer" href="ip-repeat-analyzer.html" style="--x:22;--y:22"><span class="hub-flow-index">02</span><span class="hub-flow-icon"><i class="fas fa-repeat"></i></span><span class="hub-flow-content"><span class="hub-flow-label">UPLOAD</span><strong>IP Repeat Analyzer</strong><span>Upload <b>History MinerPlus Today</b>.</span></span></a>
+                    <a class="hub-flow-node" data-node="search-ip" href="ip-repeat-analyzer.html" style="--x:42;--y:22"><span class="hub-flow-index">03</span><span class="hub-flow-icon"><i class="fas fa-magnifying-glass"></i></span><span class="hub-flow-content"><span class="hub-flow-label">CHECK</span><strong>Cek &amp; Search IP</strong><span>Cari IP yang perlu dikerjakan di IP Repeat Analyzer.</span></span></a>
+                    <a class="hub-flow-node hub-flow-required" data-node="save-done" href="ip-repeat-analyzer.html" style="--x:62;--y:22"><span class="hub-flow-index">04</span><span class="hub-flow-icon"><i class="fas fa-circle-check"></i></span><span class="hub-flow-content"><span class="hub-flow-label">REQUIRED</span><strong>Save Pekerjaan</strong><span>Status <b>WAJIB SELESAI</b> sebelum pekerjaan dianggap selesai.</span></span></a>
+                    <a class="hub-flow-node" data-node="cleaning-history" href="cleaning-history.html" style="--x:82;--y:22"><span class="hub-flow-index">05</span><span class="hub-flow-icon"><i class="fas fa-clock-rotate-left"></i></span><span class="hub-flow-content"><span class="hub-flow-label">VERIFY</span><strong>Cleaning History</strong><span>Cek data pekerjaan yang sudah dikerjakan.</span></span></a>
                 </div>
             </section>
 
             <section class="hub-tools" aria-labelledby="tools-title">
                 <div class="hub-section-heading">
-                    <div>
-                        <span class="hub-flow-label">SUPPORTING TOOLS</span>
-                        <h2 id="tools-title">Tool pendukung</h2>
-                    </div>
+                    <div><span class="hub-flow-label">SUPPORTING TOOLS</span><h2 id="tools-title">Tool pendukung</h2></div>
                     <p>Tool tambahan tetap tersedia tanpa mengganggu alur utama.</p>
                 </div>
                 <div class="hub-tools-grid">
@@ -161,44 +130,35 @@
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('sidebarOverlay');
     if (!menuToggle || !sidebar || !overlay) return;
-
     const closeSidebar = () => {
         sidebar.classList.remove('active');
         overlay.classList.remove('active');
         menuToggle.setAttribute('aria-expanded', 'false');
     };
-
     menuToggle.addEventListener('click', () => {
         const active = sidebar.classList.toggle('active');
         overlay.classList.toggle('active', active);
         menuToggle.setAttribute('aria-expanded', String(active));
     });
-
     overlay.addEventListener('click', closeSidebar);
     sidebar.querySelectorAll('a').forEach(link => link.addEventListener('click', closeSidebar));
-    window.addEventListener('resize', () => {
-        if (window.innerWidth > 780) closeSidebar();
-    });
+    window.addEventListener('resize', () => { if (window.innerWidth > 780) closeSidebar(); });
 })();
 </script>
 <script>
 (() => {
     const canvases = document.querySelectorAll('.hub-flow-canvas');
     if (!canvases.length) return;
-
     const connections = {
         offline: [['offline','validator'],['validator','pool-1'],['pool-1','subaccount'],['subaccount','pool-2'],['pool-2','single'],['pool-2','bulk']],
         repeat: [['machine-list','repeat-analyzer'],['repeat-analyzer','search-ip'],['search-ip','save-done'],['save-done','cleaning-history']]
     };
-
     const setupCanvas = (canvas) => {
         const svg = canvas.querySelector('.hub-flow-lines');
         const nodes = [...canvas.querySelectorAll('.hub-flow-node')];
         let active = null;
         let moved = false;
-
         const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
-
         const setNodePosition = (node, x, y) => {
             const maxX = canvas.clientWidth - node.offsetWidth;
             const maxY = canvas.clientHeight - node.offsetHeight;
@@ -207,19 +167,6 @@
             node.style.setProperty('--x', 'auto');
             node.style.setProperty('--y', 'auto');
         };
-
-        const resetPositions = () => {
-            const width = canvas.clientWidth;
-            const height = canvas.clientHeight;
-            nodes.forEach(node => {
-                const x = parseFloat(node.dataset.initialX ?? node.style.getPropertyValue('--x')) / 100 * width;
-                const y = parseFloat(node.dataset.initialY ?? node.style.getPropertyValue('--y')) / 100 * height;
-                node.dataset.initialX = node.dataset.initialX ?? node.style.getPropertyValue('--x');
-                node.dataset.initialY = node.dataset.initialY ?? node.style.getPropertyValue('--y');
-                setNodePosition(node, x, y);
-            });
-        };
-
         const draw = () => {
             const rect = canvas.getBoundingClientRect();
             svg.setAttribute('viewBox', `0 0 ${rect.width} ${rect.height}`);
@@ -241,17 +188,12 @@
                 svg.appendChild(line);
             });
         };
-
         const applyInitialPositions = () => {
             if (canvas.dataset.initialized === '1') return;
             const mobile = window.innerWidth <= 780;
             if (mobile) {
                 const gap = canvas.dataset.workflow === 'offline' ? 118 : 126;
-                nodes.forEach((node, index) => {
-                    const x = 12;
-                    const y = 18 + index * gap;
-                    setNodePosition(node, x, y);
-                });
+                nodes.forEach((node, index) => setNodePosition(node, 12, 18 + index * gap));
             } else {
                 nodes.forEach(node => {
                     const x = parseFloat(node.dataset.initialX) / 100 * canvas.clientWidth;
@@ -261,29 +203,20 @@
             }
             canvas.dataset.initialized = '1';
         };
-
-        const sync = () => {
-            applyInitialPositions();
-            draw();
-        };
-
+        const sync = () => { applyInitialPositions(); draw(); };
         nodes.forEach(node => {
             node.dataset.initialX = node.style.getPropertyValue('--x');
             node.dataset.initialY = node.style.getPropertyValue('--y');
             node.addEventListener('pointerdown', (event) => {
+                if (window.innerWidth <= 780) return;
                 if (event.button !== 0 && event.pointerType !== 'touch') return;
-                active = {
-                    node,
-                    startX: event.clientX,
-                    startY: event.clientY,
-                    left: node.offsetLeft,
-                    top: node.offsetTop
-                };
+                active = { node, startX: event.clientX, startY: event.clientY, left: node.offsetLeft, top: node.offsetTop };
                 moved = false;
                 node.classList.add('is-dragging');
                 node.setPointerCapture?.(event.pointerId);
             });
             node.addEventListener('pointermove', (event) => {
+                if (window.innerWidth <= 780) return;
                 if (!active || active.node !== node) return;
                 const dx = event.clientX - active.startX;
                 const dy = event.clientY - active.startY;
@@ -291,15 +224,13 @@
                 setNodePosition(node, active.left + dx, active.top + dy);
                 draw();
             });
-            const finish = (event) => {
+            const finish = () => {
                 if (!active || active.node !== node) return;
                 node.classList.remove('is-dragging');
                 node.dataset.suppressClick = moved ? '1' : '0';
                 active = null;
                 draw();
-                if (moved) {
-                    setTimeout(() => { node.dataset.suppressClick = '0'; }, 0);
-                }
+                if (moved) setTimeout(() => { node.dataset.suppressClick = '0'; }, 0);
             };
             node.addEventListener('pointerup', finish);
             node.addEventListener('pointercancel', finish);
@@ -311,11 +242,9 @@
                 }
             });
         });
-
         window.addEventListener('resize', draw);
         requestAnimationFrame(sync);
     };
-
     canvases.forEach(setupCanvas);
 })();
 </script>
