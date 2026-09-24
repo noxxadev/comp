@@ -3,6 +3,8 @@
 
   const SESSION_KEY = 'comp.auth.session';
   const USER_KEY = 'comp.auth.user';
+  const SESSION_VALIDATED_AT_KEY = 'comp.auth.sessionValidatedAt';
+  const SESSION_VALIDATION_TTL_MS = 5 * 60 * 1000;
 
   function getConfig() {
     return window.CompGoogleSheetsConfig || { webAppUrl: '', requestKey: '' };
@@ -19,11 +21,13 @@
   function setAuth(session, user) {
     sessionStorage.setItem(SESSION_KEY, session);
     sessionStorage.setItem(USER_KEY, JSON.stringify(user || null));
+    sessionStorage.removeItem(SESSION_VALIDATED_AT_KEY);
   }
 
   function clearAuth() {
     sessionStorage.removeItem(SESSION_KEY);
     sessionStorage.removeItem(USER_KEY);
+    sessionStorage.removeItem(SESSION_VALIDATED_AT_KEY);
   }
 
   async function request(action, payload = {}) {
@@ -60,14 +64,25 @@
     return result;
   }
 
-  async function validateSession() {
+  function isSessionValidationFresh() {
+    const value = Number(sessionStorage.getItem(SESSION_VALIDATED_AT_KEY) || 0);
+    return Number.isFinite(value) && value > 0 && (Date.now() - value) < SESSION_VALIDATION_TTL_MS;
+  }
+
+  async function validateSession(options = {}) {
     const perfStart = performance.now();
+    if (!options.force && isSessionValidationFresh()) {
+      return { ok: true, authenticated: true, user: getUser(), cached: true };
+    }
     const session = getSession();
     if (!session) return { ok: false, authenticated: false };
     try {
       const result = await request('validateSession', { session });
       if (!result?.authenticated) clearAuth();
-      else if (result.user) sessionStorage.setItem(USER_KEY, JSON.stringify(result.user));
+      else {
+        if (result.user) sessionStorage.setItem(USER_KEY, JSON.stringify(result.user));
+        sessionStorage.setItem(SESSION_VALIDATED_AT_KEY, String(Date.now()));
+      }
       console.debug(`[COMP PERF] validateSession total: ${(performance.now() - perfStart).toFixed(0)} ms (authenticated=${Boolean(result?.authenticated)})`);
       return result;
     } catch (error) {
