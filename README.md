@@ -811,3 +811,4 @@ Final outcome:
 | Security Phase 5 — Security Hardening & Final Audit | PLANNED |
 
 Rule: before declaring a phase complete, record the exact changes, affected files, validation result and remaining issues here.
+\n\n## Cleaning History — Engineer & Date Search\n- **Status:** IMPLEMENTED — pending live validation\n- Engineer search uses manual text input, case-insensitive, with partial-name matching.\n- Date filter defaults to the current local date when empty.\n- Selecting a date shows only Work History events from that date.\n- Engineer and date filters can be combined.\n- Cleaning History now displays Timestamp as `M/D/YYYY`, matching the date format shown in Google Sheets instead of the raw ISO timestamp.\n
