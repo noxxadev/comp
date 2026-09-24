@@ -45,6 +45,30 @@ Implemented and live-validated:
 - Correct numbering after filtering.
 - Phase 1 calculation logic preserved.
 
+## Multi-IP Search Enhancement — IP Repeat Analyzer
+Status: IMPLEMENTED — VALIDATION PENDING
+
+Implemented:
+- Search input accepts multiple IP addresses in one query.
+- IPs may be separated by spaces, new lines, commas, or any combination of these separators.
+- When the input consists entirely of valid IPv4 tokens, matching uses exact IP equality so a requested IP does not also match similarly prefixed IPs.
+- A single Nama DC search remains supported using the existing search behavior.
+- Zone filtering remains independent and unchanged.
+- Existing IP counting, master-data mapping, selection, engineer and Work Tracking logic was not intentionally changed.
+
+Examples of accepted multi-IP input:
+- 10.1.1.11 10.1.1.12 10.1.1.13
+- 10.1.1.11,10.1.1.12,10.1.1.13
+- One IP per line.
+
+Live validation required:
+- Test multiple IPs separated by spaces.
+- Test multiple IPs separated by new lines.
+- Test comma-separated IPs.
+- Confirm exact matching does not include similarly prefixed IPs.
+- Confirm single Nama DC search still behaves as before.
+- Confirm Zone filter still combines correctly with search.
+
 ## Phase 3 — Engineer Selection
 Status: COMPLETED
 
@@ -715,6 +739,15 @@ Final outcome:
 - Added Work History to the Tools Hub and the Machine List sidebar navigation.
 - Viewer does not write to or modify Work History.
 - Phase 6D implementation is complete; live validation is pending Apps Script redeployment and user verification.
+
+## 2026-09-24 — Multi-IP search enhancement
+- Updated `ip-repeat-analyzer.js` search filtering to accept multiple IPv4 addresses in one query.
+- Multi-IP input supports spaces, new lines, commas, and combinations of those separators.
+- Valid multi-IP input uses exact IP matching instead of substring matching, preventing unintended matches such as `10.1.1.1` also matching `10.1.1.10`.
+- Single Nama DC search remains supported with the existing search behavior.
+- Zone filtering remains independent.
+- No changes were made to IP counting, master-data mapping, engineer selection, Work Tracking, or backend logic.
+- Live validation by the user is still required.
 
 ## 2026-09-23 — Security Phase 1 and Phase 2 live validation completed
 - User confirmed the implemented username/password authentication flow works in live testing.
