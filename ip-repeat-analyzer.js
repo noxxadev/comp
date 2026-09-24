@@ -326,13 +326,29 @@
     updateSelectionUi();
   }
 
+  function parseSearchIps(value) {
+    const raw = String(value || '').trim();
+    if (!raw) return [];
+
+    const tokens = raw.split(/[\\s,]+/).map(token => token.trim()).filter(Boolean);
+    if (!tokens.length || !tokens.every(isIpv4)) return [];
+
+    return [...new Set(tokens)];
+  }
+
   function render() {
-    const query = searchInput.value.trim().toLowerCase();
+    const rawQuery = searchInput.value.trim();
+    const query = rawQuery.toLowerCase();
+    const searchIps = parseSearchIps(rawQuery);
+    const hasMultiIpQuery = searchIps.length > 0;
 
     state.filteredRows = state.rows.filter(row => {
-      const matchesQuery =
-        row.ip.toLowerCase().includes(query) ||
-        row.name.toLowerCase().includes(query);
+      const matchesQuery = hasMultiIpQuery
+        ? searchIps.includes(row.ip)
+        : (
+            row.ip.toLowerCase().includes(query) ||
+            row.name.toLowerCase().includes(query)
+          );
       const matchesZone =
         state.zoneFilter === 'all' || row.zone === state.zoneFilter;
       return matchesQuery && matchesZone;
