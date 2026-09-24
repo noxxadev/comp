@@ -8,9 +8,9 @@
     <link rel="stylesheet" href="index-hub.css">
     <link rel="stylesheet" href="theme-toggle.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-  <script src="google-sheets-config.js"></script>
-  <script src="auth.js"></script>
-  <script src="page-guard.js"></script>
+    <script src="google-sheets-config.js"></script>
+    <script src="auth.js"></script>
+    <script src="page-guard.js"></script>
     <link rel="preconnect" href="https://script.google.com">
     <link rel="preconnect" href="https://script.googleusercontent.com">
 </head>
@@ -42,28 +42,113 @@
         <div class="hub-container">
             <section class="hub-top">
                 <div>
-                    <div class="hub-kicker">COMP / Tools</div>
-                    <h1 class="hub-title">All tools in one place</h1>
+                    <div class="hub-kicker">COMP / System Map</div>
+                    <h1 class="hub-title">Operational workflow</h1>
+                    <p class="hub-desc">Alur kerja utama COMP dari data masuk, analisis IP, identitas mesin, pencatatan pekerjaan, sampai riwayat cleaning.</p>
                 </div>
                 <button class="hub-menu-toggle" id="menuToggle" type="button" aria-label="Buka menu navigasi" aria-controls="sidebar" aria-expanded="false">
                     <i class="fas fa-bars" aria-hidden="true"></i>
                 </button>
             </section>
 
-            <section class="hub-hero">
-                <strong>Workspace launcher</strong>
+            <section class="hub-flow" aria-label="COMP operational workflow">
+                <a class="hub-flow-node" href="ip-repeat-analyzer.html">
+                    <div class="hub-flow-index">01</div>
+                    <div class="hub-flow-icon"><i class="fas fa-file-arrow-up"></i></div>
+                    <div class="hub-flow-content">
+                        <span class="hub-flow-label">INPUT</span>
+                        <h2>MinerPlus Data</h2>
+                        <p>Upload data MinerPlus sebagai sumber IP yang akan diperiksa.</p>
+                        <span class="hub-flow-action">Open IP Repeat →</span>
+                    </div>
+                </a>
+
+                <div class="hub-flow-arrow" aria-hidden="true"><i class="fas fa-arrow-right"></i></div>
+
+                <a class="hub-flow-node" href="iplocationvalidator.html">
+                    <div class="hub-flow-index">02</div>
+                    <div class="hub-flow-icon"><i class="fas fa-magnifying-glass-location"></i></div>
+                    <div class="hub-flow-content">
+                        <span class="hub-flow-label">ANALYSIS</span>
+                        <h2>IP & Location</h2>
+                        <p>IP dinormalisasi, dihitung, dipetakan ke DC, lalu ditentukan zonanya.</p>
+                        <span class="hub-flow-action">Open IP Validator →</span>
+                    </div>
+                </a>
+
+                <div class="hub-flow-arrow" aria-hidden="true"><i class="fas fa-arrow-right"></i></div>
+
+                <a class="hub-flow-node" href="machine-list.html">
+                    <div class="hub-flow-index">03</div>
+                    <div class="hub-flow-icon"><i class="fas fa-server"></i></div>
+                    <div class="hub-flow-content">
+                        <span class="hub-flow-label">IDENTITY</span>
+                        <h2>Machine Identity</h2>
+                        <p>Location ID dan periode instalasi digunakan untuk menemukan Serial Number yang tepat.</p>
+                        <span class="hub-flow-action">Open Machine List →</span>
+                    </div>
+                </a>
+
+                <div class="hub-flow-arrow" aria-hidden="true"><i class="fas fa-arrow-right"></i></div>
+
+                <a class="hub-flow-node" href="ip-repeat-analyzer.html">
+                    <div class="hub-flow-index">04</div>
+                    <div class="hub-flow-icon"><i class="fas fa-clipboard-check"></i></div>
+                    <div class="hub-flow-content">
+                        <span class="hub-flow-label">WORK</span>
+                        <h2>Work Tracking</h2>
+                        <p>Pilih IP, tetapkan engineer, status, dan catatan. Data current state disimpan ke Work Items.</p>
+                        <span class="hub-flow-action">Open Work Tracking →</span>
+                    </div>
+                </a>
+
+                <div class="hub-flow-arrow" aria-hidden="true"><i class="fas fa-arrow-right"></i></div>
+
+                <a class="hub-flow-node" href="cleaning-history.html">
+                    <div class="hub-flow-index">05</div>
+                    <div class="hub-flow-icon"><i class="fas fa-clock-rotate-left"></i></div>
+                    <div class="hub-flow-content">
+                        <span class="hub-flow-label">HISTORY</span>
+                        <h2>Cleaning History</h2>
+                        <p>Event pekerjaan menjadi riwayat append-only yang dapat ditelusuri berdasarkan Serial Number.</p>
+                        <span class="hub-flow-action">Open Cleaning History →</span>
+                    </div>
+                </a>
             </section>
 
-            <section class="hub-grid" aria-label="Available tools">
-                <a class="hub-card" href="excel-analyzer.html"><div class="hub-card-top"><div class="hub-icon"><i class="fas fa-file-excel"></i></div><i class="fas fa-arrow-up-right-from-square"></i></div><h2 class="hub-card-title">Sub Account</h2><p class="hub-card-text">Excel Analyzer untuk memproses dan menganalisis data sub-account.</p><div class="hub-card-foot"><span class="hub-file">excel-analyzer.html</span><span class="hub-open">Open tool →</span></div></a>
-                <a class="hub-card" href="offline-analyzer.html"><div class="hub-card-top"><div class="hub-icon"><i class="fas fa-database"></i></div><i class="fas fa-arrow-up-right-from-square"></i></div><h2 class="hub-card-title">Offline Analyzer</h2><p class="hub-card-text">Halaman analyzer untuk pemeriksaan dan pemrosesan data secara offline.</p><div class="hub-card-foot"><span class="hub-file">offline-analyzer.html</span><span class="hub-open">Open tool →</span></div></a>
-                <a class="hub-card" href="iplocationvalidator.html"><div class="hub-card-top"><div class="hub-icon"><i class="fas fa-location-dot"></i></div><i class="fas fa-arrow-up-right-from-square"></i></div><h2 class="hub-card-title">IP & Location ID Validator</h2><p class="hub-card-text">Validator untuk memeriksa kecocokan IP dan location ID terhadap data yang diproses.</p><div class="hub-card-foot"><span class="hub-file">iplocationvalidator.html</span><span class="hub-open">Open tool →</span></div></a>
-                <a class="hub-card" href="data-matcher.html"><div class="hub-card-top"><div class="hub-icon"><i class="fas fa-link"></i></div><i class="fas fa-arrow-up-right-from-square"></i></div><h2 class="hub-card-title">Pool vs Dashboard</h2><p class="hub-card-text">Mencocokkan data pool dengan data dashboard untuk menemukan perbedaan.</p><div class="hub-card-foot"><span class="hub-file">data-matcher.html</span><span class="hub-open">Open tool →</span></div></a>
-                <a class="hub-card" href="bulk-compare.html"><div class="hub-card-top"><div class="hub-icon"><i class="fas fa-scale-balanced"></i></div><i class="fas fa-arrow-up-right-from-square"></i></div><h2 class="hub-card-title">Bulk Compare</h2><p class="hub-card-text">Membandingkan data pool dan dashboard dalam jumlah besar dari satu halaman.</p><div class="hub-card-foot"><span class="hub-file">bulk-compare.html</span><span class="hub-open">Open tool →</span></div></a>
-                <a class="hub-card" href="ip-repeat-analyzer.html"><div class="hub-card-top"><div class="hub-icon"><i class="fas fa-repeat"></i></div><i class="fas fa-arrow-up-right-from-square"></i></div><h2 class="hub-card-title">IP Repeat Analyzer</h2><p class="hub-card-text">Menghitung kemunculan IP dari Excel MinerPlus dan mencocokkannya dengan Master Data DC.</p><div class="hub-card-foot"><span class="hub-file">ip-repeat-analyzer.html</span><span class="hub-open">Open tool →</span></div></a>
-                <a class="hub-card" href="machine-list.html"><div class="hub-card-top"><div class="hub-icon"><i class="fas fa-server"></i></div><i class="hub-arrow fas fa-arrow-up-right-from-square"></i></div><h2 class="hub-card-title">Machine List</h2><p class="hub-card-text">Import dan preview Machine List untuk menyiapkan data Serial Number, location ID, dan periode instalasi mesin.</p><div class="hub-card-foot"><span class="hub-file">machine-list.html</span><span class="hub-open">Open tool →</span></div></a>
-                <a class="hub-card" href="cleaning-history.html"><div class="hub-card-top"><div class="hub-icon"><i class="fas fa-clock-rotate-left"></i></div><i class="hub-arrow fas fa-arrow-up-right-from-square"></i></div><h2 class="hub-card-title">Cleaning History</h2><p class="hub-card-text">Melihat riwayat cleaning berdasarkan Serial Number, IP, lokasi, engineer, status, catatan, dan resolution.</p><div class="hub-card-foot"><span class="hub-file">cleaning-history.html</span><span class="hub-open">Open tool →</span></div></a>
-                <a class="hub-card" href="theme-preview.html"><div class="hub-card-top"><div class="hub-icon"><i class="fas fa-palette"></i></div><i class="fas fa-arrow-up-right-from-square"></i></div><h2 class="hub-card-title">Theme Preview</h2><p class="hub-card-text">Halaman preview untuk mengecek dan melihat variasi tampilan UI yang tersedia.</p><div class="hub-card-foot"><span class="hub-file">theme-preview.html</span><span class="hub-open">Open preview →</span></div></a>
+            <section class="hub-identity" aria-labelledby="identity-title">
+                <div class="hub-section-heading">
+                    <div>
+                        <span class="hub-flow-label">MACHINE IDENTITY</span>
+                        <h2 id="identity-title">Bagaimana mesin ditelusuri</h2>
+                    </div>
+                    <p>IP bukan identitas permanen mesin. Serial Number menjadi identitas utama untuk history.</p>
+                </div>
+                <div class="hub-identity-flow">
+                    <div><strong>IP</strong><span>Alamat jaringan saat diamati</span></div>
+                    <i class="fas fa-arrow-right" aria-hidden="true"></i>
+                    <div><strong>Location ID</strong><span>Slot / lokasi fisik</span></div>
+                    <i class="fas fa-arrow-right" aria-hidden="true"></i>
+                    <div class="hub-identity-primary"><strong>Serial Number</strong><span>Identitas mesin fisik</span></div>
+                    <i class="fas fa-arrow-right" aria-hidden="true"></i>
+                    <div><strong>Work History</strong><span>Riwayat pekerjaan</span></div>
+                </div>
+            </section>
+
+            <section class="hub-tools" aria-labelledby="tools-title">
+                <div class="hub-section-heading">
+                    <div>
+                        <span class="hub-flow-label">SUPPORTING TOOLS</span>
+                        <h2 id="tools-title">Tool pendukung</h2>
+                    </div>
+                    <p>Tool tambahan tetap tersedia tanpa mengganggu alur utama.</p>
+                </div>
+                <div class="hub-tools-grid">
+                    <a href="excel-analyzer.html"><i class="fas fa-file-excel"></i><span><strong>Sub Account</strong><small>Excel analysis</small></span></a>
+                    <a href="offline-analyzer.html"><i class="fas fa-database"></i><span><strong>Offline Analyzer</strong><small>Offline processing</small></span></a>
+                    <a href="data-matcher.html"><i class="fas fa-link"></i><span><strong>Pool vs Dashboard</strong><small>Data matching</small></span></a>
+                    <a href="bulk-compare.html"><i class="fas fa-scale-balanced"></i><span><strong>Bulk Compare</strong><small>Large comparison</small></span></a>
+                </div>
             </section>
         </div>
     </main>
