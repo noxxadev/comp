@@ -849,3 +849,15 @@ Rule: before declaring a phase complete, record the exact changes, affected file
 - Memperkuat visual System Map: connector line, node hierarchy, icon anchor, spacing, dan alur mobile vertikal.
 - Tidak mengubah backend, endpoint, data source, atau logic tool lain.
 - Live validation pada GitHub Pages tetap diperlukan setelah deployment.
+
+
+## 2026-09-24 — Tools Hub operational check workflows + draggable nodes
+- Replaced the previous Machine Identity information card on the Tools Hub with an operational **IP Offline Workflow**: **IP Offline → IP Validator → Pool Vs Dashboard → Sub Account → Pool Vs Dashboard → Single Compare / Bulk Compare**.
+- Added explicit links for Single Compare (`data-matcher.html`) and Bulk Compare (`bulk-compare.html`).
+- Added a new **Cek IP Repeat Workflow**: **Machine List (Upload Machine List On Rack) → IP Repeat Analyzer (Upload History MinerPlus Today) → Cek & Search IP → Save Pekerjaan (status wajib SELESAI) → Cleaning History**.
+- Converted the workflow areas into draggable diagram canvases. Nodes can be moved with mouse or touch, but remain constrained inside their workflow canvas.
+- Connector lines are redrawn as nodes move.
+- Dragging a node does not navigate; a normal click/tap still opens the linked page.
+- Mobile uses a vertical initial arrangement so all workflow steps remain readable and draggable.
+- The change is limited to `index.html` and `index-hub.css`; authentication, sidebar, theme toggle, backend, Google Sheets, and existing tool-page business logic were not changed.
+- Live validation on GitHub Pages is required.
