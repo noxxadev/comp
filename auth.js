@@ -4,7 +4,7 @@
   const SESSION_KEY = 'comp.auth.session';
   const USER_KEY = 'comp.auth.user';
   const SESSION_VALIDATED_AT_KEY = 'comp.auth.sessionValidatedAt';
-  const SESSION_VALIDATION_TTL_MS = 5 * 60 * 1000;
+  const SESSION_VALIDATION_TTL_MS = 60 * 60 * 1000;
   const authStorage = window.localStorage;
 
   function getConfig() {
