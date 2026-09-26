@@ -308,11 +308,19 @@ Status: PLANNED
 
 ### Revised Work History >2,000 Plan
 1. Phase 1 — Audit system: COMPLETED.
-2. Phase 2 — Backend filtering: filter Work History before applying the result limit.
+2. Phase 2 — Backend filtering: IMPLEMENTED — VALIDATION PENDING.
 3. Phase 3 — Cleaning History integration: send active SN, Engineer, and Date filters to the backend.
 4. Phase 4 — Pagination / large filtered result: add only if required after Phase 2–3 validation.
 5. Phase 5 — Performance: keep requests batched and avoid per-row API calls.
 6. Phase 6 — Regression testing: verify direct open, SN history, Engineer search, old dates, and combined filters.
+
+## 2026-09-27 — Work History backend filtering Phase 2
+- Updated `google-apps-script/Code.gs` so `getWorkHistory` can filter by Serial Number, Engineer ID/name, and date before applying the result limit.
+- The response `total` now represents the number of rows matching the active backend filters.
+- The existing default limit remains 2,000; pagination is intentionally deferred until a filtered result set is proven to require it.
+- No Cleaning History frontend behavior was changed in this phase, so existing browser-side behavior remains unchanged until Phase 3.
+- Validation confirmed the backend filtering logic is present and the result limit is applied after filtering.
+- Live Apps Script validation is still required.
 
 # Current Status
 
