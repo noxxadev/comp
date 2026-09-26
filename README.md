@@ -378,3 +378,12 @@ Status: PLANNED
 | Security Phase 5 — Security Hardening & Final Audit | PLANNED |
 
 Rule: before declaring a phase complete, record the exact changes, affected files, validation result and remaining issues here.
+
+### Phase 7 — Search Serial Number di IP Repeat
+- **Status:** DONE
+- Search pada ip-repeat-analyzer sekarang mendukung **IP, Nama DC, dan Serial Number**.
+- Dukungan multi-IP tetap dipertahankan.
+- Filter Zona dan sorting tidak diubah.
+- Serial Number tetap berasal dari Machine List yang sudah digunakan oleh fitur SN / Cleaning Count sebelumnya; tidak membuat sumber data baru.
+- Cache-buster frontend diperbarui agar perubahan JavaScript termuat di GitHub Pages.
+- Tidak ada perubahan pada logic penyimpanan, Work Tracking, Cleaning History, atau sumber data IP Repeat.
