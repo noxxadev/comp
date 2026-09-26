@@ -1,10 +1,13 @@
 (() => {
   'use strict';
   function getConfig(){return window.CompGoogleSheetsConfig||{webAppUrl:'',requestKey:''};}
-  async function loadHistory(limit=2000){
+  async function loadHistory(limit=2000,filters={}){
     const config=getConfig(),baseUrl=String(config.webAppUrl||'').trim();
     if(!baseUrl) throw new Error('Google Sheets belum dikonfigurasi.');
     const params=new URLSearchParams({action:'getWorkHistory',limit:String(limit)});
+    if(filters.serialNumber)params.set('serialNumber',String(filters.serialNumber));
+    if(filters.engineer)params.set('engineer',String(filters.engineer));
+    if(filters.date)params.set('date',String(filters.date));
     if(config.requestKey) params.set('requestKey',String(config.requestKey));
     const separator=baseUrl.includes('?')?'&':'?';
     const response=await fetch(baseUrl+separator+params.toString(),{method:'GET',cache:'no-store',credentials:'omit',redirect:'follow'});
@@ -51,20 +54,18 @@
     if(zone)zone.textContent=zoneTop?.[0]||'-';if(zoneCount)zoneCount.textContent=(zoneTop?.[1]||0).toLocaleString('id-ID')+' kali';if(location)location.textContent=locationTop?.[0]||'-';if(locationCount)locationCount.textContent=(locationTop?.[1]||0).toLocaleString('id-ID')+' kali';if(ip)ip.textContent=ipCount.toLocaleString('id-ID');
   }
   function updateFilterState(){const selectedSerial=getSelectedSerial(),filter=document.getElementById('historyFilter'),filterSerial=document.getElementById('historyFilterSerial');if(!filter||!filterSerial)return;filter.hidden=!selectedSerial;filterSerial.textContent=selectedSerial;}
-  function applyFilters(rows){
-    const engineerQuery=normalizeEngineer(document.getElementById('engineerSearch')?.value),selectedDate=getSelectedDate();
-    return rows.filter(row=>{
-      const matchesEngineer=!engineerQuery||normalizeEngineer(row.engineerName||row.engineerId).includes(engineerQuery);
-      const matchesDate=!selectedDate||getRowDate(row)===selectedDate;
-      return matchesEngineer&&matchesDate;
-    });
+  function getActiveFilters(){
+    return {
+      serialNumber:normalizeSerial(getSelectedSerial()),
+      engineer:String(document.getElementById('engineerSearch')?.value||'').trim(),
+      date:getSelectedDate()
+    };
   }
   async function refresh(){
     const status=document.getElementById('historyStatus'),refreshButton=document.getElementById('refreshHistoryBtn');
     if(status)status.textContent='Memuat...';if(refreshButton)refreshButton.disabled=true;
     try{
-      const result=await loadHistory(),allRows=Array.isArray(result.rows)?result.rows:[],selectedSerial=normalizeSerial(getSelectedSerial());
-      const serialRows=selectedSerial?allRows.filter(row=>normalizeSerial(row.serialNumber)===selectedSerial):allRows,rows=applyFilters(serialRows);
+      const filters=getActiveFilters(),result=await loadHistory(2000,filters),rows=Array.isArray(result.rows)?result.rows:[];
       render(rows,result.total);updateFilterState();if(status)status.textContent='Google Sheets — Work History';
     }catch(error){console.error('Cleaning History:',error);render([],0);if(status)status.textContent='Gagal: '+(error.message||'tidak tersedia');}
     finally{if(refreshButton)refreshButton.disabled=false;}
