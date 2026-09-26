@@ -335,6 +335,14 @@ Status: PLANNED
 - No application code was changed for this decision.
 - Pagination can be revisited if a single filter eventually produces more than 2,000 matching events.
 
+## 2026-09-27 — Work History Phase 5 performance audit
+- Audited backend Work History retrieval and Cleaning History request flow after Phase 3.
+- Current bottleneck: `getWorkHistory()` reads the full Work History sheet on every request before applying filters.
+- Response size is already bounded to a maximum of 2,000 returned rows, and filters are applied in the backend before that limit.
+- No safe low-complexity optimization is required at the current dataset size; indexing/cache would add complexity and require additional invalidation logic.
+- Performance optimization should be revisited when Work History volume becomes materially larger or measured response time degrades.
+- No application code was changed in this audit.
+
 # Current Status
 
 | Phase | Status |
