@@ -17,7 +17,7 @@
   function getSelectedSerial(){return new URLSearchParams(window.location.search).get('serial')||'';}
   function getTodayInputValue(){const now=new Date();return now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');}
   function normalizeEngineer(value){return String(value??'').trim().toLowerCase();}
-  function getSelectedDate(){const input=document.getElementById('historyDate');return String(input?.value||'').trim()||getTodayInputValue();}
+  function getSelectedDate(){const input=document.getElementById('historyDate');return String(input?.value||'').trim();}
   function getRowDate(row){
     const date=new Date(String(row?.timestamp||'').trim());
     if(Number.isNaN(date.getTime())) return '';
@@ -41,7 +41,7 @@
     updateStats(rows);
     const selectedSerial=getSelectedSerial(),engineerQuery=String(document.getElementById('engineerSearch')?.value||'').trim(),selectedDate=getSelectedDate();
     const filterParts=['tanggal '+selectedDate];if(engineerQuery)filterParts.push('Engineer "'+engineerQuery+'"');
-    summary.textContent=selectedSerial?'Menampilkan '+rows.length.toLocaleString('id-ID')+' event untuk SN '+selectedSerial+' pada '+filterParts.join(' + ')+' dari '+Number(total||0).toLocaleString('id-ID')+' total event.':'Menampilkan '+rows.length.toLocaleString('id-ID')+' event pada '+filterParts.join(' + ')+' dari '+Number(total||0).toLocaleString('id-ID')+' total event.';
+    summary.textContent=selectedSerial?'Menampilkan '+rows.length.toLocaleString('id-ID')+' event untuk SN '+selectedSerial+' pada '+filterText+' dari '+Number(total||0).toLocaleString('id-ID')+' total event.':'Menampilkan '+rows.length.toLocaleString('id-ID')+' event pada '+filterText+' dari '+Number(total||0).toLocaleString('id-ID')+' total event.';
   }
   function updateStats(rows){
     const countValues=values=>{const counts=new Map();values.forEach(value=>{const key=String(value??'').trim();if(!key||key==='-')return;counts.set(key,(counts.get(key)||0)+1);});return[...counts.entries()].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0]))[0]||null;};
@@ -54,7 +54,8 @@
     const engineerQuery=normalizeEngineer(document.getElementById('engineerSearch')?.value),selectedDate=getSelectedDate();
     return rows.filter(row=>{
       const matchesEngineer=!engineerQuery||normalizeEngineer(row.engineerName||row.engineerId).includes(engineerQuery);
-      return matchesEngineer&&getRowDate(row)===selectedDate;
+      const matchesDate=!selectedDate||getRowDate(row)===selectedDate;
+      return matchesEngineer&&matchesDate;
     });
   }
   async function refresh(){
@@ -69,7 +70,7 @@
   }
   function initializeSearch(){
     const engineerSearch=document.getElementById('engineerSearch'),historyDate=document.getElementById('historyDate');
-    if(historyDate&&!historyDate.value)historyDate.value=getTodayInputValue();
+    if(historyDate&&!historyDate.value&&!getSelectedSerial())historyDate.value=getTodayInputValue();
     engineerSearch?.addEventListener('input',refresh);historyDate?.addEventListener('change',refresh);
   }
   window.CompCleaningHistory={loadHistory,refresh};
