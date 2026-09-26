@@ -387,3 +387,13 @@ Rule: before declaring a phase complete, record the exact changes, affected file
 - Serial Number tetap berasal dari Machine List yang sudah digunakan oleh fitur SN / Cleaning Count sebelumnya; tidak membuat sumber data baru.
 - Cache-buster frontend diperbarui agar perubahan JavaScript termuat di GitHub Pages.
 - Tidak ada perubahan pada logic penyimpanan, Work Tracking, Cleaning History, atau sumber data IP Repeat.
+## 2026-09-27 — IP Repeat Cleaning Count / SN render race fix
+- **Status:** FIXED — VALIDATION PENDING
+- Diperbaiki regresi setelah Phase 7: event `comp:ip-repeat-serials-ready` sebelumnya dipanggil dari `augmentIpRepeatTable()`.
+- Event tersebut memicu `render()`, sedangkan `render()` mengosongkan dan membuat ulang `tbody`, sehingga kolom Serial Number, Cleaning Count, dan Last Cleaning yang baru saja ditambahkan dapat terhapus.
+- Serial Number map sekarang dipublish **sekali setelah resolver siap**, bukan setiap kali tabel di-augment.
+- MutationObserver tetap digunakan untuk menambahkan kembali kolom SN/Cleaning Count/Last Cleaning setiap kali hasil tabel dirender ulang.
+- Logic perhitungan Cleaning Count tetap sama: hanya Work History dengan Status `Selesai` yang dihitung berdasarkan Serial Number.
+- Cache-buster `machine-resolver.js` dinaikkan ke `20260927-2`.
+- Tidak mengubah schema Google Sheets, logic Work Tracking, logic Cleaning History, atau sumber data Machine List/Work History.
+- Live validation yang perlu dilakukan: pastikan SN tampil, Cleaning Count sesuai Work History berstatus `Selesai`, Last Cleaning tampil, dan pencarian SN tetap bekerja.
