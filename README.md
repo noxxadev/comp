@@ -330,6 +330,11 @@ Status: PLANNED
 - Validation confirmed the frontend now sends all three supported backend filters.
 - Live end-to-end validation with records beyond event 2,000 is still required.
 
+## 2026-09-27 — Work History Phase 4 deferred
+- Phase 4 (Pagination / large-result handling) is deferred because backend filtering now searches the full Work History before applying the 2,000-row response limit.
+- No application code was changed for this decision.
+- Pagination can be revisited if a single filter eventually produces more than 2,000 matching events.
+
 # Current Status
 
 | Phase | Status |
