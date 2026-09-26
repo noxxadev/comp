@@ -40,7 +40,8 @@
     });
     updateStats(rows);
     const selectedSerial=getSelectedSerial(),engineerQuery=String(document.getElementById('engineerSearch')?.value||'').trim(),selectedDate=getSelectedDate();
-    const filterParts=['tanggal '+selectedDate];if(engineerQuery)filterParts.push('Engineer "'+engineerQuery+'"');
+    const filterParts=[];if(selectedDate)filterParts.push('tanggal '+selectedDate);if(engineerQuery)filterParts.push('Engineer "'+engineerQuery+'"');
+    const filterText=filterParts.length?filterParts.join(' + '):'semua tanggal';
     summary.textContent=selectedSerial?'Menampilkan '+rows.length.toLocaleString('id-ID')+' event untuk SN '+selectedSerial+' pada '+filterText+' dari '+Number(total||0).toLocaleString('id-ID')+' total event.':'Menampilkan '+rows.length.toLocaleString('id-ID')+' event pada '+filterText+' dari '+Number(total||0).toLocaleString('id-ID')+' total event.';
   }
   function updateStats(rows){
