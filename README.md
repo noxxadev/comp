@@ -296,6 +296,24 @@ Status: PLANNED
 - Desktop/tablet dragging remains enabled.
 - No workflow navigation, authentication, backend, or business logic was changed.
 
+
+## 2026-09-27 — Work History >2,000 data plan revision
+- Phase 1 audit confirmed that Work History currently returns the latest 2,000 events before Cleaning History applies Serial Number, Engineer, and Date filters in the browser.
+- The plan was revised so the backend applies the relevant filters before the result limit.
+- Planned backend filters: Serial Number, Engineer, and Date.
+- Direct open keeps the existing default of today's date.
+- Opening Cleaning History from an SN link keeps the date empty so history across dates can be found.
+- Pagination remains a later phase only if a filtered result set itself becomes very large.
+- No code or Google Sheet schema changes are part of this plan revision.
+
+### Revised Work History >2,000 Plan
+1. Phase 1 — Audit system: COMPLETED.
+2. Phase 2 — Backend filtering: filter Work History before applying the result limit.
+3. Phase 3 — Cleaning History integration: send active SN, Engineer, and Date filters to the backend.
+4. Phase 4 — Pagination / large filtered result: add only if required after Phase 2–3 validation.
+5. Phase 5 — Performance: keep requests batched and avoid per-row API calls.
+6. Phase 6 — Regression testing: verify direct open, SN history, Engineer search, old dates, and combined filters.
+
 # Current Status
 
 | Phase | Status |
