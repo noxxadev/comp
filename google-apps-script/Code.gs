@@ -899,27 +899,69 @@ function getWorkHistory(e) {
   const data = sheet.getDataRange().getValues();
   const requestedLimit = Number(e?.parameter?.limit || 2000);
   const limit = Math.min(Math.max(Number.isFinite(requestedLimit) ? Math.floor(requestedLimit) : 2000, 1), 5000);
+  const selectedSerial = normalizeSerialKey(e?.parameter?.serialNumber || '');
+  const engineerQuery = normalizeHistoryEngineer(e?.parameter?.engineer || '');
+  const selectedDate = normalizeHistoryDate(e?.parameter?.date || '');
+
   if (data.length <= 1) return jsonResponse({ ok: true, rows: [], total: 0, returned: 0 });
 
   const rows = [];
-  for (let r = data.length - 1; r >= 1 && rows.length < limit; r--) {
+  let matchedTotal = 0;
+
+  for (let r = data.length - 1; r >= 1; r--) {
     const row = data[r];
+    const timestamp = row[1] instanceof Date ? row[1] : parseHistoryDate(row[1]);
+    const serialNumber = String(row[3] || '').trim();
+    const engineerId = String(row[7] || '').trim();
+    const engineerName = String(row[8] || '').trim();
+
+    const matchesSerial = !selectedSerial || normalizeSerialKey(serialNumber) === selectedSerial;
+    const matchesEngineer = !engineerQuery
+      || normalizeHistoryEngineer(engineerName).includes(engineerQuery)
+      || normalizeHistoryEngineer(engineerId).includes(engineerQuery);
+    const matchesDate = !selectedDate || historyDateKey(timestamp) === selectedDate;
+
+    if (!matchesSerial || !matchesEngineer || !matchesDate) continue;
+
+    matchedTotal++;
+    if (rows.length >= limit) continue;
+
     rows.push({
       eventId: String(row[0] || '').trim(),
-      timestamp: row[1] instanceof Date ? row[1].toISOString() : String(row[1] || '').trim(),
+      timestamp: timestamp instanceof Date ? timestamp.toISOString() : String(row[1] || '').trim(),
       ip: String(row[2] || '').trim(),
-      serialNumber: String(row[3] || '').trim(),
+      serialNumber,
       locationId: String(row[4] || '').trim(),
       zone: String(row[5] || '-').trim() || '-',
       repeat: Number(row[6] || 0),
-      engineerId: String(row[7] || '').trim(),
-      engineerName: String(row[8] || '').trim(),
+      engineerId,
+      engineerName,
       status: String(row[9] || '').trim(),
       note: String(row[10] || '').trim(),
       resolutionStatus: String(row[11] || '').trim()
     });
   }
-  return jsonResponse({ ok: true, rows, total: Math.max(data.length - 1, 0), returned: rows.length });
+
+  return jsonResponse({ ok: true, rows, total: matchedTotal, returned: rows.length });
+}
+
+function normalizeHistoryEngineer(value) {
+  return String(value ?? '').trim().toLowerCase();
+}
+
+function normalizeHistoryDate(value) {
+  const date = String(value ?? '').trim();
+  return /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : '';
+}
+
+function parseHistoryDate(value) {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function historyDateKey(value) {
+  if (!(value instanceof Date) || Number.isNaN(value.getTime())) return '';
+  return Utilities.formatDate(value, Session.getScriptTimeZone(), 'yyyy-MM-dd');
 }
 
 function ensureHistorySchema(sheet) {
