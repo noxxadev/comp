@@ -13,7 +13,8 @@
     dataSource: 'none',
     selectedIps: new Set(),
     engineerId: '',
-    engineerCatalog: []
+    engineerCatalog: [],
+    serialByIp: new Map()
   };
 
   const $ = (id) => document.getElementById(id);
@@ -347,7 +348,8 @@
         ? searchIps.includes(row.ip)
         : (
             row.ip.toLowerCase().includes(query) ||
-            row.name.toLowerCase().includes(query)
+            row.name.toLowerCase().includes(query) ||
+            String(state.serialByIp.get(row.ip) || '').toLowerCase().includes(query)
           );
       const matchesZone =
         state.zoneFilter === 'all' || row.zone === state.zoneFilter;
@@ -622,6 +624,13 @@
   uploadArea.addEventListener('drop', event => setFile(event.dataTransfer.files?.[0]));
 
   processBtn.addEventListener('click', processFile);
+  window.addEventListener('comp:ip-repeat-serials-ready', (event) => {
+    const serials = event.detail?.serialByIp;
+    if (!(serials instanceof Map)) return;
+    state.serialByIp = serials;
+    render();
+  });
+
   searchInput.addEventListener('input', render);
 
   zoneFilter?.addEventListener('change', () => {
