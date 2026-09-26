@@ -343,6 +343,15 @@ Status: PLANNED
 - Performance optimization should be revisited when Work History volume becomes materially larger or measured response time degrades.
 - No application code was changed in this audit.
 
+## 2026-09-27 — Work History Phase 6 regression audit
+- Source regression checks passed for Serial Number, Engineer, Date, and combined filters.
+- Confirmed backend applies matching before the 2,000-row response limit and returns the filtered total count.
+- Confirmed Cleaning History sends all active filters directly to the backend and no longer performs the old client-side filtering step.
+- Confirmed direct-open behavior defaults to today's date when no SN is selected, while an SN URL does not force today's date.
+- Confirmed the existing SN filter reset flow remains intact.
+- Live validation for a record beyond event 2,000 / around event 2,500 remains pending until the dataset is large enough.
+- No application code was changed during this regression audit.
+
 # Current Status
 
 | Phase | Status |
