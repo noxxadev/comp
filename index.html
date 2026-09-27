@@ -68,24 +68,20 @@
                         <span class="hub-flow-index">02</span><span class="hub-flow-icon"><i class="fas fa-location-dot"></i></span>
                         <span class="hub-flow-content"><span class="hub-flow-label">CHECK</span><strong>IP Validator</strong><span>Validasi IP, DC, dan zona.</span></span>
                     </a>
-                    <a class="hub-flow-node" data-node="pool-1" href="data-matcher.html" style="--x:38;--y:20">
-                        <span class="hub-flow-index">03</span><span class="hub-flow-icon"><i class="fas fa-link"></i></span>
-                        <span class="hub-flow-content"><span class="hub-flow-label">COMPARE</span><strong>Pool Vs Dashboard</strong><span>Bandingkan data pool dengan dashboard.</span></span>
-                    </a>
-                    <a class="hub-flow-node" data-node="subaccount" href="excel-analyzer.html" style="--x:56;--y:20">
-                        <span class="hub-flow-index">04</span><span class="hub-flow-icon"><i class="fas fa-file-excel"></i></span>
+                    <a class="hub-flow-node" data-node="subaccount" href="excel-analyzer.html" style="--x:38;--y:20">
+                        <span class="hub-flow-index">03</span><span class="hub-flow-icon"><i class="fas fa-file-excel"></i></span>
                         <span class="hub-flow-content"><span class="hub-flow-label">CHECK</span><strong>Sub Account</strong><span>Periksa informasi Sub Account yang terkait.</span></span>
                     </a>
-                    <div class="hub-flow-node hub-flow-node-static" data-node="pool-2" style="--x:68;--y:8">
-                        <span class="hub-flow-index">05</span><span class="hub-flow-icon"><i class="fas fa-code-compare"></i></span>
+                    <div class="hub-flow-node hub-flow-node-static" data-node="pool-2" style="--x:56;--y:20">
+                        <span class="hub-flow-index">04</span><span class="hub-flow-icon"><i class="fas fa-code-compare"></i></span>
                         <span class="hub-flow-content"><span class="hub-flow-label">COMPARE</span><strong>Pool Vs Dashboard</strong><span>Pilih metode compare sesuai kebutuhan data.</span></span>
                     </div>
                     <a class="hub-flow-node" data-node="single" href="data-matcher.html" style="--x:68;--y:50">
-                        <span class="hub-flow-index">05A</span><span class="hub-flow-icon"><i class="fas fa-arrow-right-arrow-left"></i></span>
+                        <span class="hub-flow-index">04A</span><span class="hub-flow-icon"><i class="fas fa-arrow-right-arrow-left"></i></span>
                         <span class="hub-flow-content"><span class="hub-flow-label">SINGLE</span><strong>Single Compare</strong><span>Gunakan <code>data-matcher.html</code> untuk compare satu data.</span></span>
                     </a>
                     <a class="hub-flow-node" data-node="bulk" href="bulk-compare.html" style="--x:84;--y:50">
-                        <span class="hub-flow-index">05B</span><span class="hub-flow-icon"><i class="fas fa-scale-balanced"></i></span>
+                        <span class="hub-flow-index">04B</span><span class="hub-flow-icon"><i class="fas fa-scale-balanced"></i></span>
                         <span class="hub-flow-content"><span class="hub-flow-label">BULK</span><strong>Bulk Compare</strong><span>Gunakan <code>bulk-compare.html</code> untuk compare massal.</span></span>
                     </a>
                 </div>
@@ -149,7 +145,7 @@
     const canvases = document.querySelectorAll('.hub-flow-canvas');
     if (!canvases.length) return;
     const connections = {
-        offline: [['offline','validator'],['validator','pool-1'],['pool-1','subaccount'],['subaccount','pool-2'],['pool-2','single'],['pool-2','bulk']],
+        offline: [['offline','validator'],['validator','subaccount'],['subaccount','pool-2'],['pool-2','single'],['pool-2','bulk']],
         repeat: [['machine-list','repeat-analyzer'],['repeat-analyzer','search-ip'],['search-ip','save-done'],['save-done','cleaning-history']]
     };
     const setupCanvas = (canvas) => {
@@ -240,19 +236,18 @@
                     });
                 };
 
-                // Preserve the workflow branches: first row is the linear
-                // path, the compare node stays alone, and the final choices
-                // share the last row. Only the horizontal column count adapts.
+                // Preserve the workflow branches: nodes 01-04 form the
+                // linear path, node 04 branches into Single and Bulk.
                 const firstRowCount = Math.min(columns, 4);
                 placeRow(nodes.slice(0, firstRowCount), 0);
 
                 if (firstRowCount < 4) {
-                    placeRow(nodes.slice(firstRowCount, 4), 1);
-                    placeRow([nodes[4]], 2);
-                    placeRow(nodes.slice(5), 3);
+                    placeRow(nodes.slice(firstRowCount, 3), 1);
+                    placeRow([nodes[3]], 2);
+                    placeRow(nodes.slice(4), 3);
                 } else {
-                    placeRow([nodes[4]], 1);
-                    placeRow(nodes.slice(5), 2);
+                    placeRow([nodes[3]], 1);
+                    placeRow(nodes.slice(4), 2);
                 }
             }
 
