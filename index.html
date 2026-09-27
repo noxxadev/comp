@@ -198,44 +198,62 @@
                 const gap = workflow === 'offline' ? 118 : 126;
                 nodes.forEach((node, index) => setNodePosition(node, 12, 18 + index * gap));
             } else if (workflow === 'repeat') {
-                // Keep the same simple flow as mobile, but let the available
-                // canvas width determine the horizontal spacing on desktop.
-                const side = 18;
-                const gap = 16;
-                const totalWidth = canvas.clientWidth - (side * 2);
-                const nodeWidth = Math.min(220, Math.max(150, (totalWidth - gap * 4) / 5));
-
-                nodes.forEach((node, index) => {
-                    const x = side + index * (nodeWidth + gap);
-                    setNodePosition(node, x, 28);
-                    node.style.width = nodeWidth + 'px';
-                });
-            } else {
-                // Responsive desktop layout based on the same ordered flow
-                // principle used by mobile, without fixed percentage coordinates.
+                // Adapt the number of columns to the actual canvas width so
+                // nodes never collapse onto the same clamped position.
                 const side = 18;
                 const gapX = 16;
-                const gapY = 24;
-                const available = canvas.clientWidth - (side * 2);
-                const columns = 4;
+                const gapY = 172;
+                const available = Math.max(0, canvas.clientWidth - side * 2);
+                const columns = available >= 1040 ? 5 : available >= 700 ? 3 : 2;
                 const nodeWidth = Math.min(220, Math.max(150, (available - gapX * (columns - 1)) / columns));
 
-                const placeRow = (rowNodes, row, offset = 0) => {
+                const placeRow = (rowNodes, row) => {
                     const rowWidth = rowNodes.length * nodeWidth + Math.max(0, rowNodes.length - 1) * gapX;
-                    const startX = Math.max(side, (canvas.clientWidth - rowWidth) / 2 + offset);
-                    const y = 24 + row * 172;
+                    const startX = Math.max(side, (canvas.clientWidth - rowWidth) / 2);
+                    const y = 24 + row * gapY;
                     rowNodes.forEach((node, index) => {
                         node.style.width = nodeWidth + 'px';
                         setNodePosition(node, startX + index * (nodeWidth + gapX), y);
                     });
                 };
 
-                if (nodes.length >= 7) {
-                    placeRow(nodes.slice(0, 4), 0);
+                for (let i = 0; i < nodes.length; i += columns) {
+                    placeRow(nodes.slice(i, i + columns), Math.floor(i / columns));
+                }
+            } else {
+                // Responsive desktop layout based on the same ordered flow
+                // principle used by mobile, while adapting the number of
+                // columns to the actual width available inside the canvas.
+                const side = 18;
+                const gapX = 16;
+                const rowGap = 172;
+                const available = Math.max(0, canvas.clientWidth - side * 2);
+                const columns = available >= 900 ? 4 : available >= 650 ? 3 : 2;
+                const nodeWidth = Math.min(220, Math.max(150, (available - gapX * (columns - 1)) / columns));
+
+                const placeRow = (rowNodes, row) => {
+                    const rowWidth = rowNodes.length * nodeWidth + Math.max(0, rowNodes.length - 1) * gapX;
+                    const startX = Math.max(side, (canvas.clientWidth - rowWidth) / 2);
+                    const y = 24 + row * rowGap;
+                    rowNodes.forEach((node, index) => {
+                        node.style.width = nodeWidth + 'px';
+                        setNodePosition(node, startX + index * (nodeWidth + gapX), y);
+                    });
+                };
+
+                // Preserve the workflow branches: first row is the linear
+                // path, the compare node stays alone, and the final choices
+                // share the last row. Only the horizontal column count adapts.
+                const firstRowCount = Math.min(columns, 4);
+                placeRow(nodes.slice(0, firstRowCount), 0);
+
+                if (firstRowCount < 4) {
+                    placeRow(nodes.slice(firstRowCount, 4), 1);
+                    placeRow([nodes[4]], 2);
+                    placeRow(nodes.slice(5), 3);
+                } else {
                     placeRow([nodes[4]], 1);
                     placeRow(nodes.slice(5), 2);
-                } else {
-                    placeRow(nodes, 0);
                 }
             }
 
