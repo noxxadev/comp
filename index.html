@@ -236,18 +236,20 @@
                     });
                 };
 
-                // Preserve the workflow branches: nodes 01-04 form the
-                // linear path, node 04 branches into Single and Bulk.
+                // Keep the four main workflow nodes on the first row
+                // whenever the desktop canvas has enough room. Single and
+                // Bulk remain as the two branches below node 04.
                 const firstRowCount = Math.min(columns, 4);
                 placeRow(nodes.slice(0, firstRowCount), 0);
 
                 if (firstRowCount < 4) {
-                    placeRow(nodes.slice(firstRowCount, 3), 1);
+                    // On narrower desktop widths, preserve the ordered flow
+                    // while allowing the main path to wrap naturally.
+                    placeRow(nodes.slice(firstRowCount, 4), 1);
                     placeRow([nodes[3]], 2);
                     placeRow(nodes.slice(4), 3);
                 } else {
-                    placeRow([nodes[3]], 1);
-                    placeRow(nodes.slice(4), 2);
+                    placeRow(nodes.slice(4), 1);
                 }
             }
 
