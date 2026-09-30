@@ -62,6 +62,10 @@
     const result = await request('login', { username, password });
     if (!result?.ok || !result.session) throw new Error(result?.error || 'Login gagal.');
     setAuth(result.session, result.user);
+    // The login response is already authenticated by the server. Mark this
+    // freshly issued session as validated so page-guard does not immediately
+    // send a second validateSession request after the redirect.
+    authStorage.setItem(SESSION_VALIDATED_AT_KEY, String(Date.now()));
     return result;
   }
 
