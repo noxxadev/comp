@@ -670,7 +670,21 @@
 
       selectedIpSnapshot.forEach(ip => state.selectedIps.delete(ip));
       render();
-      showWorkMessage(`${selectedRows.length.toLocaleString('id-ID')} IP berhasil disimpan ke Google Sheets.`);
+      showWorkMessage(`${selectedRows.length.toLocaleString('id-ID')} IP berhasil disimpan ke Google Sheets. Memperbarui Cleaning Count...`);
+
+      try {
+        if (window.CompMachineResolver?.refreshCleaningData) {
+          await window.CompMachineResolver.refreshCleaningData();
+          render();
+          showWorkMessage(`${selectedRows.length.toLocaleString('id-ID')} IP berhasil disimpan. Cleaning Count sudah diperbarui dari Work History.`);
+        }
+      } catch (refreshError) {
+        console.error('Gagal memperbarui Cleaning Count setelah save:', refreshError);
+        showWorkMessage(
+          `${selectedRows.length.toLocaleString('id-ID')} IP berhasil disimpan, tetapi Cleaning Count belum dapat diperbarui otomatis. Silakan refresh data.`,
+          true
+        );
+      }
     } catch (error) {
       console.error(error);
       showWorkMessage(error.message || 'Gagal menyimpan data pekerjaan ke Google Sheets. Pilihan IP tetap dipertahankan.', true);
