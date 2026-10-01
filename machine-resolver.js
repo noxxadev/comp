@@ -417,22 +417,29 @@
         body.dataset.machineIdentityObserver = 'true';
       }
 
-      // Publish the Serial Number map once after the resolver state is ready.
-      // Do not dispatch from augmentIpRepeatTable(), because IP Repeat render()
-      // replaces tbody rows and would otherwise remove the appended identity cells.
+      // Publish the IP -> Serial Number -> Cleaning Count maps directly from
+      // the resolved Machine List and Work History. Do not depend on the
+      // rendered tbody here because IP Repeat renders its rows asynchronously.
+      const locationMap = buildLocationMap(records);
       const serialByIp = new Map();
       const cleaningCountByIp = new Map();
-      body.querySelectorAll('tr').forEach(row => {
-        const ip = String(row.querySelector('.ip-cell')?.textContent || '').replace(/\s+/g, '').trim();
-        const serial = String(row.querySelector('[data-machine-identity-cell="true"]')?.textContent || '').trim();
-        const countText = String(row.querySelector('[data-cleaning-count-cell="true"]')?.textContent || '').trim();
-        const count = Number(countText);
 
-        if (ip && isIpv4(ip) && serial && serial !== 'SN Tidak Ditemukan') {
+      if (window.masterData && typeof window.masterData === 'object') {
+        Object.entries(window.masterData).forEach(([rawIp, rawLocation]) => {
+          const ip = String(rawIp || '').replace(/\\s+/g, '').trim();
+          const location = normalizeLocationId(rawLocation);
+          const serial = String(locationMap.get(location) || '').trim();
+          if (!ip || !serial) return;
+
+          const normalizedSerial = normalizeSerialNumber(serial);
           serialByIp.set(ip, serial);
-          cleaningCountByIp.set(ip, Number.isFinite(count) ? count : 0);
-        }
-      });
+          cleaningCountByIp.set(
+            ip,
+            Number(cleaningCounts.get(normalizedSerial) || 0)
+          );
+        });
+      }
+
       window.dispatchEvent(new CustomEvent('comp:ip-repeat-serials-ready', {
         detail: { serialByIp, cleaningCountByIp }
       }));
