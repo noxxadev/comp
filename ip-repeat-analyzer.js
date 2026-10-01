@@ -15,6 +15,7 @@
     engineerId: '',
     engineerCatalog: [],
     serialByIp: new Map(),
+    cleaningCountByIp: new Map(),
     saveInProgress: false
   };
 
@@ -46,6 +47,10 @@
   const workNote = $('workNote');
   const saveWorkBtn = $('saveWorkBtn');
   const workMessage = $('workMessage');
+  const cleaningWarningModal = $('cleaningWarningModal');
+  const cleaningWarningList = $('cleaningWarningList');
+  const cleaningWarningCancel = $('cleaningWarningCancel');
+  const cleaningWarningContinue = $('cleaningWarningContinue');
 
   const ENGINEER_STORAGE_KEY = 'comp.selectedEngineerId';
 
@@ -340,6 +345,56 @@
     updateSelectionUi();
   }
 
+  function getCleaningWarnings(ips) {
+    return [...new Set(ips)]
+      .map(ip => {
+        const serial = String(state.serialByIp.get(ip) || '').trim();
+        const count = Number(state.cleaningCountByIp.get(ip) || 0);
+        return { ip, serial, count };
+      })
+      .filter(item => item.serial && item.count > 2);
+  }
+
+  function showCleaningWarning(warnings) {
+    if (!cleaningWarningModal || !cleaningWarningList || !warnings.length) {
+      return Promise.resolve(true);
+    }
+
+    cleaningWarningList.innerHTML = '';
+    warnings.forEach(item => {
+      const li = document.createElement('li');
+      li.innerHTML = '<strong></strong><span></span><small></small>';
+      li.querySelector('strong').textContent = item.serial;
+      li.querySelector('span').textContent = `IP ${item.ip}`;
+      li.querySelector('small').textContent = `Cleaning Count: ${item.count}`;
+      cleaningWarningList.appendChild(li);
+    });
+
+    cleaningWarningModal.hidden = false;
+    document.body.classList.add('repeat-modal-open');
+
+    return new Promise(resolve => {
+      const close = result => {
+        cleaningWarningModal.hidden = true;
+        document.body.classList.remove('repeat-modal-open');
+        cleaningWarningCancel.removeEventListener('click', onCancel);
+        cleaningWarningContinue.removeEventListener('click', onContinue);
+        resolve(result);
+      };
+      const onCancel = () => close(false);
+      const onContinue = () => close(true);
+
+      cleaningWarningCancel.addEventListener('click', onCancel);
+      cleaningWarningContinue.addEventListener('click', onContinue);
+    });
+  }
+
+  async function confirmCleaningSelection(ips) {
+    const warnings = getCleaningWarnings(ips);
+    if (!warnings.length) return true;
+    return showCleaningWarning(warnings);
+  }
+
   function parseSearchIps(value) {
     const raw = String(value || '').trim();
     if (!raw) return [];
@@ -397,9 +452,23 @@
       checkbox.className = 'repeat-row-checkbox';
       checkbox.checked = state.selectedIps.has(row.ip);
       checkbox.setAttribute('aria-label', `Pilih IP ${row.ip}`);
-      checkbox.addEventListener('change', event => {
-        toggleSelection(row.ip, event.target.checked);
-        tr.classList.toggle('is-selected', event.target.checked);
+      checkbox.addEventListener('change', async event => {
+        const checked = event.target.checked;
+
+        if (checked) {
+          checkbox.disabled = true;
+          const confirmed = await confirmCleaningSelection([row.ip]);
+          checkbox.disabled = false;
+
+          if (!confirmed) {
+            checkbox.checked = false;
+            tr.classList.remove('is-selected');
+            return;
+          }
+        }
+
+        toggleSelection(row.ip, checked);
+        tr.classList.toggle('is-selected', checked);
       });
       selection.appendChild(checkbox);
 
@@ -648,6 +717,12 @@
     const serials = event.detail?.serialByIp;
     if (!(serials instanceof Map)) return;
     state.serialByIp = serials;
+
+    const cleaningCounts = event.detail?.cleaningCountByIp;
+    if (cleaningCounts instanceof Map) {
+      state.cleaningCountByIp = cleaningCounts;
+    }
+
     render();
   });
 
@@ -667,15 +742,21 @@
     render();
   });
 
-  selectAllBtn?.addEventListener('click', () => {
+  selectAllBtn?.addEventListener('click', async () => {
     const visibleIps = state.filteredRows.map(row => row.ip);
     const allVisibleSelected = visibleIps.length > 0 && visibleIps.every(ip => state.selectedIps.has(ip));
 
     if (allVisibleSelected) {
       visibleIps.forEach(ip => state.selectedIps.delete(ip));
-    } else {
-      visibleIps.forEach(ip => state.selectedIps.add(ip));
+      render();
+      return;
     }
+
+    const ipsToAdd = visibleIps.filter(ip => !state.selectedIps.has(ip));
+    const confirmed = await confirmCleaningSelection(ipsToAdd);
+    if (!confirmed) return;
+
+    ipsToAdd.forEach(ip => state.selectedIps.add(ip));
     render();
   });
 
