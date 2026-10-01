@@ -14,7 +14,8 @@
     selectedIps: new Set(),
     engineerId: '',
     engineerCatalog: [],
-    serialByIp: new Map()
+    serialByIp: new Map(),
+    saveInProgress: false
   };
 
   const $ = (id) => document.getElementById(id);
@@ -295,7 +296,19 @@
 
   function updateWorkUi() {
     const targetCount = state.selectedIps.size;
-    saveWorkBtn.disabled = targetCount === 0 || !state.engineerId;
+    saveWorkBtn.disabled = state.saveInProgress || targetCount === 0 || !state.engineerId;
+  }
+
+  function setSaveInProgress(isSaving) {
+    state.saveInProgress = Boolean(isSaving);
+
+    if (!saveWorkBtn) return;
+
+    saveWorkBtn.disabled = state.saveInProgress || state.selectedIps.size === 0 || !state.engineerId;
+    saveWorkBtn.setAttribute('aria-busy', state.saveInProgress ? 'true' : 'false');
+    saveWorkBtn.innerHTML = state.saveInProgress
+      ? '<i class="fas fa-spinner fa-spin"></i><span>Menyimpan...</span>'
+      : '<i class="fas fa-save"></i><span>Simpan Pekerjaan</span>';
   }
 
   function showWorkMessage(message, isError = false) {
@@ -523,6 +536,8 @@
   }
 
   async function saveWorkForSelected() {
+    if (state.saveInProgress) return;
+
     if (!state.selectedIps.size) {
       showWorkMessage('Pilih minimal satu IP terlebih dahulu.', true);
       return;
@@ -539,7 +554,8 @@
       return;
     }
 
-    const selectedRows = state.rows.filter(row => state.selectedIps.has(row.ip));
+    const selectedIpSnapshot = new Set(state.selectedIps);
+    const selectedRows = state.rows.filter(row => selectedIpSnapshot.has(row.ip));
     const items = {};
     const timestamp = new Date().toISOString();
 
@@ -557,20 +573,24 @@
       };
     });
 
+    setSaveInProgress(true);
+    showWorkMessage('Menyimpan data ke Google Sheets...');
+
     try {
-      saveWorkBtn.disabled = true;
-      showWorkMessage('Menyimpan data ke Google Sheets...');
       const result = await workApi.saveWorkItems(items);
 
-      if (result.saved !== selectedRows.length) {
-        throw new Error(`Google Sheets melaporkan ${result.saved} dari ${selectedRows.length} IP berhasil disimpan.`);
+      if (Number(result?.saved || 0) !== selectedRows.length) {
+        throw new Error(`Google Sheets melaporkan ${result?.saved || 0} dari ${selectedRows.length} IP berhasil disimpan.`);
       }
 
-      showWorkMessage(`${result.saved.toLocaleString('id-ID')} IP berhasil disimpan ke Google Sheets.`);
+      selectedIpSnapshot.forEach(ip => state.selectedIps.delete(ip));
+      render();
+      showWorkMessage(`${selectedRows.length.toLocaleString('id-ID')} IP berhasil disimpan ke Google Sheets.`);
     } catch (error) {
       console.error(error);
-      showWorkMessage(error.message || 'Gagal menyimpan data pekerjaan ke Google Sheets.', true);
+      showWorkMessage(error.message || 'Gagal menyimpan data pekerjaan ke Google Sheets. Pilihan IP tetap dipertahankan.', true);
     } finally {
+      setSaveInProgress(false);
       updateWorkUi();
     }
   }
