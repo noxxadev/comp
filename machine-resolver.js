@@ -390,6 +390,41 @@
     let cleaningCounts = new Map();
     let lastCleaningMap = new Map();
 
+    const publishIdentityMaps = () => {
+      const locationMap = buildLocationMap(records);
+      const serialByIp = new Map();
+      const cleaningCountByIp = new Map();
+
+      if (window.masterData && typeof window.masterData === 'object') {
+        Object.entries(window.masterData).forEach(([rawIp, rawLocation]) => {
+          const ip = String(rawIp || '').replace(/\s+/g, '').trim();
+          const location = normalizeLocationId(rawLocation);
+          const serial = String(locationMap.get(location) || '').trim();
+          if (!ip || !serial) return;
+
+          const normalizedSerial = normalizeSerialNumber(serial);
+          serialByIp.set(ip, serial);
+          cleaningCountByIp.set(
+            ip,
+            Number(cleaningCounts.get(normalizedSerial) || 0)
+          );
+        });
+      }
+
+      window.dispatchEvent(new CustomEvent('comp:ip-repeat-serials-ready', {
+        detail: { serialByIp, cleaningCountByIp }
+      }));
+    };
+
+    refreshCleaningDataHandler = async () => {
+      const historyRows = await loadCleaningHistory();
+      cleaningCounts = buildCleaningCountMap(historyRows);
+      lastCleaningMap = buildLastCleaningMap(historyRows);
+      augmentIpRepeatTable(records, cleaningCounts, lastCleaningMap);
+      publishIdentityMaps();
+      return { cleaningCounts, lastCleaningMap };
+    };
+
     try {
       // Load Machine List independently so the Phase 6 SN feature remains
       // available even if the history endpoint temporarily fails.
@@ -420,29 +455,7 @@
       // Publish the IP -> Serial Number -> Cleaning Count maps directly from
       // the resolved Machine List and Work History. Do not depend on the
       // rendered tbody here because IP Repeat renders its rows asynchronously.
-      const locationMap = buildLocationMap(records);
-      const serialByIp = new Map();
-      const cleaningCountByIp = new Map();
-
-      if (window.masterData && typeof window.masterData === 'object') {
-        Object.entries(window.masterData).forEach(([rawIp, rawLocation]) => {
-          const ip = String(rawIp || '').replace(/\s+/g, '').trim();
-          const location = normalizeLocationId(rawLocation);
-          const serial = String(locationMap.get(location) || '').trim();
-          if (!ip || !serial) return;
-
-          const normalizedSerial = normalizeSerialNumber(serial);
-          serialByIp.set(ip, serial);
-          cleaningCountByIp.set(
-            ip,
-            Number(cleaningCounts.get(normalizedSerial) || 0)
-          );
-        });
-      }
-
-      window.dispatchEvent(new CustomEvent('comp:ip-repeat-serials-ready', {
-        detail: { serialByIp, cleaningCountByIp }
-      }));
+      publishIdentityMaps();
 
       [250, 750, 1500].forEach(delay => {
         setTimeout(() => augmentIpRepeatTable(records, cleaningCounts, lastCleaningMap), delay);
@@ -465,6 +478,8 @@
     }
   }
 
+  let refreshCleaningDataHandler = null;
+
   window.CompMachineResolver = {
     resolve,
     parseDate,
@@ -473,6 +488,12 @@
     loadCurrentRecords,
     loadCleaningHistory,
     buildCleaningCountMap,
+    refreshCleaningData: async () => {
+      if (typeof refreshCleaningDataHandler !== 'function') {
+        throw new Error('Data Cleaning Count belum siap diperbarui.');
+      }
+      return refreshCleaningDataHandler();
+    },
     getStorageKey: () => STORAGE_KEY
   };
 
