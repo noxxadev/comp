@@ -230,8 +230,24 @@
 <script src="google-sheets-config.js?v=20260901-2"></script>
 <script src="machine-resolver.js?v=20260927-2"></script>
 <script src="work-tracking.js?v=20260922-1"></script>
-<script src="ip-repeat-analyzer.js?v=20261001-1"></script>
+<script src="ip-repeat-analyzer.js?v=20261001-2"></script>
 <script src="ip-repeat-zone.js?v=20260831-4"></script>
 <script src="theme-toggle.js"></script>
+  <div id="cleaningWarningModal" class="repeat-warning-modal" hidden>
+    <div class="repeat-warning-backdrop"></div>
+    <section class="repeat-warning-dialog" role="dialog" aria-modal="true" aria-labelledby="cleaningWarningTitle">
+      <div class="repeat-warning-icon"><i class="fas fa-triangle-exclamation"></i></div>
+      <div class="repeat-warning-content">
+        <h2 id="cleaningWarningTitle">Cleaning Count Tinggi</h2>
+        <p>SN berikut sudah melakukan cleaning lebih dari 2 kali. Periksa kembali sebelum melanjutkan.</p>
+        <ul id="cleaningWarningList" class="repeat-warning-list"></ul>
+      </div>
+      <div class="repeat-warning-actions">
+        <button id="cleaningWarningCancel" type="button" class="repeat-warning-btn secondary">Batalkan</button>
+        <button id="cleaningWarningContinue" type="button" class="repeat-warning-btn primary">Tetap Pilih</button>
+      </div>
+    </section>
+  </div>
+
 </body>
 </html>
