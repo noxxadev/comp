@@ -16,7 +16,8 @@
     engineerCatalog: [],
     serialByIp: new Map(),
     cleaningCountByIp: new Map(),
-    saveInProgress: false
+    saveInProgress: false,
+    selectionActionBusy: false
   };
 
   const $ = (id) => document.getElementById(id);
@@ -328,7 +329,7 @@
 
     const visibleIps = state.filteredRows.map(row => row.ip);
     const allVisibleSelected = visibleIps.length > 0 && visibleIps.every(ip => state.selectedIps.has(ip));
-    selectAllBtn.disabled = visibleIps.length === 0;
+    selectAllBtn.disabled = visibleIps.length === 0 || state.selectionActionBusy;
     selectAllBtn.innerHTML = allVisibleSelected
       ? '<i class="fas fa-square-minus"></i><span>Batalkan Semua</span>'
       : '<i class="fas fa-check-double"></i><span>Pilih Semua</span>';
@@ -447,30 +448,45 @@
 
       const selection = document.createElement('td');
       selection.className = 'selection-cell';
-      const checkbox = document.createElement('input');
-      checkbox.type = 'checkbox';
-      checkbox.className = 'repeat-row-checkbox';
-      checkbox.checked = state.selectedIps.has(row.ip);
-      checkbox.setAttribute('aria-label', `Pilih IP ${row.ip}`);
-      checkbox.addEventListener('change', async event => {
-        const checked = event.target.checked;
 
-        if (checked) {
-          checkbox.disabled = true;
-          const confirmed = await confirmCleaningSelection([row.ip]);
-          checkbox.disabled = false;
+      const selectButton = document.createElement('button');
+      const isSelected = state.selectedIps.has(row.ip);
+      selectButton.type = 'button';
+      selectButton.className = 'repeat-row-select-btn';
+      selectButton.classList.toggle('selected', isSelected);
+      selectButton.textContent = isSelected ? 'Dipilih' : 'Pilih';
+      selectButton.setAttribute(
+        'aria-label',
+        isSelected ? `Batalkan pilihan IP ${row.ip}` : `Pilih IP ${row.ip}`
+      );
 
-          if (!confirmed) {
-            checkbox.checked = false;
-            tr.classList.remove('is-selected');
-            return;
-          }
+      selectButton.addEventListener('click', async () => {
+        if (state.selectionActionBusy) return;
+
+        if (state.selectedIps.has(row.ip)) {
+          state.selectedIps.delete(row.ip);
+          render();
+          return;
         }
 
-        toggleSelection(row.ip, checked);
-        tr.classList.toggle('is-selected', checked);
+        state.selectionActionBusy = true;
+        selectButton.disabled = true;
+        selectButton.classList.add('checking');
+        selectButton.textContent = 'Memeriksa...';
+        updateSelectionUi();
+
+        try {
+          const confirmed = await confirmCleaningSelection([row.ip]);
+          if (confirmed) {
+            state.selectedIps.add(row.ip);
+          }
+        } finally {
+          state.selectionActionBusy = false;
+          render();
+        }
       });
-      selection.appendChild(checkbox);
+
+      selection.appendChild(selectButton);
 
       const ip = document.createElement('td');
       ip.className = 'ip-cell';
@@ -743,6 +759,8 @@
   });
 
   selectAllBtn?.addEventListener('click', async () => {
+    if (state.selectionActionBusy) return;
+
     const visibleIps = state.filteredRows.map(row => row.ip);
     const allVisibleSelected = visibleIps.length > 0 && visibleIps.every(ip => state.selectedIps.has(ip));
 
@@ -753,11 +771,20 @@
     }
 
     const ipsToAdd = visibleIps.filter(ip => !state.selectedIps.has(ip));
-    const confirmed = await confirmCleaningSelection(ipsToAdd);
-    if (!confirmed) return;
+    if (!ipsToAdd.length) return;
 
-    ipsToAdd.forEach(ip => state.selectedIps.add(ip));
-    render();
+    state.selectionActionBusy = true;
+    selectAllBtn.disabled = true;
+
+    try {
+      const confirmed = await confirmCleaningSelection(ipsToAdd);
+      if (confirmed) {
+        ipsToAdd.forEach(ip => state.selectedIps.add(ip));
+      }
+    } finally {
+      state.selectionActionBusy = false;
+      render();
+    }
   });
 
   clearSelectionBtn?.addEventListener('click', () => {
