@@ -426,7 +426,7 @@
 
       if (window.masterData && typeof window.masterData === 'object') {
         Object.entries(window.masterData).forEach(([rawIp, rawLocation]) => {
-          const ip = String(rawIp || '').replace(/\\s+/g, '').trim();
+          const ip = String(rawIp || '').replace(/\s+/g, '').trim();
           const location = normalizeLocationId(rawLocation);
           const serial = String(locationMap.get(location) || '').trim();
           if (!ip || !serial) return;
