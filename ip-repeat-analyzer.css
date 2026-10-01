@@ -523,3 +523,62 @@ body.repeat-modal-open { overflow: hidden; }
   .repeat-warning-actions { flex-direction: column-reverse; }
   .repeat-warning-btn { width: 100%; }
 }
+
+
+/* Phase 1 selection control — explicit button flow for deterministic async confirmation. */
+.repeat-row-select-btn {
+  min-width: 76px;
+  min-height: 34px;
+  padding: 0 .75rem;
+  border: 1px solid rgba(59,130,246,.28);
+  border-radius: 9px;
+  background: rgba(59,130,246,.08);
+  color: var(--blue, #3B82F6);
+  font: 600 .72rem 'Inter', sans-serif;
+  cursor: pointer;
+  transition: all .2s ease;
+}
+.repeat-row-select-btn:hover:not(:disabled) {
+  border-color: rgba(59,130,246,.55);
+  background: rgba(59,130,246,.14);
+  transform: translateY(-1px);
+}
+.repeat-row-select-btn.selected {
+  border-color: rgba(16,185,129,.3);
+  background: rgba(16,185,129,.1);
+  color: var(--emerald, #10B981);
+}
+.repeat-row-select-btn.selected:hover:not(:disabled) {
+  border-color: rgba(16,185,129,.5);
+  background: rgba(16,185,129,.15);
+}
+.repeat-row-select-btn.checking,
+.repeat-row-select-btn:disabled {
+  cursor: wait;
+  opacity: .65;
+}
+html:not([data-theme="dark"]) .repeat-row-select-btn {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #2563eb;
+}
+html:not([data-theme="dark"]) .repeat-row-select-btn.selected {
+  background: #ecfdf5;
+  border-color: #a7f3d0;
+  color: #059669;
+}
+[data-theme="dark"] .repeat-row-select-btn {
+  background: rgba(59,130,246,.1);
+  border-color: rgba(96,165,250,.3);
+}
+[data-theme="dark"] .repeat-row-select-btn.selected {
+  background: rgba(16,185,129,.1);
+  border-color: rgba(52,211,153,.3);
+}
+@media (max-width: 700px) {
+  .repeat-row-select-btn {
+    min-width: 70px;
+    min-height: 32px;
+    padding: 0 .65rem;
+  }
+}
