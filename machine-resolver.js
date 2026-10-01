@@ -421,12 +421,21 @@
       // Do not dispatch from augmentIpRepeatTable(), because IP Repeat render()
       // replaces tbody rows and would otherwise remove the appended identity cells.
       const serialByIp = new Map();
+      const cleaningCountByIp = new Map();
       body.querySelectorAll('tr').forEach(row => {
         const ip = String(row.querySelector('.ip-cell')?.textContent || '').replace(/\s+/g, '').trim();
         const serial = String(row.querySelector('[data-machine-identity-cell="true"]')?.textContent || '').trim();
-        if (ip && isIpv4(ip) && serial && serial !== 'SN Tidak Ditemukan') serialByIp.set(ip, serial);
+        const countText = String(row.querySelector('[data-cleaning-count-cell="true"]')?.textContent || '').trim();
+        const count = Number(countText);
+
+        if (ip && isIpv4(ip) && serial && serial !== 'SN Tidak Ditemukan') {
+          serialByIp.set(ip, serial);
+          cleaningCountByIp.set(ip, Number.isFinite(count) ? count : 0);
+        }
       });
-      window.dispatchEvent(new CustomEvent('comp:ip-repeat-serials-ready', { detail: { serialByIp } }));
+      window.dispatchEvent(new CustomEvent('comp:ip-repeat-serials-ready', {
+        detail: { serialByIp, cleaningCountByIp }
+      }));
 
       [250, 750, 1500].forEach(delay => {
         setTimeout(() => augmentIpRepeatTable(records, cleaningCounts, lastCleaningMap), delay);
