@@ -404,7 +404,7 @@ Rule: before declaring a phase complete, record the exact changes, affected file
 - Added standalone `dc-hightemp.html`, `dc-hightemp.css`, and `dc-hightemp.js`.
 - The page accepts `.xls`, `.xlsx`, and `.csv` MinerPlus history files and detects the IP column automatically.
 - IPs are normalized and counted by occurrence; duplicate history rows therefore contribute to the DC frequency.
-- IP → location mapping uses the existing `master-data.js) only. `master-data.js` was not modified.
+- IP → location mapping uses the existing `master-data.js` only. `master-data.js` was not modified.
 - Nama DC is extracted strictly from the first segment after `GBE.`: for example `GBE.A1.A.1.1` → `A1` and `GBE.A10.B.1.2` → `A10`.
 - The result shows the **TOP 5 DC HIGHTEMP** ranking plus summary counts for total valid IPs, unique IPs, recognized IP occurrences, and unmapped IP occurrences.
 - Unmapped IPs are excluded from the DC ranking and are reported separately as **Bukan IP DC**.
