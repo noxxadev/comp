@@ -11,6 +11,7 @@
     { href: 'data-matcher.html', icon: 'fa-link', label: 'Pool vs Dashboard' },
     { href: 'bulk-compare.html', icon: 'fa-scale-balanced', label: 'Bulk Compare' },
     { href: 'ip-repeat-analyzer.html', icon: 'fa-repeat', label: 'IP Repeat' },
+    { href: 'dc-hightemp.html', icon: 'fa-temperature-high', label: 'DC HighTemp' },
     { href: 'machine-list.html', icon: 'fa-server', label: 'Machine List' },
     { href: 'cleaning-history.html', icon: 'fa-clock-rotate-left', label: 'Cleaning History' },
     { href: 'theme-preview.html', icon: 'fa-palette', label: 'Theme Preview' }
