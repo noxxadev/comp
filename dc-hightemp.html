@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DC HighTemp — COMP Tools</title>
+  <link rel="icon" href="/favicon.ico" type="image/x-icon">
+  <link rel="stylesheet" href="index-hub.css">
+  <link rel="stylesheet" href="dc-hightemp.css?v=20261002-1">
+  <link rel="stylesheet" href="theme-toggle.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="google-sheets-config.js"></script>
+  <script src="auth.js"></script>
+  <script src="page-guard.js"></script>
+  <link rel="preconnect" href="https://script.google.com">
+  <link rel="preconnect" href="https://script.googleusercontent.com">
+</head>
+<body>
+<div class="hub-shell dc-shell">
+  <aside class="hub-sidebar dc-sidebar" id="sidebar">
+    <div class="hub-logo">
+      <div class="hub-mark">CP</div>
+      <div><div class="hub-brand">COMP Tools</div><div class="hub-subbrand">Data &amp; comparison suite</div></div>
+    </div>
+    <nav class="hub-nav" aria-label="Tool navigation">
+      <a href="index.html"><i class="fas fa-grid-2"></i><span>Tools Hub</span></a>
+      <a href="excel-analyzer.html"><i class="fas fa-file-excel"></i><span>Sub Account</span></a>
+      <a href="offline-analyzer.html"><i class="fas fa-database"></i><span>Offline</span></a>
+      <a href="iplocationvalidator.html"><i class="fas fa-location-dot"></i><span>IP Validator</span></a>
+      <a href="data-matcher.html"><i class="fas fa-link"></i><span>Pool vs Dashboard</span></a>
+      <a href="bulk-compare.html"><i class="fas fa-scale-balanced"></i><span>Bulk Compare</span></a>
+      <a href="ip-repeat-analyzer.html"><i class="fas fa-repeat"></i><span>IP Repeat</span></a>
+      <a class="active" href="dc-hightemp.html"><i class="fas fa-temperature-high"></i><span>DC HighTemp</span></a>
+      <a href="machine-list.html"><i class="fas fa-server"></i><span>Machine List</span></a>
+      <a href="cleaning-history.html"><i class="fas fa-clock-rotate-left"></i><span>Cleaning History</span></a>
+      <a href="theme-preview.html"><i class="fas fa-palette"></i><span>Theme Preview</span></a>
+    </nav>
+    <div class="hub-meta"><strong>DC HIGHTEMP</strong><span>Hitung frekuensi Nama DC dari history MinerPlus.</span></div>
+  </aside>
+
+  <div class="dc-sidebar-overlay" id="sidebarOverlay"></div>
+
+  <main class="hub-main dc-main">
+    <div class="hub-container">
+      <section class="hub-top dc-top">
+        <div>
+          <div class="hub-kicker">COMP / Tools</div>
+          <h1 class="hub-title">DC HighTemp</h1>
+          <p class="hub-desc">Upload history MinerPlus untuk melihat Nama DC yang paling sering muncul berdasarkan master-data.</p>
+        </div>
+        <button class="dc-menu-toggle" id="menuToggle" type="button" aria-label="Toggle menu" aria-controls="sidebar" aria-expanded="false">
+          <i class="fas fa-bars"></i>
+        </button>
+      </section>
+
+      <section class="hub-card dc-card dc-upload-card">
+        <div class="dc-card-heading">
+          <div class="dc-heading-icon"><i class="fas fa-file-excel"></i></div>
+          <div>
+            <h2>Upload History MinerPlus</h2>
+            <p>Gunakan file history yang memiliki kolom IP. Data diproses lokal di browser.</p>
+          </div>
+        </div>
+
+        <div class="dc-upload-area" id="uploadArea">
+          <input type="file" id="historyFile" accept=".xls,.xlsx,.csv" aria-label="Upload history MinerPlus">
+          <div class="dc-upload-content">
+            <div class="dc-upload-icon"><i class="fas fa-cloud-arrow-up"></i></div>
+            <div>
+              <h3>Drop file di sini</h3>
+              <p>atau klik untuk memilih file</p>
+              <span id="fileName">Belum ada file dipilih</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="dc-actions">
+          <div id="fileStatus" class="dc-file-status" aria-live="polite">Belum ada data.</div>
+          <div class="dc-action-buttons">
+            <button id="processBtn" class="dc-btn dc-btn-primary" type="button" disabled>
+              <i class="fas fa-chart-column"></i> Hitung DC
+            </button>
+            <button id="clearBtn" class="dc-btn dc-btn-secondary" type="button">
+              <i class="fas fa-rotate-right"></i> Reset
+            </button>
+          </div>
+        </div>
+        <div id="errorMessage" class="dc-message dc-message-error" role="alert"></div>
+      </section>
+
+      <div id="loading" class="dc-loading" aria-live="polite" hidden>
+        <div class="dc-spinner"></div>
+        <p>Memproses history MinerPlus...</p>
+      </div>
+
+      <section id="resultsSection" class="dc-results" hidden>
+        <div class="dc-stats" id="stats"></div>
+
+        <section class="hub-card dc-card dc-ranking-card" aria-labelledby="rankingTitle">
+          <div class="dc-card-heading">
+            <div class="dc-heading-icon ranking"><i class="fas fa-temperature-high"></i></div>
+            <div>
+              <h2 id="rankingTitle">TOP 5 DC HIGHTEMP</h2>
+              <p>Frekuensi Nama DC berdasarkan seluruh IP yang berhasil dikenali dari file.</p>
+            </div>
+          </div>
+          <div class="dc-table-wrap">
+            <table class="dc-table">
+              <thead>
+                <tr><th>Rank</th><th>Nama DC</th><th>Jumlah IP</th></tr>
+              </thead>
+              <tbody id="rankingBody"></tbody>
+            </table>
+          </div>
+          <div id="emptyRanking" class="dc-empty" hidden>
+            <i class="fas fa-inbox"></i>
+            <h3>Belum ada DC yang teridentifikasi</h3>
+            <p>Pastikan IP pada file tersedia di <code>master-data.js</code>.</p>
+          </div>
+        </section>
+
+        <div class="dc-result-note" id="resultNote" aria-live="polite"></div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<script src="https://cdn.sheetjs.com/xlsx-0.18.5/package/dist/xlsx.full.min.js"></script>
+<script src="master-data.js"></script>
+<script src="dc-hightemp.js?v=20261002-1"></script>
+<script src="theme-toggle.js"></script>
+</body>
+</html>
