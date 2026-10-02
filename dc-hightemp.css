@@ -26,7 +26,7 @@
 .dc-message{display:none;margin-top:12px;padding:10px 12px;border-radius:10px;font-size:12px;line-height:1.5}
 .dc-message.visible{display:block}
 .dc-message-error{color:#b42318;background:#fef3f2;border:1px solid #fecdca}
-.dc-loading{display:flex;align-items:center;justify-content:center;gap:10px;margin:16px 0;padding:18px;border:1px solid var(--border);border-radius:14px;background:var(--surface);color:var(--muted);font-size:12px}
+.dc-loading[hidden]{display:none}.dc-loading{display:flex;align-items:center;justify-content:center;gap:10px;margin:16px 0;padding:18px;border:1px solid var(--border);border-radius:14px;background:var(--surface);color:var(--muted);font-size:12px}
 .dc-spinner{width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--brand);border-radius:50%;animation:dc-spin .7s linear infinite}
 @keyframes dc-spin{to{transform:rotate(360deg)}}
 .dc-results{margin-top:18px}
