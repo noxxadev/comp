@@ -397,3 +397,25 @@ Rule: before declaring a phase complete, record the exact changes, affected file
 - Cache-buster `machine-resolver.js` dinaikkan ke `20260927-2`.
 - Tidak mengubah schema Google Sheets, logic Work Tracking, logic Cleaning History, atau sumber data Machine List/Work History.
 - Live validation yang perlu dilakukan: pastikan SN tampil, Cleaning Count sesuai Work History berstatus `Selesai`, Last Cleaning tampil, dan pencarian SN tetap bekerja.
+
+
+## 2026-10-02 — DC HighTemp Analyzer
+- **Status:** IMPLEMENTED — LIVE VALIDATION PENDING
+- Added standalone `dc-hightemp.html`, `dc-hightemp.css`, and `dc-hightemp.js`.
+- The page accepts `.xls`, `.xlsx`, and `.csv` MinerPlus history files and detects the IP column automatically.
+- IPs are normalized and counted by occurrence; duplicate history rows therefore contribute to the DC frequency.
+- IP → location mapping uses the existing `master-data.js) only. `master-data.js` was not modified.
+- Nama DC is extracted strictly from the first segment after `GBE.`: for example `GBE.A1.A.1.1` → `A1` and `GBE.A10.B.1.2` → `A10`.
+- The result shows the **TOP 5 DC HIGHTEMP** ranking plus summary counts for total valid IPs, unique IPs, recognized IP occurrences, and unmapped IP occurrences.
+- Unmapped IPs are excluded from the DC ranking and are reported separately as **Bukan IP DC**.
+- The new page uses the existing COMP shell, sidebar, theme system, responsive behavior, authentication/page guard, and SheetJS loader.
+- Added **DC HighTemp** to the Tools Hub navigation.
+- No existing analyzer, Work Tracking, Google Sheets, authentication, or master-data logic was changed.
+
+Live validation required:
+- Upload a real MinerPlus history file and confirm IP column detection.
+- Confirm duplicate IP occurrences are counted individually.
+- Confirm Nama DC extraction uses only the segment immediately after `GBE.`.
+- Confirm TOP 5 ordering and counts against a manual sample.
+- Confirm unmapped IP handling.
+- Confirm Light/Dark theme and mobile navigation.
