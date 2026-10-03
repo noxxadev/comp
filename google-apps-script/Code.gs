@@ -15,15 +15,17 @@ const DC_PROGRESS_SHEET_NAME = 'DC Progress';
 const DC_PROGRESS_HISTORY_SHEET_NAME = 'DC Progress History';
 
 const DC_PROGRESS_HEADERS = [
-  'Progress ID', 'DC Name', 'Lifecycle No',
-  'Baseline Count', 'Baseline Total', 'Baseline Rate', 'Baseline Rank', 'Baseline Top 5', 'Baseline File',
-  'Current Count', 'Current Total', 'Current Rate', 'Current Rank', 'Current Top 5',
-  'Progress Percent', 'Started At', 'Updated At'
+  'Progress ID', 'DC Name',
+  'Baseline Count', 'Baseline Total', 'Baseline Rate', 'Baseline File',
+  'Current Count', 'Current Total', 'Current Rate',
+  'Count Change', 'Rate Change', 'Percent Change', 'Status', 'Updated At'
 ];
 
 const DC_PROGRESS_HISTORY_HEADERS = [
-  'History ID', 'Progress ID', 'DC Name', 'Lifecycle No', 'Checkpoint No',
-  'Source File', 'Count', 'Total', 'Rate', 'Progress Percent', 'Count Change', 'Rate Change',
+  'History ID', 'Progress ID', 'DC Name',
+  'Source File', 'Snapshot ID',
+  'Count', 'Total', 'Rate',
+  'Count Change', 'Percent Change',
   'Rank', 'Is Top 5', 'Recorded At'
 ];
 const PASSWORD_HASH_ITERATIONS = 10000;
@@ -104,8 +106,8 @@ function doPost(e) {
     if (payload.action === 'upsertWorkItems') return upsertWorkItems(payload.items);
     if (payload.action === 'appendWorkHistory') return appendWorkHistory(payload.events);
     if (payload.action === 'replaceMachineList') return replaceMachineList(payload.records, payload.sourceFileName);
-    if (payload.action === 'startDcProgress') return startDcProgress(payload);
-    if (payload.action === 'saveDcProgressCheckpoint') return saveDcProgressCheckpoint(payload);
+    if (payload.action === 'addDcProgress') return addDcProgress(payload);
+    if (payload.action === 'saveDcProgressSnapshot') return saveDcProgressSnapshot(payload);
     return jsonResponse({ ok: false, error: 'Unsupported action.' });
   } catch (error) {
     console.error(error);
@@ -1257,23 +1259,31 @@ function isValidIpv4(value) {
 
 
 function getDcProgress(e) {
-  const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
   const sheet = getDcProgressSheet();
   const data = sheet.getDataRange().getValues();
   const requestedDc = normalizeDcProgressText(e?.parameter?.dcName || '');
 
-  if (data.length <= 1) {
-    return jsonResponse({ ok: true, rows: [], total: 0 });
-  }
+  if (data.length <= 1) return jsonResponse({ ok: true, rows: [], total: 0 });
 
-  const rows = [];
-  for (let r = data.length - 1; r >= 1; r--) {
+  const latestByDc = new Map();
+  for (let r = 1; r < data.length; r++) {
     const row = data[r];
-    const dcName = String(row[1] || '').trim();
-    if (requestedDc && dcName.toLowerCase() !== requestedDc.toLowerCase()) continue;
-    rows.push(dcProgressRowToObject(row));
+    const progress = dcProgressRowToObject(row);
+    if (!progress.progressId || !progress.dcName) continue;
+
+    // Rows created by the previous lifecycle model do not have Status.
+    // They remain in the existing sheet but are intentionally ignored by the new model.
+    if (!progress.status) continue;
+    if (requestedDc && progress.dcName.toLowerCase() !== requestedDc.toLowerCase()) continue;
+
+    const key = progress.dcName.toLowerCase();
+    const previous = latestByDc.get(key);
+    if (!previous || new Date(progress.updatedAt).getTime() >= new Date(previous.updatedAt).getTime()) {
+      latestByDc.set(key, progress);
+    }
   }
 
+  const rows = [...latestByDc.values()].sort((a, b) => a.dcName.localeCompare(b.dcName, undefined, { numeric: true }));
   return jsonResponse({ ok: true, rows, total: rows.length });
 }
 
@@ -1283,115 +1293,39 @@ function getDcProgressHistory(e) {
   const progressId = String(e?.parameter?.progressId || '').trim();
   const dcName = normalizeDcProgressText(e?.parameter?.dcName || '');
 
-  if (data.length <= 1) {
-    return jsonResponse({ ok: true, rows: [], total: 0 });
-  }
+  if (data.length <= 1) return jsonResponse({ ok: true, rows: [], total: 0 });
 
   const rows = [];
   for (let r = data.length - 1; r >= 1; r--) {
     const row = data[r];
-    const rowProgressId = String(row[1] || '').trim();
-    const rowDcName = String(row[2] || '').trim();
-    if (progressId && rowProgressId !== progressId) continue;
-    if (dcName && rowDcName.toLowerCase() !== dcName.toLowerCase()) continue;
-    rows.push(dcProgressHistoryRowToObject(row));
+    const history = dcProgressHistoryRowToObject(row);
+    if (!history.historyId || !history.snapshotId) continue;
+    if (progressId && history.progressId !== progressId) continue;
+    if (dcName && history.dcName.toLowerCase() !== dcName.toLowerCase()) continue;
+    rows.push(history);
   }
 
   return jsonResponse({ ok: true, rows, total: rows.length });
 }
 
-function startDcProgress(payload) {
+function addDcProgress(payload) {
   const dcName = normalizeDcProgressText(payload?.dcName);
   const baselineCount = toNonNegativeNumber(payload?.baselineCount);
   const baselineTotal = toPositiveNumber(payload?.baselineTotal);
   const baselineRate = toFiniteNumber(payload?.baselineRate);
+  const baselineFile = normalizeDcProgressText(payload?.baselineFile);
+  const snapshotId = normalizeDcProgressText(payload?.snapshotId);
   const baselineRank = toPositiveInteger(payload?.baselineRank);
   const baselineTop5 = normalizeBoolean(payload?.baselineTop5);
-  const baselineFile = normalizeDcProgressText(payload?.baselineFile);
 
   if (!dcName) return jsonResponse({ ok: false, error: 'DC name tidak valid.' });
   if (baselineCount === null || baselineTotal === null || baselineCount > baselineTotal) {
     return jsonResponse({ ok: false, error: 'Baseline count/total tidak valid.' });
   }
-  if (baselineRate === null || baselineRate < 0) {
-    return jsonResponse({ ok: false, error: 'Baseline rate tidak valid.' });
-  }
+  if (baselineRate === null || baselineRate < 0) return jsonResponse({ ok: false, error: 'Baseline rate tidak valid.' });
+  if (baselineFile.length > 255 || !baselineFile) return jsonResponse({ ok: false, error: 'Nama file baseline tidak valid.' });
+  if (!snapshotId || snapshotId.length > 500) return jsonResponse({ ok: false, error: 'Snapshot ID tidak valid.' });
   if (baselineRank === null) return jsonResponse({ ok: false, error: 'Baseline rank tidak valid.' });
-  if (baselineFile.length > 255) return jsonResponse({ ok: false, error: 'Nama file baseline terlalu panjang.' });
-
-  const lock = LockService.getScriptLock();
-  lock.waitLock(30000);
-
-  try {
-    const sheet = getDcProgressSheet();
-    const data = sheet.getDataRange().getValues();
-
-    let maxLifecycle = 0;
-    for (let r = 1; r < data.length; r++) {
-      if (String(data[r][1] || '').trim().toLowerCase() !== dcName.toLowerCase()) continue;
-      const lifecycleNo = Number(data[r][2] || 0);
-      if (Number.isFinite(lifecycleNo)) maxLifecycle = Math.max(maxLifecycle, Math.floor(lifecycleNo));
-    }
-
-    const lifecycleNo = maxLifecycle + 1;
-    const progressId = 'DCP-' + Utilities.getUuid().replace(/-/g, '').slice(0, 16).toUpperCase();
-    const now = new Date();
-
-    sheet.getRange(sheet.getLastRow() + 1, 1, 1, DC_PROGRESS_HEADERS.length).setValues([[
-      progressId, dcName, lifecycleNo,
-      baselineCount, baselineTotal, baselineRate, baselineRank, baselineTop5, baselineFile,
-      baselineCount, baselineTotal, baselineRate, baselineRank, baselineTop5,
-      0, now, now
-    ]]);
-
-    SpreadsheetApp.flush();
-
-    return jsonResponse({
-      ok: true,
-      action: 'startDcProgress',
-      progress: {
-        progressId,
-        dcName,
-        lifecycleNo,
-        baselineCount,
-        baselineTotal,
-        baselineRate,
-        baselineRank,
-        baselineTop5,
-        baselineFile,
-        currentCount: baselineCount,
-        currentTotal: baselineTotal,
-        currentRate: baselineRate,
-        currentRank: baselineRank,
-        currentTop5: baselineTop5,
-        progressPercent: 0,
-        startedAt: now.toISOString(),
-        updatedAt: now.toISOString()
-      }
-    });
-  } finally {
-    lock.releaseLock();
-  }
-}
-
-function saveDcProgressCheckpoint(payload) {
-  const progressId = String(payload?.progressId || '').trim();
-  const sourceFile = normalizeDcProgressText(payload?.sourceFile);
-  const count = toNonNegativeNumber(payload?.count);
-  const total = toPositiveNumber(payload?.total);
-  const rate = toFiniteNumber(payload?.rate);
-  const rank = toPositiveInteger(payload?.rank);
-  const isTop5 = normalizeBoolean(payload?.isTop5);
-  const requestId = String(payload?.requestId || '').trim();
-
-  if (!progressId) return jsonResponse({ ok: false, error: 'Progress ID tidak valid.' });
-  if (count === null || total === null || count > total) {
-    return jsonResponse({ ok: false, error: 'Checkpoint count/total tidak valid.' });
-  }
-  if (rate === null || rate < 0) return jsonResponse({ ok: false, error: 'Checkpoint rate tidak valid.' });
-  if (rank === null) return jsonResponse({ ok: false, error: 'Checkpoint rank tidak valid.' });
-  if (sourceFile.length > 255) return jsonResponse({ ok: false, error: 'Nama file checkpoint terlalu panjang.' });
-  if (requestId.length > 200) return jsonResponse({ ok: false, error: 'Request ID terlalu panjang.' });
 
   const lock = LockService.getScriptLock();
   lock.waitLock(30000);
@@ -1401,74 +1335,159 @@ function saveDcProgressCheckpoint(payload) {
     const historySheet = getDcProgressHistorySheet();
     const progressData = progressSheet.getDataRange().getValues();
 
-    let progressRow = -1;
-    let progress = null;
-
     for (let r = 1; r < progressData.length; r++) {
-      if (String(progressData[r][0] || '').trim() !== progressId) continue;
-      progressRow = r + 1;
-      progress = dcProgressRowToObject(progressData[r]);
-      break;
+      const existing = dcProgressRowToObject(progressData[r]);
+      if (!existing.status) continue;
+      if (existing.dcName.toLowerCase() !== dcName.toLowerCase()) continue;
+
+      return jsonResponse({
+        ok: true,
+        action: 'addDcProgress',
+        duplicate: true,
+        progress: existing
+      });
     }
 
-    if (!progress) return jsonResponse({ ok: false, error: 'Lifecycle DC tidak ditemukan.' });
-
-    const historyData = historySheet.getDataRange().getValues();
-    if (requestId) {
-      for (let r = 1; r < historyData.length; r++) {
-        if (String(historyData[r][0] || '').trim() === requestId) {
-          return jsonResponse({
-            ok: true,
-            action: 'saveDcProgressCheckpoint',
-            duplicate: true,
-            history: dcProgressHistoryRowToObject(historyData[r]),
-            progress
-          });
-        }
-      }
-    }
-
-    let maxCheckpoint = 0;
-    for (let r = 1; r < historyData.length; r++) {
-      if (String(historyData[r][1] || '').trim() !== progressId) continue;
-      const checkpointNo = Number(historyData[r][4] || 0);
-      if (Number.isFinite(checkpointNo)) maxCheckpoint = Math.max(maxCheckpoint, Math.floor(checkpointNo));
-    }
-
-    const checkpointNo = maxCheckpoint + 1;
-    const progressPercent = progress.baselineCount === 0
-      ? 0
-      : ((progress.baselineCount - count) / progress.baselineCount) * 100;
-    const countChange = count - progress.baselineCount;
-    const rateChange = rate - progress.baselineRate;
-    const historyId = requestId || ('DCPH-' + Utilities.getUuid().replace(/-/g, '').slice(0, 16).toUpperCase());
+    const progressId = 'DCP-' + Utilities.getUuid().replace(/-/g, '').slice(0, 16).toUpperCase();
+    const historyId = 'DCPH-' + Utilities.getUuid().replace(/-/g, '').slice(0, 16).toUpperCase();
     const now = new Date();
 
-    historySheet.getRange(historySheet.getLastRow() + 1, 1, 1, DC_PROGRESS_HISTORY_HEADERS.length).setValues([[
-      historyId, progressId, progress.dcName, progress.lifecycleNo, checkpointNo,
-      sourceFile, count, total, rate, progressPercent, countChange, rateChange,
-      rank, isTop5, now
+    progressSheet.getRange(progressSheet.getLastRow() + 1, 1, 1, DC_PROGRESS_HEADERS.length).setValues([[
+      progressId, dcName,
+      baselineCount, baselineTotal, baselineRate, baselineFile,
+      baselineCount, baselineTotal, baselineRate,
+      0, 0, 0, 'Tetap', now
     ]]);
 
-    progressSheet.getRange(progressRow, 10, 1, 7).setValues([[
-      count, total, rate, rank, isTop5, progressPercent, now
+    historySheet.getRange(historySheet.getLastRow() + 1, 1, 1, DC_PROGRESS_HISTORY_HEADERS.length).setValues([[
+      historyId, progressId, dcName,
+      baselineFile, snapshotId,
+      baselineCount, baselineTotal, baselineRate,
+      0, 0,
+      baselineRank, baselineTop5, now
     ]]);
 
     SpreadsheetApp.flush();
 
-    const updatedProgress = dcProgressRowToObject(
-      progressSheet.getRange(progressRow, 1, 1, DC_PROGRESS_HEADERS.length).getValues()[0]
-    );
-    const history = dcProgressHistoryRowToObject(
-      historySheet.getRange(historySheet.getLastRow(), 1, 1, DC_PROGRESS_HISTORY_HEADERS.length).getValues()[0]
-    );
+    return jsonResponse({
+      ok: true,
+      action: 'addDcProgress',
+      duplicate: false,
+      progress: dcProgressRowToObject(
+        progressSheet.getRange(progressSheet.getLastRow(), 1, 1, DC_PROGRESS_HEADERS.length).getValues()[0]
+      )
+    });
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function saveDcProgressSnapshot(payload) {
+  const sourceFile = normalizeDcProgressText(payload?.sourceFile);
+  const snapshotId = normalizeDcProgressText(payload?.snapshotId);
+  const total = toPositiveNumber(payload?.total);
+  const items = Array.isArray(payload?.items) ? payload.items : [];
+
+  if (!sourceFile || sourceFile.length > 255) return jsonResponse({ ok: false, error: 'Nama file snapshot tidak valid.' });
+  if (!snapshotId || snapshotId.length > 500) return jsonResponse({ ok: false, error: 'Snapshot ID tidak valid.' });
+  if (total === null) return jsonResponse({ ok: false, error: 'Total snapshot tidak valid.' });
+  if (!items.length) return jsonResponse({ ok: true, action: 'saveDcProgressSnapshot', saved: 0, duplicate: false });
+
+  const lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+
+  try {
+    const progressSheet = getDcProgressSheet();
+    const historySheet = getDcProgressHistorySheet();
+    const progressData = progressSheet.getDataRange().getValues();
+    const historyData = historySheet.getDataRange().getValues();
+
+    const progressByDc = new Map();
+    for (let r = 1; r < progressData.length; r++) {
+      const row = dcProgressRowToObject(progressData[r]);
+      if (!row.status || !row.progressId || !row.dcName) continue;
+      const key = row.dcName.toLowerCase();
+      if (!progressByDc.has(key)) progressByDc.set(key, { rowNumber: r + 1, data: row });
+    }
+
+    const existingSnapshotKeys = new Set();
+    for (let r = 1; r < historyData.length; r++) {
+      const row = dcProgressHistoryRowToObject(historyData[r]);
+      if (row.progressId && row.snapshotId) {
+        existingSnapshotKeys.add(row.progressId + '|' + row.snapshotId);
+      }
+    }
+
+    const now = new Date();
+    const historyRows = [];
+    const updated = [];
+
+    for (const item of items) {
+      const dcName = normalizeDcProgressText(item?.dcName);
+      const key = dcName.toLowerCase();
+      const target = progressByDc.get(key);
+      if (!target) continue;
+
+      const count = toNonNegativeNumber(item?.count);
+      const rate = toFiniteNumber(item?.rate);
+      const rank = Number(item?.rank || 0);
+      const isTop5 = normalizeBoolean(item?.isTop5);
+
+      if (count === null || count > total || rate === null || rate < 0) continue;
+
+      const snapshotKey = target.data.progressId + '|' + snapshotId;
+      if (existingSnapshotKeys.has(snapshotKey)) continue;
+
+      const countChange = count - target.data.baselineCount;
+      const rateChange = rate - target.data.baselineRate;
+      const progressPercent = target.data.baselineCount === 0
+        ? 0
+        : ((target.data.baselineCount - count) / target.data.baselineCount) * 100;
+      const percentChange = target.data.baselineCount === 0
+        ? 0
+        : ((count - target.data.baselineCount) / target.data.baselineCount) * 100;
+      const status = count < target.data.baselineCount
+        ? 'Berkurang'
+        : count > target.data.baselineCount
+          ? 'Bertambah'
+          : 'Tetap';
+
+      historyRows.push([
+        'DCPH-' + Utilities.getUuid().replace(/-/g, '').slice(0, 16).toUpperCase(),
+        target.data.progressId,
+        target.data.dcName,
+        sourceFile,
+        snapshotId,
+        count,
+        total,
+        rate,
+        countChange,
+        percentChange,
+        rank > 0 ? rank : '',
+        isTop5,
+        now
+      ]);
+
+      progressSheet.getRange(target.rowNumber, 7, 1, 8).setValues([[
+        count, total, rate,
+        countChange, rateChange, percentChange, status, now
+      ]]);
+
+      existingSnapshotKeys.add(snapshotKey);
+      updated.push(target.data.dcName);
+    }
+
+    if (historyRows.length) {
+      historySheet.getRange(historySheet.getLastRow() + 1, 1, historyRows.length, DC_PROGRESS_HISTORY_HEADERS.length).setValues(historyRows);
+    }
+
+    SpreadsheetApp.flush();
 
     return jsonResponse({
       ok: true,
-      action: 'saveDcProgressCheckpoint',
-      duplicate: false,
-      history,
-      progress: updatedProgress
+      action: 'saveDcProgressSnapshot',
+      saved: historyRows.length,
+      updatedDcs: updated
     });
   } finally {
     lock.releaseLock();
@@ -1539,21 +1558,19 @@ function dcProgressRowToObject(row) {
   return {
     progressId: String(row[0] || '').trim(),
     dcName: String(row[1] || '').trim(),
-    lifecycleNo: Number(row[2] || 0),
-    baselineCount: Number(row[3] || 0),
-    baselineTotal: Number(row[4] || 0),
-    baselineRate: Number(row[5] || 0),
-    baselineRank: Number(row[6] || 0),
-    baselineTop5: normalizeBoolean(row[7]),
-    baselineFile: String(row[8] || '').trim(),
-    currentCount: Number(row[9] || 0),
-    currentTotal: Number(row[10] || 0),
-    currentRate: Number(row[11] || 0),
-    currentRank: Number(row[12] || 0),
-    currentTop5: normalizeBoolean(row[13]),
-    progressPercent: Number(row[14] || 0),
-    startedAt: toIsoOrText(row[15]),
-    updatedAt: toIsoOrText(row[16])
+    baselineCount: Number(row[2] || 0),
+    baselineTotal: Number(row[3] || 0),
+    baselineRate: Number(row[4] || 0),
+    baselineFile: String(row[5] || '').trim(),
+    currentCount: Number(row[6] || 0),
+    currentTotal: Number(row[7] || 0),
+    currentRate: Number(row[8] || 0),
+    countChange: Number(row[9] || 0),
+    rateChange: Number(row[10] || 0),
+    percentChange: Number(row[11] || 0),
+    status: String(row[12] || '').trim(),
+    progressPercent: Number(row[2] || 0) === 0 ? 0 : ((Number(row[2] || 0) - Number(row[6] || 0)) / Number(row[2] || 0)) * 100,
+    updatedAt: toIsoOrText(row[13])
   };
 }
 
@@ -1562,18 +1579,16 @@ function dcProgressHistoryRowToObject(row) {
     historyId: String(row[0] || '').trim(),
     progressId: String(row[1] || '').trim(),
     dcName: String(row[2] || '').trim(),
-    lifecycleNo: Number(row[3] || 0),
-    checkpointNo: Number(row[4] || 0),
-    sourceFile: String(row[5] || '').trim(),
-    count: Number(row[6] || 0),
-    total: Number(row[7] || 0),
-    rate: Number(row[8] || 0),
-    progressPercent: Number(row[9] || 0),
-    countChange: Number(row[10] || 0),
-    rateChange: Number(row[11] || 0),
-    rank: Number(row[12] || 0),
-    isTop5: normalizeBoolean(row[13]),
-    recordedAt: toIsoOrText(row[14])
+    sourceFile: String(row[3] || '').trim(),
+    snapshotId: String(row[4] || '').trim(),
+    count: Number(row[5] || 0),
+    total: Number(row[6] || 0),
+    rate: Number(row[7] || 0),
+    countChange: Number(row[8] || 0),
+    percentChange: Number(row[9] || 0),
+    rank: Number(row[10] || 0),
+    isTop5: normalizeBoolean(row[11]),
+    recordedAt: toIsoOrText(row[12])
   };
 }
 
