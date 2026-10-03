@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const state = { file: null, rows: [], ipColumn: -1 };
+  const state = { file: null, rows: [], ipColumn: -1, ranking: [], total: 0, progressRows: [], selectedDc: '', selectedProgressId: '' };
 
   const $ = (id) => document.getElementById(id);
   const historyFile = $('historyFile');
@@ -17,6 +17,26 @@
   const rankingBody = $('rankingBody');
   const emptyRanking = $('emptyRanking');
   const resultNote = $('resultNote');
+  const periodStart = $('periodStart');
+  const periodEnd = $('periodEnd');
+  const periodDuration = $('periodDuration');
+  const progressPanel = $('progressPanel');
+  const progressTitle = $('progressTitle');
+  const closeProgressBtn = $('closeProgressBtn');
+  const lifecycleSelect = $('lifecycleSelect');
+  const newLifecycleBtn = $('newLifecycleBtn');
+  const checkpointBtn = $('checkpointBtn');
+  const progressSummary = $('progressSummary');
+  const progressHistoryBody = $('progressHistoryBody');
+  const progressEmpty = $('progressEmpty');
+
+  const getConfig = () => window.CompGoogleSheetsConfig || { webAppUrl: '', requestKey: '' };
+  const apiGet = async (action, extra = {}) => { const c=getConfig(); if(!c.webAppUrl) throw new Error('Google Sheets belum dikonfigurasi.'); const p=new URLSearchParams({action,...extra}); if(c.requestKey)p.set('requestKey',String(c.requestKey)); const r=await fetch(c.webAppUrl+(c.webAppUrl.includes('?')?'&':'?')+p.toString(),{cache:'no-store'}); const raw=await r.text(); let x; try{x=JSON.parse(raw)}catch(_){throw new Error('Google Apps Script mengembalikan response tidak valid.')} if(!r.ok||!x?.ok)throw new Error(x?.error||'Request gagal.'); return x; };
+  const apiPost = async payload => { const c=getConfig(); if(!c.webAppUrl) throw new Error('Google Sheets belum dikonfigurasi.'); const r=await fetch(c.webAppUrl,{method:'POST',headers:{'Content-Type':'text/plain;charset=UTF-8'},body:JSON.stringify({...payload,requestKey:String(c.requestKey||'')})}); const raw=await r.text(); let x; try{x=JSON.parse(raw)}catch(_){throw new Error('Google Apps Script mengembalikan response tidak valid.')} if(!r.ok||!x?.ok)throw new Error(x?.error||'Request gagal.'); return x; };
+  const formatRate = v => Number(v||0).toLocaleString('id-ID',{minimumFractionDigits:2,maximumFractionDigits:2})+'%';
+  const formatDuration = m => { m=Math.max(0,Number(m||0)); if(!m)return '-'; const d=Math.floor(m/1440),h=Math.floor((m%1440)/60),n=Math.round(m%60); return [d?d+'h':'',h?h+'j':'',n?n+'m':''].filter(Boolean).join(' ')||'0m'; };
+  const getPeriod = () => { if(!periodStart.value||!periodEnd.value) throw new Error('Isi Periode History Mulai dan Selesai sebelum menyimpan Progress.'); const s=new Date(periodStart.value),e=new Date(periodEnd.value); if(!Number.isFinite(s.getTime())||!Number.isFinite(e.getTime())||e<=s)throw new Error('Periode History tidak valid.'); return {periodStart:s.toISOString(),periodEnd:e.toISOString(),durationMinutes:Math.round((e-s)/60000)}; };
+  const loadProgress = async () => { try { const x=await apiGet('getDcProgress'); state.progressRows=Array.isArray(x.rows)?x.rows:[]; } catch(e){ console.warn('DC Progress belum tersedia:',e); state.progressRows=[]; } };
 
   const showError = (message) => {
     errorMessage.textContent = message || '';
@@ -132,15 +152,15 @@
     }
 
     const unrecognized = total - recognized;
+    state.total = total;
     const ranking = [...counts.entries()]
       .map(([name, count]) => ({ name, count }))
       .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, undefined, { numeric: true }))
-      .slice(0, 5);
+      .slice(0, 5).map(item => ({ ...item, rate: total ? item.count / total * 100 : 0 }));
 
+    state.ranking = ranking;
     renderStats({ total, unique: uniqueIps.size, recognized, unrecognized });
-    rankingBody.innerHTML = ranking.map((item, index) =>
-      `<tr><td class="dc-rank">#${index + 1}</td><td class="dc-name">${item.name}</td><td class="dc-count">${item.count.toLocaleString('id-ID')}</td></tr>`
-    ).join('');
+    rankingBody.innerHTML = ranking.map((item, index) => '<tr><td class="dc-rank">#'+(index+1)+'</td><td class="dc-name">'+item.name+'</td><td class="dc-count">'+item.count.toLocaleString('id-ID')+'</td><td class="dc-rate">'+formatRate(item.rate)+'</td><td><button class="dc-progress-btn" type="button" data-progress-dc="'+encodeURIComponent(item.name)+'"><i class="fas fa-chart-line"></i> Progress</button></td></tr>').join('');
 
     emptyRanking.hidden = ranking.length !== 0;
     resultNote.textContent = ranking.length
@@ -149,6 +169,12 @@
 
     resultsSection.hidden = false;
   };
+
+  const renderProgress = async () => { const rows=state.progressRows.filter(x=>String(x.dcName||'').trim()===state.selectedDc); progressTitle.textContent='Progress '+state.selectedDc; lifecycleSelect.innerHTML=rows.length?rows.map(x=>'<option value="'+x.progressId+'">Lifecycle #'+x.lifecycleNo+' • Baseline '+Number(x.baselineCount||0).toLocaleString('id-ID')+' IP</option>').join(''):'<option value="">Belum ada lifecycle</option>'; if(!state.selectedProgressId||!rows.some(x=>x.progressId===state.selectedProgressId))state.selectedProgressId=rows[0]?.progressId||''; lifecycleSelect.value=state.selectedProgressId; const cur=rows.find(x=>x.progressId===state.selectedProgressId); if(!cur){progressSummary.innerHTML='';progressHistoryBody.innerHTML='';progressEmpty.hidden=false;checkpointBtn.disabled=true;return;} checkpointBtn.disabled=false; progressSummary.innerHTML=[['Baseline',Number(cur.baselineCount||0).toLocaleString('id-ID')],['Baseline Rate',formatRate(cur.baselineRate)],['Current',Number(cur.currentCount||0).toLocaleString('id-ID')],['Current Rate',formatRate(cur.currentRate)],['Progress',formatRate(cur.progressPercent)]].map(x=>'<div class="dc-progress-metric"><span>'+x[0]+'</span><strong>'+x[1]+'</strong></div>').join(''); const x=await apiGet('getDcProgressHistory',{progressId:cur.progressId}); const history=Array.isArray(x.rows)?x.rows:[]; progressHistoryBody.innerHTML=history.map(row=>'<tr><td>#'+row.checkpointNo+'</td><td>'+(row.periodStart?new Date(row.periodStart).toLocaleString('id-ID'):'-')+'</td><td class="dc-count">'+Number(row.count||0).toLocaleString('id-ID')+'</td><td class="dc-rate">'+formatRate(row.rate)+'</td><td>#'+(row.rank||'-')+'</td><td class="'+(row.isTop5?'yes':'no')+'">'+(row.isTop5?'Ya':'Tidak')+'</td><td class="dc-progress-value">'+formatRate(row.progressPercent)+'</td></tr>').join(''); progressEmpty.hidden=history.length!==0; };
+  const openProgress = async dc => { state.selectedDc=dc; state.selectedProgressId=''; progressPanel.hidden=false; await renderProgress(); progressPanel.scrollIntoView({behavior:'smooth',block:'nearest'}); };
+  const startLifecycle = async () => { try { const p=getPeriod(),item=state.ranking.find(x=>x.name===state.selectedDc); if(!item)throw new Error('DC tidak ditemukan pada Top 5.'); newLifecycleBtn.disabled=true; const x=await apiPost({action:'startDcProgress',dcName:item.name,baselineCount:item.count,baselineTotal:state.total,baselineRate:item.rate,baselineRank:state.ranking.findIndex(y=>y.name===item.name)+1,baselineTop5:true,...p}); await loadProgress(); state.selectedProgressId=x.progress?.progressId||''; await renderProgress(); } catch(e){showError(e.message)} finally{newLifecycleBtn.disabled=false} };
+  const saveCheckpoint = async () => { try { const p=getPeriod(),item=state.ranking.find(x=>x.name===state.selectedDc),cur=state.progressRows.find(x=>x.progressId===state.selectedProgressId); if(!item||!cur)throw new Error('Lifecycle atau DC tidak tersedia.'); checkpointBtn.disabled=true; const x=await apiPost({action:'saveDcProgressCheckpoint',progressId:cur.progressId,count:item.count,total:state.total,rate:item.rate,rank:state.ranking.findIndex(y=>y.name===item.name)+1,isTop5:true,...p,requestId:'web-'+cur.progressId+'-'+Date.now()}); await loadProgress(); state.selectedProgressId=x.progress?.progressId||cur.progressId; await renderProgress(); } catch(e){showError(e.message)} finally{checkpointBtn.disabled=false} };
+  const updatePeriodDuration = () => { if(!periodStart.value||!periodEnd.value){periodDuration.textContent='Durasi: -';return;} const s=new Date(periodStart.value),e=new Date(periodEnd.value); periodDuration.textContent=e>s?'Durasi: '+formatDuration((e-s)/60000):'Durasi: tidak valid'; };
 
   const handleFile = async (file) => {
     if (!file) return;
@@ -171,6 +197,8 @@
       showError(error instanceof Error ? error.message : 'Gagal membaca file.');
     }
   };
+
+  periodStart.addEventListener('change',updatePeriodDuration); periodEnd.addEventListener('change',updatePeriodDuration); lifecycleSelect.addEventListener('change',()=>{state.selectedProgressId=lifecycleSelect.value;renderProgress()}); newLifecycleBtn.addEventListener('click',startLifecycle); checkpointBtn.addEventListener('click',saveCheckpoint); closeProgressBtn.addEventListener('click',()=>{progressPanel.hidden=true}); rankingBody.addEventListener('click',e=>{const b=e.target.closest('[data-progress-dc]');if(b)openProgress(decodeURIComponent(b.dataset.progressDc||''))}); loadProgress();
 
   historyFile.addEventListener('change', (event) => handleFile(event.target.files?.[0]));
 
@@ -208,6 +236,7 @@
     fileStatus.textContent = 'Belum ada data.';
     processBtn.disabled = true;
     resultsSection.hidden = true;
+    progressPanel.hidden = true;
     stats.innerHTML = '';
     rankingBody.innerHTML = '';
     emptyRanking.hidden = true;
