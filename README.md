@@ -352,6 +352,12 @@ Status: PLANNED
 - Live validation for a record beyond event 2,000 / around event 2,500 remains pending until the dataset is large enough.
 - No application code was changed during this regression audit.
 
+## 2026-10-03 — DC Progress save confirmation + download
+- Removed the non-functional Exit/Close control from the DC Progress card.
+- Added a visible success indicator after a DC is successfully saved to Progress.
+- Added a Download button in the DC Progress card to export the currently displayed DC progress history as CSV.
+- Download uses the history already displayed for the selected DC; no backend schema or progress calculation logic was changed.
+
 # Current Status
 
 | Phase | Status |
