@@ -33,6 +33,7 @@
   const progressChart = $('progressChart');
   const progressHistoryBody = $('progressHistoryBody');
   const progressEmpty = $('progressEmpty');
+  const trackedProgressCard = $('trackedProgressCard');
   const trackedAccess = $('trackedAccess');
   const trackedDcSelect = $('trackedDcSelect');
   const openTrackedBtn = $('openTrackedBtn');
@@ -431,6 +432,7 @@
 
   const updateTrackedAccess = () => {
     const rows = state.progressRows || [];
+    trackedProgressCard.hidden = rows.length === 0;
     trackedAccess.hidden = rows.length === 0;
     trackedDcSelect.innerHTML = rows.map(row =>
       '<option value="' + escapeHtml(row.dcName) + '">' + escapeHtml(row.dcName) + '</option>'
@@ -524,6 +526,7 @@
     processBtn.disabled = true;
     resultsSection.hidden = true;
     progressPanel.hidden = true;
+    updateTrackedAccess();
     stats.innerHTML = '';
     rankingBody.innerHTML = '';
     emptyRanking.hidden = true;
