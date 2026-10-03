@@ -2,6 +2,7 @@
   const STORAGE_KEY = 'comp-theme';
   const DARK = 'dark';
   const LIGHT = 'light';
+  const NAV_GROUP_STORAGE_KEY = 'comp-sidebar-groups';
 
   const NAV_ITEMS = [
     { href: 'index.html', icon: 'fa-house', label: 'Tools Hub' },
@@ -57,6 +58,66 @@
     }
   }
 
+  function getStoredNavGroups() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(NAV_GROUP_STORAGE_KEY) || '{}');
+      return saved && typeof saved === 'object' ? saved : {};
+    } catch (_) {
+      return {};
+    }
+  }
+
+  function persistNavGroups(groups) {
+    try {
+      localStorage.setItem(NAV_GROUP_STORAGE_KEY, JSON.stringify(groups));
+    } catch (_) {
+      // Keep sidebar grouping working even when storage is unavailable.
+    }
+  }
+
+  function syncNavGroupState(nav) {
+    const groups = getStoredNavGroups();
+    nav.querySelectorAll('.hub-nav-group').forEach((group) => {
+      const key = group.dataset.navGroup;
+      if (!key) return;
+      const title = group.querySelector('.hub-nav-group-title');
+      const collapsed = groups[key] === true;
+      group.classList.toggle('is-collapsed', collapsed);
+      if (title) {
+        title.setAttribute('role', 'button');
+        title.setAttribute('tabindex', '0');
+        title.setAttribute('aria-expanded', String(!collapsed));
+        title.setAttribute('aria-controls', key + '-items');
+      }
+    });
+  }
+
+  function bindNavGroupToggles(nav) {
+    nav.querySelectorAll('.hub-nav-group').forEach((group) => {
+      const title = group.querySelector('.hub-nav-group-title');
+      const items = group.querySelector('.hub-nav-group-items');
+      const key = group.dataset.navGroup;
+      if (!title || !items || !key) return;
+      items.id = key + '-items';
+
+      const toggle = () => {
+        const groups = getStoredNavGroups();
+        const collapsed = group.classList.toggle('is-collapsed');
+        groups[key] = collapsed;
+        persistNavGroups(groups);
+        title.setAttribute('aria-expanded', String(!collapsed));
+      };
+
+      title.addEventListener('click', toggle);
+      title.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          toggle();
+        }
+      });
+    });
+  }
+
   function getCurrentPage() {
     const file = window.location.pathname.split('/').pop();
     return file || 'index.html';
@@ -72,14 +133,17 @@
             const active = child.href === currentPage;
             return `<a${active ? ' class="active"' : ''} href="${child.href}"><i class="fas ${child.icon}" aria-hidden="true"></i><span>${child.label}</span></a>`;
           }).join('');
-          return `<div class="hub-nav-group${groupActive ? ' is-active' : ''}">
-            <div class="hub-nav-group-title"><i class="fas ${item.icon}" aria-hidden="true"></i><span>${item.group}</span></div>
+          const groupKey = item.group.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+          return `<div class="hub-nav-group${groupActive ? ' is-active' : ''}" data-nav-group="${groupKey}">
+            <div class="hub-nav-group-title"><i class="fas ${item.icon}" aria-hidden="true"></i><span>${item.group}</span><i class="fas fa-chevron-down hub-nav-group-chevron" aria-hidden="true"></i></div>
             <div class="hub-nav-group-items">${links}</div>
           </div>`;
         }
         const active = item.href === currentPage;
         return `<a${active ? ' class="active"' : ''} href="${item.href}"><i class="fas ${item.icon}" aria-hidden="true"></i><span>${item.label}</span></a>`;
       }).join('');
+      syncNavGroupState(nav);
+      bindNavGroupToggles(nav);
     });
   }
 
