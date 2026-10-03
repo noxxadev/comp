@@ -157,10 +157,8 @@
     const unrecognized = total - recognized;
     state.total = total;
     const allRanking = [...counts.entries()]
-      .map(([name, count]) => ({ name, count }))
-      .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, undefined, { numeric: true }))
       .map(([name, count]) => ({ name, count, rate: total ? count / total * 100 : 0 }))
-      .sort((a,b) => b.count-a.count || a.name.localeCompare(b.name,undefined,{numeric:true}));
+      .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, undefined, { numeric: true }));
     state.allRanking = allRanking;
     const ranking = allRanking.slice(0, 5);
     state.ranking = ranking;
@@ -180,7 +178,8 @@
   const openProgress = async dc => { state.selectedDc=dc; state.selectedProgressId=''; progressPanel.hidden=false; await renderProgress(); progressPanel.scrollIntoView({behavior:'smooth',block:'nearest'}); };
   const startLifecycle = async () => { try { const p=getPeriod(),item=state.allRanking.find(x=>x.name===state.selectedDc); if(!item)throw new Error('DC tidak ditemukan pada Top 5.'); newLifecycleBtn.disabled=true; const x=await apiPost({action:'startDcProgress',dcName:item.name,baselineCount:item.count,baselineTotal:state.total,baselineRate:item.rate,baselineRank:state.allRanking.findIndex(y=>y.name===item.name)+1,baselineTop5:state.allRanking.findIndex(y=>y.name===item.name)<5,...p}); await loadProgress(); state.selectedProgressId=x.progress?.progressId||''; await renderProgress(); } catch(e){showError(e.message)} finally{newLifecycleBtn.disabled=false} };
   const saveCheckpoint = async () => { try { const p=getPeriod(),item=state.allRanking.find(x=>x.name===state.selectedDc),cur=state.progressRows.find(x=>x.progressId===state.selectedProgressId); if(!item||!cur)throw new Error('Lifecycle atau DC tidak tersedia.'); checkpointBtn.disabled=true; const x=await apiPost({action:'saveDcProgressCheckpoint',progressId:cur.progressId,count:item.count,total:state.total,rate:item.rate,rank:state.allRanking.findIndex(y=>y.name===item.name)+1,isTop5:state.allRanking.findIndex(y=>y.name===item.name)<5,...p,requestId:'web-'+cur.progressId+'-'+Date.now()}); await loadProgress(); state.selectedProgressId=x.progress?.progressId||cur.progressId; await renderProgress(); } catch(e){showError(e.message)} finally{checkpointBtn.disabled=false} };
-  const updateTrackedAccess = () => { const rows=state.progressRows; trackedAccess.hidden=!rows.length; trackedDcSelect.innerHTML=rows.map(x=>'<option value="'+x.dcName+'">'+x.dcName+' • Lifecycle #'+x.lifecycleNo+'</option>').join(''); };\n  const updatePeriodDuration = () => { if(!periodStart.value||!periodEnd.value){periodDuration.textContent='Durasi: -';return;} const s=new Date(periodStart.value),e=new Date(periodEnd.value); periodDuration.textContent=e>s?'Durasi: '+formatDuration((e-s)/60000):'Durasi: tidak valid'; };
+  const updateTrackedAccess = () => { const rows=state.progressRows; trackedAccess.hidden=!rows.length; trackedDcSelect.innerHTML=rows.map(x=>'<option value="'+x.dcName+'">'+x.dcName+' • Lifecycle #'+x.lifecycleNo+'</option>').join(''); };
+  const updatePeriodDuration = () => { if(!periodStart.value||!periodEnd.value){periodDuration.textContent='Durasi: -';return;} const s=new Date(periodStart.value),e=new Date(periodEnd.value); periodDuration.textContent=e>s?'Durasi: '+formatDuration((e-s)/60000):'Durasi: tidak valid'; };
 
   const handleFile = async (file) => {
     if (!file) return;
