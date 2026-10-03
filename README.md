@@ -491,3 +491,12 @@ Validation required:
 - Recalculate the same file and confirm no duplicate snapshot is created.
 - Confirm existing upload/reset/theme/mobile behavior remains intact.
 
+
+
+## 2026-10-03 — DC High Zero Workflow di Tools Hub
+- Added **DC High Zero Workflow** to `index.html`.
+- Workflow order: **Upload History MinerPlus → Otomatis Snapshot → Klik Progress untuk DC yang akan dikerjakan → Lihat Grafik & Data → Upload History Berikutnya untuk melihat performance DC**.
+- The workflow uses the existing `dc-hightemp.html` page; no new feature logic or backend flow was introduced.
+- The workflow nodes remain draggable on desktop/tablet and static on mobile, following the existing Tools Hub workflow behavior.
+- Added connector lines between the five workflow steps.
+- Updated `index-hub.css` only for the new workflow canvas height; existing workflow styling and behavior remain unchanged.
