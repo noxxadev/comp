@@ -81,7 +81,8 @@
       const key = group.dataset.navGroup;
       if (!key) return;
       const title = group.querySelector('.hub-nav-group-title');
-      const collapsed = groups[key] === true;
+      const isActive = group.classList.contains('is-active');
+      const collapsed = !isActive && groups[key] === true;
       group.classList.toggle('is-collapsed', collapsed);
       if (title) {
         title.setAttribute('role', 'button');
