@@ -8,12 +8,24 @@
     { href: 'excel-analyzer.html', icon: 'fa-file-excel', label: 'Sub Account' },
     { href: 'offline-analyzer.html', icon: 'fa-database', label: 'Offline' },
     { href: 'iplocationvalidator.html', icon: 'fa-location-dot', label: 'IP Validator' },
-    { href: 'data-matcher.html', icon: 'fa-link', label: 'Pool vs Dashboard' },
-    { href: 'bulk-compare.html', icon: 'fa-scale-balanced', label: 'Bulk Compare' },
-    { href: 'ip-repeat-analyzer.html', icon: 'fa-repeat', label: 'IP Repeat' },
+    {
+      group: 'Pool Vs Dashboard',
+      icon: 'fa-code-compare',
+      items: [
+        { href: 'data-matcher.html', icon: 'fa-link', label: 'Data Matcher' },
+        { href: 'bulk-compare.html', icon: 'fa-scale-balanced', label: 'Bulk Compare' }
+      ]
+    },
+    {
+      group: 'IP Repeat',
+      icon: 'fa-repeat',
+      items: [
+        { href: 'ip-repeat-analyzer.html', icon: 'fa-repeat', label: 'IP Repeat Analyzer' },
+        { href: 'machine-list.html', icon: 'fa-server', label: 'Machine List' },
+        { href: 'cleaning-history.html', icon: 'fa-clock-rotate-left', label: 'Cleaning History' }
+      ]
+    },
     { href: 'dc-hightemp.html', icon: 'fa-temperature-high', label: 'DC HighTemp' },
-    { href: 'machine-list.html', icon: 'fa-server', label: 'Machine List' },
-    { href: 'cleaning-history.html', icon: 'fa-clock-rotate-left', label: 'Cleaning History' },
     { href: 'theme-preview.html', icon: 'fa-palette', label: 'Theme Preview' }
   ];
 
@@ -54,6 +66,17 @@
     document.querySelectorAll('.hub-nav').forEach((nav) => {
       const currentPage = getCurrentPage();
       nav.innerHTML = NAV_ITEMS.map((item) => {
+        if (item.group) {
+          const groupActive = item.items.some(child => child.href === currentPage);
+          const links = item.items.map(child => {
+            const active = child.href === currentPage;
+            return `<a${active ? ' class="active"' : ''} href="${child.href}"><i class="fas ${child.icon}" aria-hidden="true"></i><span>${child.label}</span></a>`;
+          }).join('');
+          return `<div class="hub-nav-group${groupActive ? ' is-active' : ''}">
+            <div class="hub-nav-group-title"><i class="fas ${item.icon}" aria-hidden="true"></i><span>${item.group}</span></div>
+            <div class="hub-nav-group-items">${links}</div>
+          </div>`;
+        }
         const active = item.href === currentPage;
         return `<a${active ? ' class="active"' : ''} href="${item.href}"><i class="fas ${item.icon}" aria-hidden="true"></i><span>${item.label}</span></a>`;
       }).join('');
