@@ -354,6 +354,7 @@ Status: PLANNED
 
 ## 2026-10-03 — DC Progress save confirmation + download
 - Removed the non-functional Exit/Close control from the DC Progress card.
+- Fixed `Recorded At` display to Indonesian date/time format `DD/MM/YYYY HH:mm:ss WIB` using Asia/Jakarta timezone, including CSV downloads.
 - Added a visible success indicator after a DC is successfully saved to Progress.
 - Added a Download button in the DC Progress card to export the currently displayed DC progress history as CSV.
 - Download uses the history already displayed for the selected DC; no backend schema or progress calculation logic was changed.
