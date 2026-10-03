@@ -1,5 +1,13 @@
 # COMP — Roadmap & Change Log
 
+## 2026-10-03 — Collapsible sidebar groups
+- Added hide/show behavior to the **Pool Vs Dashboard** and **IP Repeat** sidebar groups.
+- Clicking a group header collapses or expands only that group's child pages.
+- The collapsed/expanded state is persisted in browser `localStorage`, so it remains when navigating between pages.
+- The active page remains highlighted when its group is open.
+- Added keyboard support (`Enter` / `Space`) and ARIA state for the group headers.
+- No page feature logic, authentication, security mechanism, or backend logic was changed.
+
 ## Purpose
 Fixed roadmap for the IP Repeat Analyzer and Engineer Work Tracking project.
 
