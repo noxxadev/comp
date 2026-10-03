@@ -5,6 +5,12 @@ Fixed roadmap for the IP Repeat Analyzer and Engineer Work Tracking project.
 
 The roadmap is executed phase-by-phase. Completed phases are not changed casually; fixes and new requirements are recorded in the change log. Existing application logic must not be modified unless explicitly agreed.
 
+## 2026-10-03 — Grouped sidebar navigation
+- Grouped `Data Matcher` and `Bulk Compare` under **Pool Vs Dashboard**.
+- Grouped `IP Repeat Analyzer`, `Machine List`, and `Cleaning History` under **IP Repeat**.
+- Kept the existing standalone tools and page behavior unchanged.
+- Group headers collapse to icon-only in the desktop collapsed sidebar and remain fully visible on mobile.
+
 # Roadmap
 
 ## Phase 0 — Requirement Freeze
