@@ -1,7 +1,16 @@
 (() => {
   'use strict';
 
-  const state = { file: null, rows: [], ipColumn: -1, ranking: [], allRanking: [], total: 0, progressRows: [], selectedDc: '', selectedProgressId: '' };
+  const state = {
+    file: null,
+    rows: [],
+    ipColumn: -1,
+    ranking: [],
+    allRanking: [],
+    total: 0,
+    progressRows: [],
+    selectedDc: ''
+  };
 
   const $ = (id) => document.getElementById(id);
   const historyFile = $('historyFile');
@@ -20,10 +29,8 @@
   const progressPanel = $('progressPanel');
   const progressTitle = $('progressTitle');
   const closeProgressBtn = $('closeProgressBtn');
-  const lifecycleSelect = $('lifecycleSelect');
-  const newLifecycleBtn = $('newLifecycleBtn');
-  const checkpointBtn = $('checkpointBtn');
   const progressSummary = $('progressSummary');
+  const progressChart = $('progressChart');
   const progressHistoryBody = $('progressHistoryBody');
   const progressEmpty = $('progressEmpty');
   const trackedAccess = $('trackedAccess');
@@ -31,10 +38,55 @@
   const openTrackedBtn = $('openTrackedBtn');
 
   const getConfig = () => window.CompGoogleSheetsConfig || { webAppUrl: '', requestKey: '' };
-  const apiGet = async (action, extra = {}) => { const c=getConfig(); if(!c.webAppUrl) throw new Error('Google Sheets belum dikonfigurasi.'); const p=new URLSearchParams({action,...extra}); if(c.requestKey)p.set('requestKey',String(c.requestKey)); const r=await fetch(c.webAppUrl+(c.webAppUrl.includes('?')?'&':'?')+p.toString(),{cache:'no-store'}); const raw=await r.text(); let x; try{x=JSON.parse(raw)}catch(_){throw new Error('Google Apps Script mengembalikan response tidak valid.')} if(!r.ok||!x?.ok)throw new Error(x?.error||'Request gagal.'); return x; };
-  const apiPost = async payload => { const c=getConfig(); if(!c.webAppUrl) throw new Error('Google Sheets belum dikonfigurasi.'); const r=await fetch(c.webAppUrl,{method:'POST',headers:{'Content-Type':'text/plain;charset=UTF-8'},body:JSON.stringify({...payload,requestKey:String(c.requestKey||'')})}); const raw=await r.text(); let x; try{x=JSON.parse(raw)}catch(_){throw new Error('Google Apps Script mengembalikan response tidak valid.')} if(!r.ok||!x?.ok)throw new Error(x?.error||'Request gagal.'); return x; };
-  const formatRate = v => Number(v||0).toLocaleString('id-ID',{minimumFractionDigits:2,maximumFractionDigits:2})+'%';
-  const loadProgress = async () => { try { const x=await apiGet('getDcProgress'); state.progressRows=Array.isArray(x.rows)?x.rows:[]; updateTrackedAccess(); } catch(e){ console.warn('DC Progress belum tersedia:',e); state.progressRows=[]; } };
+
+  const apiGet = async (action, extra = {}) => {
+    const c = getConfig();
+    if (!c.webAppUrl) throw new Error('Google Sheets belum dikonfigurasi.');
+    const p = new URLSearchParams({ action, ...extra });
+    if (c.requestKey) p.set('requestKey', String(c.requestKey));
+    const r = await fetch(c.webAppUrl + (c.webAppUrl.includes('?') ? '&' : '?') + p.toString(), { cache: 'no-store' });
+    const raw = await r.text();
+    let x;
+    try { x = JSON.parse(raw); } catch (_) { throw new Error('Google Apps Script mengembalikan response tidak valid.'); }
+    if (!r.ok || !x?.ok) throw new Error(x?.error || 'Request gagal.');
+    return x;
+  };
+
+  const apiPost = async (payload) => {
+    const c = getConfig();
+    if (!c.webAppUrl) throw new Error('Google Sheets belum dikonfigurasi.');
+    const r = await fetch(c.webAppUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+      body: JSON.stringify({ ...payload, requestKey: String(c.requestKey || '') })
+    });
+    const raw = await r.text();
+    let x;
+    try { x = JSON.parse(raw); } catch (_) { throw new Error('Google Apps Script mengembalikan response tidak valid.'); }
+    if (!r.ok || !x?.ok) throw new Error(x?.error || 'Request gagal.');
+    return x;
+  };
+
+  const formatRate = (v) =>
+    Number(v || 0).toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
+
+  const formatNumber = (v) => Number(v || 0).toLocaleString('id-ID');
+
+  const escapeHtml = (value) => String(value ?? '')
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+
+  const loadProgress = async () => {
+    try {
+      const x = await apiGet('getDcProgress');
+      state.progressRows = Array.isArray(x.rows) ? x.rows : [];
+      updateTrackedAccess();
+    } catch (e) {
+      console.warn('DC Progress belum tersedia:', e);
+      state.progressRows = [];
+      updateTrackedAccess();
+    }
+  };
 
   const showError = (message) => {
     errorMessage.textContent = message || '';
@@ -56,7 +108,7 @@
   };
 
   const findIpColumn = (headers, rows) => {
-    const preferred = new Set(['ip','ipaddress','ipaddr','minerip','ipminer','ipaddressminer']);
+    const preferred = new Set(['ip', 'ipaddress', 'ipaddr', 'minerip', 'ipminer', 'ipaddressminer']);
     const normalized = headers.map(normalizeHeader);
     const preferredIndex = normalized.findIndex(value => preferred.has(value));
     if (preferredIndex >= 0) return preferredIndex;
@@ -84,6 +136,7 @@
     const buffer = await file.arrayBuffer();
     const workbook = XLSX.read(buffer, { type: 'array', raw: true });
     if (!workbook.SheetNames.length) throw new Error('File tidak memiliki sheet.');
+
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
     const matrix = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '', raw: true });
     if (!matrix.length) throw new Error('File kosong.');
@@ -94,7 +147,6 @@
     const headers = matrix[headerIndex] || [];
     const dataRows = matrix.slice(headerIndex + 1).filter(row => row.some(cell => String(cell ?? '').trim() !== ''));
     const ipColumn = findIpColumn(headers, dataRows);
-
     if (ipColumn < 0) throw new Error('Kolom IP tidak ditemukan. Pastikan file memiliki kolom IP atau IP Address.');
 
     state.rows = dataRows;
@@ -123,13 +175,11 @@
 
   const extractDcName = (location) => {
     const parts = String(location ?? '').trim().split('.');
-    if (parts.length >= 2 && parts[0].toUpperCase() === 'GBE' && parts[1].trim()) {
-      return parts[1].trim();
-    }
+    if (parts.length >= 2 && parts[0].toUpperCase() === 'GBE' && parts[1].trim()) return parts[1].trim();
     return '';
   };
 
-  const calculate = () => {
+  const calculateSnapshot = () => {
     const counts = new Map();
     const uniqueIps = new Set();
     let total = 0;
@@ -151,115 +201,244 @@
 
     const unrecognized = total - recognized;
     state.total = total;
+
     const allRanking = [...counts.entries()]
       .map(([name, count]) => ({ name, count, rate: total ? count / total * 100 : 0 }))
       .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, undefined, { numeric: true }));
-    state.allRanking = allRanking;
-    const ranking = allRanking.slice(0, 5);
-    state.ranking = ranking;
-    updateTrackedAccess();
-    renderStats({ total, unique: uniqueIps.size, recognized, unrecognized });
-    rankingBody.innerHTML = ranking.map((item, index) => '<tr><td class="dc-rank">#'+(index+1)+'</td><td class="dc-name">'+item.name+'</td><td class="dc-count">'+item.count.toLocaleString('id-ID')+'</td><td class="dc-rate">'+formatRate(item.rate)+'</td><td><button class="dc-progress-btn" type="button" data-progress-dc="'+encodeURIComponent(item.name)+'"><i class="fas fa-chart-line"></i> Progress</button></td></tr>').join('');
 
-    emptyRanking.hidden = ranking.length !== 0;
-    resultNote.textContent = ranking.length
+    state.allRanking = allRanking;
+    state.ranking = allRanking.slice(0, 5);
+
+    renderStats({ total, unique: uniqueIps.size, recognized, unrecognized });
+
+    rankingBody.innerHTML = state.ranking.map((item, index) =>
+      '<tr>' +
+      '<td class="dc-rank">#' + (index + 1) + '</td>' +
+      '<td class="dc-name">' + escapeHtml(item.name) + '</td>' +
+      '<td class="dc-count">' + formatNumber(item.count) + '</td>' +
+      '<td class="dc-rate">' + formatRate(item.rate) + '</td>' +
+      '<td><button class="dc-progress-btn" type="button" data-progress-dc="' + encodeURIComponent(item.name) + '"><i class="fas fa-chart-line"></i> Progress</button></td>' +
+      '</tr>'
+    ).join('');
+
+    emptyRanking.hidden = state.ranking.length !== 0;
+    resultNote.textContent = state.ranking.length
       ? `Menampilkan 5 DC teratas dari ${counts.size.toLocaleString('id-ID')} Nama DC yang teridentifikasi. Perhitungan menggunakan setiap kemunculan IP, bukan hanya IP unik.`
       : 'Tidak ada Nama DC yang dapat diambil dari mapping master-data.js.';
 
     resultsSection.hidden = false;
+    updateTrackedAccess();
   };
 
-  const renderProgress = async () => {
-    const rows = state.progressRows.filter(x => String(x.dcName || '').trim() === state.selectedDc);
-    progressTitle.textContent = 'Progress ' + state.selectedDc;
-    lifecycleSelect.innerHTML = rows.length
-      ? rows.map(x => '<option value="'+x.progressId+'">Lifecycle #'+x.lifecycleNo+' • Baseline '+Number(x.baselineCount||0).toLocaleString('id-ID')+' IP</option>').join('')
-      : '<option value="">Belum ada lifecycle</option>';
-    if (!state.selectedProgressId || !rows.some(x => x.progressId === state.selectedProgressId)) {
-      state.selectedProgressId = rows[0]?.progressId || '';
+  const getRankMap = () => {
+    const map = new Map();
+    state.allRanking.forEach((item, index) => map.set(item.name, index + 1));
+    return map;
+  };
+
+  const makeSnapshotId = () => {
+    const f = state.file;
+    if (!f) return '';
+    return [f.name, f.size, f.lastModified].join('|').slice(0, 500);
+  };
+
+  const persistTrackedSnapshot = async () => {
+    if (!state.progressRows.length || !state.file?.name) return;
+
+    const rankMap = getRankMap();
+    const items = state.progressRows.map(progress => {
+      const dcName = String(progress.dcName || '').trim();
+      const item = state.allRanking.find(row => row.name.toLowerCase() === dcName.toLowerCase());
+      const count = item ? item.count : 0;
+      const rate = state.total ? count / state.total * 100 : 0;
+      const rank = rankMap.get(item?.name || dcName) || 0;
+
+      return {
+        dcName,
+        count,
+        total: state.total,
+        rate,
+        rank,
+        isTop5: rank > 0 && rank <= 5
+      };
+    });
+
+    try {
+      await apiPost({
+        action: 'saveDcProgressSnapshot',
+        sourceFile: state.file.name,
+        snapshotId: makeSnapshotId(),
+        total: state.total,
+        items
+      });
+      await loadProgress();
+      if (state.selectedDc && !progressPanel.hidden) await renderProgress(state.selectedDc);
+    } catch (e) {
+      console.warn('Snapshot DC Progress gagal disimpan:', e);
+      showError('Hasil Top 5 berhasil dihitung, tetapi snapshot progress belum tersimpan: ' + e.message);
     }
-    lifecycleSelect.value = state.selectedProgressId;
-    const cur = rows.find(x => x.progressId === state.selectedProgressId);
-    if (!cur) {
-      progressSummary.innerHTML = '';
-      progressHistoryBody.innerHTML = '';
-      progressEmpty.hidden = false;
-      checkpointBtn.disabled = true;
+  };
+
+  const renderSummary = (row) => {
+    const status = String(row.status || 'Tetap');
+    const statusClass = status === 'Berkurang' ? 'decrease' : status === 'Bertambah' ? 'increase' : 'same';
+    progressSummary.innerHTML = [
+      ['Baseline', formatNumber(row.baselineCount)],
+      ['Current', formatNumber(row.currentCount)],
+      ['Perubahan', (row.countChange > 0 ? '+' : '') + formatNumber(row.countChange)],
+      ['% Perubahan', (row.percentChange > 0 ? '+' : '') + formatRate(row.percentChange)],
+      ['Progress', formatRate(row.progressPercent)],
+      ['Status', '<span class="dc-progress-status ' + statusClass + '">' + escapeHtml(status) + '</span>']
+    ].map(([label, value]) =>
+      '<div class="dc-progress-metric"><span>' + label + '</span><strong>' + value + '</strong></div>'
+    ).join('');
+  };
+
+  const renderChart = (history) => {
+    if (!history.length) {
+      progressChart.innerHTML = '<div class="dc-chart-empty">Belum ada data grafik.</div>';
       return;
     }
-    checkpointBtn.disabled = false;
-    progressSummary.innerHTML = [
-      ['Baseline', Number(cur.baselineCount||0).toLocaleString('id-ID')],
-      ['Baseline Rate', formatRate(cur.baselineRate)],
-      ['Baseline File', cur.baselineFile || '-'],
-      ['Current', Number(cur.currentCount||0).toLocaleString('id-ID')],
-      ['Current Rate', formatRate(cur.currentRate)],
-      ['Progress', formatRate(cur.progressPercent)]
-    ].map(x => '<div class="dc-progress-metric"><span>'+x[0]+'</span><strong>'+x[1]+'</strong></div>').join('');
-    const x = await apiGet('getDcProgressHistory', {progressId: cur.progressId});
-    const history = Array.isArray(x.rows) ? x.rows : [];
-    progressHistoryBody.innerHTML = history.map(row =>
-      '<tr><td>#'+row.checkpointNo+'</td><td title="'+String(row.sourceFile||'').replace(/"/g,'&quot;')+'">'+(row.sourceFile||'-')+'</td><td class="dc-count">'+Number(row.count||0).toLocaleString('id-ID')+'</td><td class="dc-rate">'+formatRate(row.rate)+'</td><td>#'+(row.rank||'-')+'</td><td class="'+(row.isTop5?'yes':'no')+'">'+(row.isTop5?'Ya':'Tidak')+'</td><td class="dc-progress-value">'+formatRate(row.progressPercent)+'</td></tr>'
+
+    const width = 760;
+    const height = 280;
+    const pad = { left: 52, right: 20, top: 22, bottom: 48 };
+    const plotW = width - pad.left - pad.right;
+    const plotH = height - pad.top - pad.bottom;
+    const values = history.map(row => Number(row.count || 0));
+    const max = Math.max(...values, 1);
+    const min = Math.min(...values, 0);
+    const range = Math.max(max - min, 1);
+    const x = (i) => history.length === 1 ? pad.left + plotW / 2 : pad.left + (i / (history.length - 1)) * plotW;
+    const y = (v) => pad.top + (max - v) / range * plotH;
+    const points = history.map((row, i) => x(i) + ',' + y(Number(row.count || 0))).join(' ');
+    const gridValues = [max, min === max ? 0 : min + range / 2, min];
+
+    const grid = gridValues.map(v =>
+      '<line x1="' + pad.left + '" y1="' + y(v) + '" x2="' + (width - pad.right) + '" y2="' + y(v) + '" class="dc-chart-grid"></line>' +
+      '<text x="' + (pad.left - 8) + '" y="' + (y(v) + 4) + '" text-anchor="end" class="dc-chart-label">' + formatNumber(v) + '</text>'
     ).join('');
-    progressEmpty.hidden = history.length !== 0;
+
+    const labels = history.map((row, i) => {
+      const label = String(row.sourceFile || ('Snapshot ' + (i + 1)));
+      const short = label.length > 18 ? label.slice(0, 15) + '…' : label;
+      return '<text x="' + x(i) + '" y="' + (height - 15) + '" text-anchor="middle" class="dc-chart-label" title="' + escapeHtml(label) + '">' + escapeHtml(short) + '</text>';
+    }).join('');
+
+    const dots = history.map((row, i) =>
+      '<circle cx="' + x(i) + '" cy="' + y(Number(row.count || 0)) + '" r="4" class="dc-chart-dot"><title>' +
+      escapeHtml(String(row.sourceFile || 'Snapshot')) + ': ' + formatNumber(row.count) + ' IP</title></circle>'
+    ).join('');
+
+    progressChart.innerHTML =
+      '<svg viewBox="0 0 ' + width + ' ' + height + '" preserveAspectRatio="none" aria-hidden="true">' +
+      grid +
+      '<polyline points="' + points + '" class="dc-chart-line" fill="none"></polyline>' +
+      dots +
+      labels +
+      '</svg>';
   };
-  const openProgress = async dc => { state.selectedDc=dc; state.selectedProgressId=''; progressPanel.hidden=false; await renderProgress(); progressPanel.scrollIntoView({behavior:'smooth',block:'nearest'}); };
-  const startLifecycle = async () => {
+
+  const renderProgress = async (dcName = state.selectedDc) => {
+    state.selectedDc = dcName;
+    const row = state.progressRows.find(x => String(x.dcName || '').toLowerCase() === String(dcName || '').toLowerCase());
+
+    progressTitle.textContent = 'Progress ' + dcName;
+
+    if (!row) {
+      progressSummary.innerHTML = '';
+      progressChart.innerHTML = '';
+      progressHistoryBody.innerHTML = '';
+      progressEmpty.hidden = false;
+      return;
+    }
+
+    renderSummary(row);
+
     try {
-      const item = state.allRanking.find(x => x.name === state.selectedDc);
+      const x = await apiGet('getDcProgressHistory', { progressId: row.progressId });
+      const history = Array.isArray(x.rows) ? x.rows : [];
+      renderChart(history);
+
+      progressHistoryBody.innerHTML = history.map(item =>
+        '<tr>' +
+        '<td title="' + escapeHtml(item.sourceFile || '') + '">' + escapeHtml(item.sourceFile || '-') + '</td>' +
+        '<td class="dc-count">' + formatNumber(item.count) + '</td>' +
+        '<td class="dc-rate">' + formatRate(item.rate) + '</td>' +
+        '<td class="' + (Number(item.countChange || 0) < 0 ? 'decrease' : Number(item.countChange || 0) > 0 ? 'increase' : '') + '">' +
+          (Number(item.countChange || 0) > 0 ? '+' : '') + formatNumber(item.countChange) +
+        '</td>' +
+        '<td>' + (Number(item.percentChange || 0) > 0 ? '+' : '') + formatRate(item.percentChange) + '</td>' +
+        '<td class="' + (item.isTop5 ? 'yes' : 'no') + '">' + (item.isTop5 ? 'Ya' : 'Tidak') + '</td>' +
+        '<td>' + escapeHtml(item.recordedAt || '-') + '</td>' +
+        '</tr>'
+      ).join('');
+
+      progressEmpty.hidden = history.length !== 0;
+    } catch (e) {
+      progressHistoryBody.innerHTML = '';
+      progressChart.innerHTML = '<div class="dc-chart-empty">History belum dapat dimuat.</div>';
+      progressEmpty.hidden = false;
+      showError('Progress ' + dcName + ' ditemukan, tetapi history belum dapat dimuat: ' + e.message);
+    }
+  };
+
+  const openProgress = async (dc) => {
+    if (!dc) return;
+    state.selectedDc = dc;
+    progressPanel.hidden = false;
+    await renderProgress(dc);
+    progressPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  };
+
+  const addProgress = async (dc) => {
+    try {
+      const item = state.allRanking.find(x => x.name === dc);
       if (!item) throw new Error('DC tidak ditemukan pada hasil snapshot.');
       if (!state.file?.name) throw new Error('File snapshot belum tersedia.');
-      newLifecycleBtn.disabled = true;
-      const rank = state.allRanking.findIndex(y => y.name === item.name) + 1;
+
+      const button = rankingBody.querySelector('[data-progress-dc="' + encodeURIComponent(dc) + '"]');
+      if (button) button.disabled = true;
+
+      const rank = state.allRanking.findIndex(x => x.name === item.name) + 1;
       const x = await apiPost({
-        action: 'startDcProgress',
+        action: 'addDcProgress',
         dcName: item.name,
         baselineCount: item.count,
         baselineTotal: state.total,
         baselineRate: item.rate,
         baselineRank: rank,
         baselineTop5: rank <= 5,
-        baselineFile: state.file.name
+        baselineFile: state.file.name,
+        snapshotId: makeSnapshotId()
       });
+
       await loadProgress();
-      state.selectedProgressId = x.progress?.progressId || '';
-      await renderProgress();
-    } catch(e) {
+      await openProgress(item.name);
+
+      if (x.duplicate) {
+        resultNote.textContent = item.name + ' sudah ada di daftar Progress.';
+      } else {
+        resultNote.textContent = item.name + ' sekarang dipantau. Snapshot baseline sudah tersimpan.';
+      }
+    } catch (e) {
       showError(e.message);
     } finally {
-      newLifecycleBtn.disabled = false;
+      const button = rankingBody.querySelector('[data-progress-dc="' + encodeURIComponent(dc) + '"]');
+      if (button) button.disabled = false;
     }
   };
-  const saveCheckpoint = async () => {
-    try {
-      const item = state.allRanking.find(x => x.name === state.selectedDc);
-      const cur = state.progressRows.find(x => x.progressId === state.selectedProgressId);
-      if (!item || !cur) throw new Error('Lifecycle atau DC tidak tersedia pada snapshot saat ini.');
-      if (!state.file?.name) throw new Error('File snapshot belum tersedia.');
-      checkpointBtn.disabled = true;
-      const rank = state.allRanking.findIndex(y => y.name === item.name) + 1;
-      const x = await apiPost({
-        action: 'saveDcProgressCheckpoint',
-        progressId: cur.progressId,
-        sourceFile: state.file.name,
-        count: item.count,
-        total: state.total,
-        rate: item.rate,
-        rank,
-        isTop5: rank <= 5,
-        requestId: 'web-' + cur.progressId + '-' + Date.now()
-      });
-      await loadProgress();
-      state.selectedProgressId = x.progress?.progressId || cur.progressId;
-      await renderProgress();
-    } catch(e) {
-      showError(e.message);
-    } finally {
-      checkpointBtn.disabled = false;
+
+  const updateTrackedAccess = () => {
+    const rows = state.progressRows || [];
+    trackedAccess.hidden = rows.length === 0;
+    trackedDcSelect.innerHTML = rows.map(row =>
+      '<option value="' + escapeHtml(row.dcName) + '">' + escapeHtml(row.dcName) + '</option>'
+    ).join('');
+    if (rows.length && (!state.selectedDc || !rows.some(row => row.dcName === state.selectedDc))) {
+      state.selectedDc = rows[0].dcName;
     }
   };
-  const updateTrackedAccess = () => { const rows=state.progressRows; trackedAccess.hidden=!rows.length; trackedDcSelect.innerHTML=rows.map(x=>'<option value="'+x.dcName+'">'+x.dcName+' • Lifecycle #'+x.lifecycleNo+'</option>').join(''); };
-  const updatePeriodDuration = () => { if(!periodStart.value||!periodEnd.value){periodDuration.textContent='Durasi: -';return;} const s=new Date(periodStart.value),e=new Date(periodEnd.value); periodDuration.textContent=e>s?'Durasi: '+formatDuration((e-s)/60000):'Durasi: tidak valid'; };
 
   const handleFile = async (file) => {
     if (!file) return;
@@ -283,7 +462,21 @@
     }
   };
 
-  lifecycleSelect.addEventListener('change',()=>{state.selectedProgressId=lifecycleSelect.value;renderProgress()}); newLifecycleBtn.addEventListener('click',startLifecycle); checkpointBtn.addEventListener('click',saveCheckpoint); closeProgressBtn.addEventListener('click',()=>{progressPanel.hidden=true}); openTrackedBtn.addEventListener('click',()=>openProgress(trackedDcSelect.value)); rankingBody.addEventListener('click',e=>{const b=e.target.closest('[data-progress-dc]');if(b)openProgress(decodeURIComponent(b.dataset.progressDc||''))}); loadProgress();
+  rankingBody.addEventListener('click', (event) => {
+    const button = event.target.closest('[data-progress-dc]');
+    if (!button) return;
+    addProgress(decodeURIComponent(button.dataset.progressDc || ''));
+  });
+
+  closeProgressBtn.addEventListener('click', () => { progressPanel.hidden = true; });
+
+  openTrackedBtn.addEventListener('click', () => openProgress(trackedDcSelect.value));
+
+  trackedDcSelect.addEventListener('change', () => {
+    if (trackedDcSelect.value) openProgress(trackedDcSelect.value);
+  });
+
+  loadProgress();
 
   historyFile.addEventListener('change', (event) => handleFile(event.target.files?.[0]));
 
@@ -291,31 +484,40 @@
     event.preventDefault();
     uploadArea.classList.add('drag-over');
   }));
+
   ['dragleave', 'drop'].forEach(type => uploadArea.addEventListener(type, (event) => {
     event.preventDefault();
     uploadArea.classList.remove('drag-over');
   }));
+
   uploadArea.addEventListener('drop', (event) => handleFile(event.dataTransfer?.files?.[0]));
 
-  processBtn.addEventListener('click', () => {
+  processBtn.addEventListener('click', async () => {
     if (!state.file || state.ipColumn < 0) return;
+
     showError('');
     loading.hidden = false;
     processBtn.disabled = true;
-    setTimeout(() => {
-      try {
-        calculate();
-      } finally {
-        loading.hidden = true;
-        processBtn.disabled = false;
-      }
-    }, 0);
+
+    try {
+      calculateSnapshot();
+      await loadProgress();
+      await persistTrackedSnapshot();
+    } catch (e) {
+      showError(e.message || 'Gagal menghitung snapshot.');
+    } finally {
+      loading.hidden = true;
+      processBtn.disabled = false;
+    }
   });
 
   clearBtn.addEventListener('click', () => {
     state.file = null;
     state.rows = [];
     state.ipColumn = -1;
+    state.ranking = [];
+    state.allRanking = [];
+    state.total = 0;
     historyFile.value = '';
     fileName.textContent = 'Belum ada file dipilih';
     fileStatus.textContent = 'Belum ada data.';
@@ -323,7 +525,6 @@
     resultsSection.hidden = true;
     progressPanel.hidden = true;
     stats.innerHTML = '';
-    updateTrackedAccess();
     rankingBody.innerHTML = '';
     emptyRanking.hidden = true;
     resultNote.textContent = '';
@@ -333,17 +534,20 @@
   const menuToggle = $('menuToggle');
   const sidebar = $('sidebar');
   const overlay = $('sidebarOverlay');
+
   if (menuToggle && sidebar && overlay) {
     const closeSidebar = () => {
       sidebar.classList.remove('active');
       overlay.classList.remove('active');
       menuToggle.setAttribute('aria-expanded', 'false');
     };
+
     menuToggle.addEventListener('click', () => {
       const active = sidebar.classList.toggle('active');
       overlay.classList.toggle('active', active);
       menuToggle.setAttribute('aria-expanded', String(active));
     });
+
     overlay.addEventListener('click', closeSidebar);
     sidebar.querySelectorAll('a').forEach(link => link.addEventListener('click', closeSidebar));
     window.addEventListener('resize', () => { if (window.innerWidth > 780) closeSidebar(); });
