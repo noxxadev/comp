@@ -6,7 +6,7 @@
   <title>DC HighTemp — COMP Tools</title>
   <link rel="icon" href="/favicon.ico" type="image/x-icon">
   <link rel="stylesheet" href="index-hub.css">
-  <link rel="stylesheet" href="dc-hightemp.css?v=20261002-1">
+  <link rel="stylesheet" href="dc-hightemp.css?v=20261003-2">
   <link rel="stylesheet" href="theme-toggle.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <script src="google-sheets-config.js"></script>
@@ -72,7 +72,7 @@
           </div>
         </div>
 
-        <div class="dc-period"><div class="dc-period-heading"><strong>Periode History</strong><span>Isi jika data ini akan digunakan untuk Progress.</span></div><div class="dc-period-fields"><label>Mulai<input type="datetime-local" id="periodStart"></label><label>Selesai<input type="datetime-local" id="periodEnd"></label><div class="dc-period-duration" id="periodDuration">Durasi: -</div></div></div><div class="dc-actions">
+        <div class="dc-snapshot-note"><strong>Mode Snapshot</strong><span>Setiap file yang di-upload menjadi satu snapshot. Rate dan Progress dihitung hanya dari data pada file tersebut.</span></div><div class="dc-actions">
           <div id="fileStatus" class="dc-file-status" aria-live="polite">Belum ada data.</div>
           <div class="dc-action-buttons">
             <button id="processBtn" class="dc-btn dc-btn-primary" type="button" disabled>
@@ -110,7 +110,7 @@
               <tbody id="rankingBody"></tbody>
             </table>
           </div>
-          <div id="progressPanel" class="dc-progress-panel" hidden><div class="dc-progress-panel-head"><div><div class="dc-progress-kicker">DC PROGRESS</div><h3 id="progressTitle">Progress DC</h3></div><button id="closeProgressBtn" class="dc-icon-btn" type="button" aria-label="Tutup progress"><i class="fas fa-xmark"></i></button></div><div class="dc-progress-selector"><label>Lifecycle<select id="lifecycleSelect"></select></label><button id="newLifecycleBtn" class="dc-btn dc-btn-secondary" type="button"><i class="fas fa-plus"></i> Lifecycle Baru</button><button id="checkpointBtn" class="dc-btn dc-btn-primary" type="button"><i class="fas fa-floppy-disk"></i> Simpan Checkpoint</button></div><div id="progressSummary" class="dc-progress-summary"></div><div class="dc-table-wrap"><table class="dc-table dc-history-table"><thead><tr><th>Checkpoint</th><th>Periode</th><th>Jumlah IP</th><th>Rate</th><th>Rank</th><th>Top 5</th><th>Progress</th></tr></thead><tbody id="progressHistoryBody"></tbody></table></div><div id="progressEmpty" class="dc-empty" hidden><i class="fas fa-clock-rotate-left"></i><h3>Belum ada checkpoint</h3><p>Lifecycle baru dimulai dari baseline saat Progress digunakan.</p></div></div><div id="emptyRanking" class="dc-empty" hidden>
+          <div id="progressPanel" class="dc-progress-panel" hidden><div class="dc-progress-panel-head"><div><div class="dc-progress-kicker">DC PROGRESS</div><h3 id="progressTitle">Progress DC</h3></div><button id="closeProgressBtn" class="dc-icon-btn" type="button" aria-label="Tutup progress"><i class="fas fa-xmark"></i></button></div><div class="dc-progress-selector"><label>Lifecycle<select id="lifecycleSelect"></select></label><button id="newLifecycleBtn" class="dc-btn dc-btn-secondary" type="button"><i class="fas fa-plus"></i> Lifecycle Baru</button><button id="checkpointBtn" class="dc-btn dc-btn-primary" type="button"><i class="fas fa-floppy-disk"></i> Simpan Checkpoint</button></div><div id="progressSummary" class="dc-progress-summary"></div><div class="dc-table-wrap"><table class="dc-table dc-history-table"><thead><tr><th>Checkpoint</th><th>File Snapshot</th><th>Jumlah IP</th><th>Rate</th><th>Rank</th><th>Top 5</th><th>Progress</th></tr></thead><tbody id="progressHistoryBody"></tbody></table></div><div id="progressEmpty" class="dc-empty" hidden><i class="fas fa-clock-rotate-left"></i><h3>Belum ada checkpoint</h3><p>Lifecycle baru dimulai dari snapshot baseline saat Progress digunakan.</p></div></div><div id="emptyRanking" class="dc-empty" hidden>
             <i class="fas fa-inbox"></i>
             <h3>Belum ada DC yang teridentifikasi</h3>
             <p>Pastikan IP pada file tersedia di <code>master-data.js</code>.</p>
@@ -125,7 +125,7 @@
 
 <script src="https://cdn.sheetjs.com/xlsx-0.18.5/package/dist/xlsx.full.min.js"></script>
 <script src="master-data.js"></script>
-<script src="dc-hightemp.js?v=20261002-1"></script>
+<script src="dc-hightemp.js?v=20261003-2"></script>
 <script src="theme-toggle.js"></script>
 </body>
 </html>
