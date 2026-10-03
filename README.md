@@ -419,3 +419,23 @@ Live validation required:
 - Confirm TOP 5 ordering and counts against a manual sample.
 - Confirm unmapped IP handling.
 - Confirm Light/Dark theme and mobile navigation.
+
+## 2026-10-03 — DC HighTemp Progress Tracking
+- **Status:** IMPLEMENTED — END-TO-END VALIDATION PENDING
+- Added Phase 2 UI for DC HighTemp progress tracking without changing the existing Top 5 counting logic.
+- Top 5 now shows **Jumlah IP**, **Rate**, and a **Progress** action.
+- Added History Period start/end inputs with automatic duration display; the system does not assume every uploaded history covers exactly 24 hours.
+- Progress lifecycle UI is connected to the new Phase 1 Apps Script actions for starting a lifecycle, reading lifecycle history, and saving checkpoints.
+- Baseline progress is captured from the selected Top 5 result; progress is calculated against the fixed baseline.
+- Added tracked-progress access so a DC can still receive a checkpoint after it drops outside the current Top 5.
+- Current DC rank and Top 5 state are calculated from the full DC ranking, while the displayed ranking remains Top 5 only.
+- Multiple lifecycle records remain supported through the Phase 1 Google Sheets backend.
+- No changes were made to authentication, Work History, Work Items, Cleaning History, master-data, or the existing Top 5 occurrence-counting mechanism.
+
+Validation required:
+- Test Top 5 + Rate against a manual sample.
+- Start Lifecycle #1 and confirm baseline values are stored in **DC Progress**.
+- Upload a later history, save a checkpoint, and confirm count/rate/progress/rank/Top 5 values.
+- Confirm checkpoint works after the DC leaves Top 5.
+- Confirm multiple lifecycles for the same DC remain separate.
+- Confirm existing DC HighTemp upload/reset/theme/mobile behavior still works.
