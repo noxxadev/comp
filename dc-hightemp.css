@@ -128,3 +128,13 @@
 @media(max-width:480px){
   .dc-tracked-card,.dc-progress-card{padding:14px}
 }
+
+/* DC progress save/download controls */
+.dc-progress-panel-head{display:flex;align-items:center;justify-content:space-between;gap:14px}
+.dc-progress-panel-actions{display:flex;align-items:center;gap:8px}
+.dc-progress-save-status{display:none;margin-top:12px;padding:9px 12px;border:1px solid #abefc6;border-radius:10px;background:#ecfdf3;color:#067647;font-size:12px;font-weight:600}
+.dc-progress-save-status.visible{display:flex;align-items:center;gap:7px}
+@media(max-width:480px){
+  .dc-progress-panel-head{align-items:flex-start}
+  .dc-progress-panel-actions .dc-btn{min-height:36px;padding:0 11px}
+}
