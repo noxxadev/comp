@@ -151,8 +151,13 @@
             <div class="dc-progress-kicker">DC PROGRESS</div>
             <h3 id="progressTitle">Progress DC</h3>
           </div>
-          <button id="closeProgressBtn" class="dc-icon-btn" type="button" aria-label="Tutup progress"><i class="fas fa-xmark"></i></button>
+          <div class="dc-progress-panel-actions">
+            <button id="downloadProgressBtn" class="dc-btn dc-btn-secondary" type="button" disabled>
+              <i class="fas fa-download"></i> Download
+            </button>
+          </div>
         </div>
+        <div id="progressSaveStatus" class="dc-progress-save-status" role="status" aria-live="polite"></div>
         <div id="progressSummary" class="dc-progress-summary"></div>
         <div class="dc-progress-chart-card">
           <div class="dc-progress-chart-head">
@@ -181,7 +186,7 @@
 
 <script src="https://cdn.sheetjs.com/xlsx-0.18.5/package/dist/xlsx.full.min.js"></script>
 <script src="master-data.js"></script>
-<script src="dc-hightemp.js?v=20261003-5"></script>
+<script src="dc-hightemp.js?v=20261003-6"></script>
 <script src="theme-toggle.js"></script>
 </body>
 </html>
