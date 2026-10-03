@@ -508,28 +508,42 @@
     const history = Array.isArray(state.progressHistory) ? state.progressHistory : [];
     if (!history.length) return;
 
-    const headers = ['Snapshot', 'Jumlah IP', 'Rate', 'Perubahan', '% Perubahan', 'Top 5', 'Recorded At'];
+    if (typeof XLSX === 'undefined') {
+      showError('Library Excel belum termuat. Refresh halaman lalu coba lagi.');
+      return;
+    }
+
+    const progress = state.progressRows.find(row =>
+      String(row.dcName || '').toLowerCase() === String(dcName || '').toLowerCase()
+    );
+    const baseline = Number(progress?.baselineCount || history[0]?.count || 0);
+
+    const headers = ['Record At', 'Nama DC', 'Baseline', 'Perubahan', 'Perubahan %'];
     const rows = history.map(item => [
-      item.sourceFile || '',
-      Number(item.count || 0),
-      Number(item.rate || 0).toFixed(2) + '%',
+      formatDateTime(item.recordedAt),
+      item.dcName || dcName,
+      baseline,
       Number(item.countChange || 0),
-      Number(item.percentChange || 0).toFixed(2) + '%',
-      item.isTop5 ? 'Ya' : 'Tidak',
-      formatDateTime(item.recordedAt)
+      Number(item.percentChange || 0) / 100
     ]);
 
-    const csvEscape = (value) => '"' + String(value ?? '').replace(/"/g, '""') + '"';
-    const csv = [headers, ...rows].map(row => row.map(csvEscape).join(',')).join('\r\n');
-    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'DC-Progress-' + dcName.replace(/[^a-z0-9_-]+/gi, '-') + '.csv';
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    URL.revokeObjectURL(url);
+    const worksheet = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+    worksheet['!cols'] = [
+      { wch: 22 },
+      { wch: 18 },
+      { wch: 14 },
+      { wch: 14 },
+      { wch: 16 }
+    ];
+
+    for (let rowIndex = 2; rowIndex <= rows.length + 1; rowIndex++) {
+      const percentCell = worksheet['E' + rowIndex];
+      if (percentCell) percentCell.z = '0.00%';
+    }
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Progress');
+    XLSX.writeFile(workbook, 'DC-Progress-' + dcName.replace(/[^a-z0-9_-]+/gi, '-') + '.xlsx');
   });
 
 
