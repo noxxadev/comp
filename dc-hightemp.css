@@ -115,3 +115,16 @@
   .dc-progress-chart,.dc-progress-chart svg{min-height:230px;height:230px}
   .dc-progress-summary{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
+
+/* Separate progress cards */
+.dc-tracked-card,
+.dc-progress-card{padding:20px;margin-top:18px}
+.dc-tracked-card .dc-card-heading,
+.dc-progress-card .dc-card-heading{margin-bottom:0}
+.dc-tracked-card .dc-tracked-access{margin-top:16px}
+.dc-progress-card .dc-progress-panel-head{padding:0}
+.dc-progress-card .dc-progress-summary{padding:16px 0 0}
+.dc-progress-card .dc-progress-chart-card{margin-top:16px}
+@media(max-width:480px){
+  .dc-tracked-card,.dc-progress-card{padding:14px}
+}
