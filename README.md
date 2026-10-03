@@ -399,6 +399,12 @@ Rule: before declaring a phase complete, record the exact changes, affected file
 - Live validation yang perlu dilakukan: pastikan SN tampil, Cleaning Count sesuai Work History berstatus `Selesai`, Last Cleaning tampil, dan pencarian SN tetap bekerja.
 
 
+
+### 2026-10-03 — DC Progress visibility fix
+- Moved `Progress yang Sedang Dipantau` and the progress detail panel outside `resultsSection` so existing tracked DCs can be selected immediately on page load without uploading a file.
+- Preserved the existing Top 5 calculation and automatic snapshot logic.
+- Corrected DC progress text whitespace normalization in `google-apps-script/Code.gs`.
+
 ## 2026-10-02 — DC HighTemp Analyzer
 - **Status:** IMPLEMENTED — LIVE VALIDATION PENDING
 - Added standalone `dc-hightemp.html`, `dc-hightemp.css`, and `dc-hightemp.js`.
