@@ -16,16 +16,15 @@ const DC_PROGRESS_HISTORY_SHEET_NAME = 'DC Progress History';
 
 const DC_PROGRESS_HEADERS = [
   'Progress ID', 'DC Name', 'Lifecycle No',
-  'Baseline Count', 'Baseline Total', 'Baseline Rate', 'Baseline Rank', 'Baseline Top 5',
-  'Baseline Start', 'Baseline End', 'Baseline Duration',
+  'Baseline Count', 'Baseline Total', 'Baseline Rate', 'Baseline Rank', 'Baseline Top 5', 'Baseline File',
   'Current Count', 'Current Total', 'Current Rate', 'Current Rank', 'Current Top 5',
   'Progress Percent', 'Started At', 'Updated At'
 ];
 
 const DC_PROGRESS_HISTORY_HEADERS = [
   'History ID', 'Progress ID', 'DC Name', 'Lifecycle No', 'Checkpoint No',
-  'Count', 'Total', 'Rate', 'Progress Percent', 'Count Change', 'Rate Change',
-  'Rank', 'Is Top 5', 'Period Start', 'Period End', 'Duration', 'Recorded At'
+  'Source File', 'Count', 'Total', 'Rate', 'Progress Percent', 'Count Change', 'Rate Change',
+  'Rank', 'Is Top 5', 'Recorded At'
 ];
 const PASSWORD_HASH_ITERATIONS = 10000;
 const SESSION_TTL_HOURS = 8;
@@ -1308,9 +1307,7 @@ function startDcProgress(payload) {
   const baselineRate = toFiniteNumber(payload?.baselineRate);
   const baselineRank = toPositiveInteger(payload?.baselineRank);
   const baselineTop5 = normalizeBoolean(payload?.baselineTop5);
-  const baselineStart = parseOptionalDate(payload?.baselineStart);
-  const baselineEnd = parseOptionalDate(payload?.baselineEnd);
-  const baselineDuration = normalizeDcProgressText(payload?.baselineDuration);
+  const baselineFile = normalizeDcProgressText(payload?.baselineFile);
 
   if (!dcName) return jsonResponse({ ok: false, error: 'DC name tidak valid.' });
   if (baselineCount === null || baselineTotal === null || baselineCount > baselineTotal) {
@@ -1320,10 +1317,7 @@ function startDcProgress(payload) {
     return jsonResponse({ ok: false, error: 'Baseline rate tidak valid.' });
   }
   if (baselineRank === null) return jsonResponse({ ok: false, error: 'Baseline rank tidak valid.' });
-  if (!baselineStart || !baselineEnd || baselineEnd < baselineStart) {
-    return jsonResponse({ ok: false, error: 'Periode baseline tidak valid.' });
-  }
-  if (baselineDuration.length > 100) return jsonResponse({ ok: false, error: 'Durasi baseline terlalu panjang.' });
+  if (baselineFile.length > 255) return jsonResponse({ ok: false, error: 'Nama file baseline terlalu panjang.' });
 
   const lock = LockService.getScriptLock();
   lock.waitLock(30000);
@@ -1345,8 +1339,7 @@ function startDcProgress(payload) {
 
     sheet.getRange(sheet.getLastRow() + 1, 1, 1, DC_PROGRESS_HEADERS.length).setValues([[
       progressId, dcName, lifecycleNo,
-      baselineCount, baselineTotal, baselineRate, baselineRank, baselineTop5,
-      baselineStart, baselineEnd, baselineDuration,
+      baselineCount, baselineTotal, baselineRate, baselineRank, baselineTop5, baselineFile,
       baselineCount, baselineTotal, baselineRate, baselineRank, baselineTop5,
       0, now, now
     ]]);
@@ -1365,9 +1358,7 @@ function startDcProgress(payload) {
         baselineRate,
         baselineRank,
         baselineTop5,
-        baselineStart: baselineStart.toISOString(),
-        baselineEnd: baselineEnd.toISOString(),
-        baselineDuration,
+        baselineFile,
         currentCount: baselineCount,
         currentTotal: baselineTotal,
         currentRate: baselineRate,
@@ -1385,14 +1376,12 @@ function startDcProgress(payload) {
 
 function saveDcProgressCheckpoint(payload) {
   const progressId = String(payload?.progressId || '').trim();
+  const sourceFile = normalizeDcProgressText(payload?.sourceFile);
   const count = toNonNegativeNumber(payload?.count);
   const total = toPositiveNumber(payload?.total);
   const rate = toFiniteNumber(payload?.rate);
   const rank = toPositiveInteger(payload?.rank);
   const isTop5 = normalizeBoolean(payload?.isTop5);
-  const periodStart = parseOptionalDate(payload?.periodStart);
-  const periodEnd = parseOptionalDate(payload?.periodEnd);
-  const duration = normalizeDcProgressText(payload?.duration);
   const requestId = String(payload?.requestId || '').trim();
 
   if (!progressId) return jsonResponse({ ok: false, error: 'Progress ID tidak valid.' });
@@ -1401,10 +1390,7 @@ function saveDcProgressCheckpoint(payload) {
   }
   if (rate === null || rate < 0) return jsonResponse({ ok: false, error: 'Checkpoint rate tidak valid.' });
   if (rank === null) return jsonResponse({ ok: false, error: 'Checkpoint rank tidak valid.' });
-  if (!periodStart || !periodEnd || periodEnd < periodStart) {
-    return jsonResponse({ ok: false, error: 'Periode checkpoint tidak valid.' });
-  }
-  if (duration.length > 100) return jsonResponse({ ok: false, error: 'Durasi checkpoint terlalu panjang.' });
+  if (sourceFile.length > 255) return jsonResponse({ ok: false, error: 'Nama file checkpoint terlalu panjang.' });
   if (requestId.length > 200) return jsonResponse({ ok: false, error: 'Request ID terlalu panjang.' });
 
   const lock = LockService.getScriptLock();
@@ -1451,7 +1437,7 @@ function saveDcProgressCheckpoint(payload) {
 
     const checkpointNo = maxCheckpoint + 1;
     const progressPercent = progress.baselineCount === 0
-      ? (count === 0 ? 0 : 0)
+      ? 0
       : ((progress.baselineCount - count) / progress.baselineCount) * 100;
     const countChange = count - progress.baselineCount;
     const rateChange = rate - progress.baselineRate;
@@ -1460,12 +1446,12 @@ function saveDcProgressCheckpoint(payload) {
 
     historySheet.getRange(historySheet.getLastRow() + 1, 1, 1, DC_PROGRESS_HISTORY_HEADERS.length).setValues([[
       historyId, progressId, progress.dcName, progress.lifecycleNo, checkpointNo,
-      count, total, rate, progressPercent, countChange, rateChange,
-      rank, isTop5, periodStart, periodEnd, duration, now
+      sourceFile, count, total, rate, progressPercent, countChange, rateChange,
+      rank, isTop5, now
     ]]);
 
-    progressSheet.getRange(progressRow, 12, 1, 8).setValues([[
-      count, total, rate, rank, isTop5, progressPercent, progress.startedAt ? new Date(progress.startedAt) : progressData[progressRow - 1][17], now
+    progressSheet.getRange(progressRow, 10, 1, 7).setValues([[
+      count, total, rate, rank, isTop5, progressPercent, now
     ]]);
 
     SpreadsheetApp.flush();
@@ -1559,17 +1545,15 @@ function dcProgressRowToObject(row) {
     baselineRate: Number(row[5] || 0),
     baselineRank: Number(row[6] || 0),
     baselineTop5: normalizeBoolean(row[7]),
-    baselineStart: toIsoOrText(row[8]),
-    baselineEnd: toIsoOrText(row[9]),
-    baselineDuration: String(row[10] || '').trim(),
-    currentCount: Number(row[11] || 0),
-    currentTotal: Number(row[12] || 0),
-    currentRate: Number(row[13] || 0),
-    currentRank: Number(row[14] || 0),
-    currentTop5: normalizeBoolean(row[15]),
-    progressPercent: Number(row[16] || 0),
-    startedAt: toIsoOrText(row[17]),
-    updatedAt: toIsoOrText(row[18])
+    baselineFile: String(row[8] || '').trim(),
+    currentCount: Number(row[9] || 0),
+    currentTotal: Number(row[10] || 0),
+    currentRate: Number(row[11] || 0),
+    currentRank: Number(row[12] || 0),
+    currentTop5: normalizeBoolean(row[13]),
+    progressPercent: Number(row[14] || 0),
+    startedAt: toIsoOrText(row[15]),
+    updatedAt: toIsoOrText(row[16])
   };
 }
 
@@ -1580,18 +1564,16 @@ function dcProgressHistoryRowToObject(row) {
     dcName: String(row[2] || '').trim(),
     lifecycleNo: Number(row[3] || 0),
     checkpointNo: Number(row[4] || 0),
-    count: Number(row[5] || 0),
-    total: Number(row[6] || 0),
-    rate: Number(row[7] || 0),
-    progressPercent: Number(row[8] || 0),
-    countChange: Number(row[9] || 0),
-    rateChange: Number(row[10] || 0),
-    rank: Number(row[11] || 0),
-    isTop5: normalizeBoolean(row[12]),
-    periodStart: toIsoOrText(row[13]),
-    periodEnd: toIsoOrText(row[14]),
-    duration: String(row[15] || '').trim(),
-    recordedAt: toIsoOrText(row[16])
+    sourceFile: String(row[5] || '').trim(),
+    count: Number(row[6] || 0),
+    total: Number(row[7] || 0),
+    rate: Number(row[8] || 0),
+    progressPercent: Number(row[9] || 0),
+    countChange: Number(row[10] || 0),
+    rateChange: Number(row[11] || 0),
+    rank: Number(row[12] || 0),
+    isTop5: normalizeBoolean(row[13]),
+    recordedAt: toIsoOrText(row[14])
   };
 }
 
