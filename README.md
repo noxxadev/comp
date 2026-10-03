@@ -422,26 +422,30 @@ Live validation required:
 
 ## 2026-10-03 — DC HighTemp Progress Tracking
 - **Status:** IMPLEMENTED — END-TO-END VALIDATION PENDING
-- Added Progress tracking without changing the existing Top 5 occurrence-counting logic.
-- The system now treats **each uploaded MinerPlus file as one snapshot**.
-- The system does **not** require or assume a history period such as 24 hours.
-- Rate is calculated from the current uploaded file only: `DC occurrences / total valid IP occurrences × 100%`.
-- A lifecycle stores a fixed baseline snapshot and later checkpoints from subsequent uploaded snapshots.
-- Progress is always compared with the fixed baseline: `(Baseline Count - Current Count) / Baseline Count × 100%`.
-- Checkpoints store the source file name, count, total, rate, rank, Top 5 state, count change, rate change, and recording timestamp.
-- Added tracked-progress access so a DC can still receive a checkpoint after it drops outside the current Top 5.
-- Current rank and Top 5 state are calculated from the full ranking, while the displayed ranking remains Top 5 only.
-- Multiple lifecycle records remain supported for the same DC.
-- The two dedicated sheets remain isolated from Work History / Work Items:
-  - `DC Progress`
-  - `DC Progress History`
-- Removed the previously added Period Start / Period End / Duration requirement from the DC HighTemp UI and backend contract.
+- Simplified the Progress model to use **automatic upload snapshots**; lifecycle, checkpoint, and period concepts were removed.
+- The existing **TOP 5 DC HIGHTEMP** calculation is unchanged.
+- A Top 5 row has a **Progress** button. Clicking it registers that DC and immediately stores the current upload as its baseline snapshot.
+- Every later upload that is successfully calculated automatically records the latest count/rate for every tracked DC in Google Sheets.
+- A tracked DC is still recorded even when it drops outside the current Top 5; if it does not appear in the current ranking, its count is stored as `0`.
+- The current progress state is stored in **DC Progress**.
+- Every upload snapshot is stored in **DC Progress History**.
+- Duplicate processing of the same browser file is prevented with a snapshot identifier based on file name, size, and last-modified timestamp.
+- The Progress view shows baseline/current count, absolute change, percentage change, status, a count trend graph, and snapshot history.
+- **Progress %** represents the reduction from baseline: `(Baseline Count - Current Count) / Baseline Count × 100%`. A positive value means the current occurrence count is lower than baseline.
+- **Status** is descriptive only:
+  - **Berkurang** = current count below baseline.
+  - **Bertambah** = current count above baseline.
+  - **Tetap** = current count equal to baseline.
+- Existing old lifecycle rows in the two Progress sheets are preserved but are not included in the new simplified tracking view unless they contain the new snapshot-model status/snapshot identifiers.
 - No changes were made to authentication, Work History, Work Items, Cleaning History, master-data, or the existing Top 5 occurrence-counting mechanism.
 
 Validation required:
-- Upload one real MinerPlus history file and confirm Top 5 counts and Rate against a manual sample.
-- Start Lifecycle #1 and confirm the baseline snapshot and source file are stored in **DC Progress**.
-- Upload a later history file and save a checkpoint; confirm count, total, rate, progress, rank, Top 5 state, and source file.
-- Confirm checkpoint still works after the tracked DC leaves Top 5.
-- Confirm multiple lifecycles for the same DC remain separate.
-- Confirm existing upload/reset/theme/mobile behavior still works.
+- Upload a real MinerPlus history file and confirm the existing Top 5 counts/rates.
+- Click **Progress** on one Top 5 DC and confirm one baseline row appears in both Progress sheets.
+- Upload a second file and confirm the tracked DC is automatically recorded without clicking Save/Checkpoint.
+- Confirm the tracked DC is still recorded when it leaves Top 5.
+- Confirm a tracked DC that disappears from the file is recorded with count `0`.
+- Confirm the graph follows the uploaded snapshots and the percentage/change values match the baseline.
+- Recalculate the same file and confirm no duplicate snapshot is created.
+- Confirm existing upload/reset/theme/mobile behavior remains intact.
+
