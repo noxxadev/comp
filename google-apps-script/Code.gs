@@ -11,6 +11,22 @@ const USER_SHEET_NAME = 'Users';
 const USER_HEADERS = ['User ID', 'Username', 'Password Hash', 'Salt', 'Role', 'Status'];
 const SESSION_SHEET_NAME = 'Sessions';
 const SESSION_HEADERS = ['Session Hash', 'User ID', 'Created At', 'Expires At', 'Status'];
+const DC_PROGRESS_SHEET_NAME = 'DC Progress';
+const DC_PROGRESS_HISTORY_SHEET_NAME = 'DC Progress History';
+
+const DC_PROGRESS_HEADERS = [
+  'Progress ID', 'DC Name', 'Lifecycle No',
+  'Baseline Count', 'Baseline Total', 'Baseline Rate', 'Baseline Rank', 'Baseline Top 5',
+  'Baseline Start', 'Baseline End', 'Baseline Duration',
+  'Current Count', 'Current Total', 'Current Rate', 'Current Rank', 'Current Top 5',
+  'Progress Percent', 'Started At', 'Updated At'
+];
+
+const DC_PROGRESS_HISTORY_HEADERS = [
+  'History ID', 'Progress ID', 'DC Name', 'Lifecycle No', 'Checkpoint No',
+  'Count', 'Total', 'Rate', 'Progress Percent', 'Count Change', 'Rate Change',
+  'Rank', 'Is Top 5', 'Period Start', 'Period End', 'Duration', 'Recorded At'
+];
 const PASSWORD_HASH_ITERATIONS = 10000;
 const SESSION_TTL_HOURS = 8;
 const AUTH_ERROR = 'Username atau password salah.';
@@ -59,6 +75,8 @@ function doGet(e) {
     if (action === 'getWorkHistory') return getWorkHistory(e);
     if (action === 'getMachineList') return getMachineList();
     if (action === 'getEngineers') return getEngineers();
+    if (action === 'getDcProgress') return getDcProgress(e);
+    if (action === 'getDcProgressHistory') return getDcProgressHistory(e);
     return jsonResponse({
       ok: true,
       service: 'COMP Work Tracking',
@@ -87,6 +105,8 @@ function doPost(e) {
     if (payload.action === 'upsertWorkItems') return upsertWorkItems(payload.items);
     if (payload.action === 'appendWorkHistory') return appendWorkHistory(payload.events);
     if (payload.action === 'replaceMachineList') return replaceMachineList(payload.records, payload.sourceFileName);
+    if (payload.action === 'startDcProgress') return startDcProgress(payload);
+    if (payload.action === 'saveDcProgressCheckpoint') return saveDcProgressCheckpoint(payload);
     return jsonResponse({ ok: false, error: 'Unsupported action.' });
   } catch (error) {
     console.error(error);
@@ -1234,6 +1254,390 @@ function isValidIpv4(value) {
     const number = Number(part);
     return number >= 0 && number <= 255;
   });
+}
+
+
+function getDcProgress(e) {
+  const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const sheet = getDcProgressSheet();
+  const data = sheet.getDataRange().getValues();
+  const requestedDc = normalizeDcProgressText(e?.parameter?.dcName || '');
+
+  if (data.length <= 1) {
+    return jsonResponse({ ok: true, rows: [], total: 0 });
+  }
+
+  const rows = [];
+  for (let r = data.length - 1; r >= 1; r--) {
+    const row = data[r];
+    const dcName = String(row[1] || '').trim();
+    if (requestedDc && dcName.toLowerCase() !== requestedDc.toLowerCase()) continue;
+    rows.push(dcProgressRowToObject(row));
+  }
+
+  return jsonResponse({ ok: true, rows, total: rows.length });
+}
+
+function getDcProgressHistory(e) {
+  const sheet = getDcProgressHistorySheet();
+  const data = sheet.getDataRange().getValues();
+  const progressId = String(e?.parameter?.progressId || '').trim();
+  const dcName = normalizeDcProgressText(e?.parameter?.dcName || '');
+
+  if (data.length <= 1) {
+    return jsonResponse({ ok: true, rows: [], total: 0 });
+  }
+
+  const rows = [];
+  for (let r = data.length - 1; r >= 1; r--) {
+    const row = data[r];
+    const rowProgressId = String(row[1] || '').trim();
+    const rowDcName = String(row[2] || '').trim();
+    if (progressId && rowProgressId !== progressId) continue;
+    if (dcName && rowDcName.toLowerCase() !== dcName.toLowerCase()) continue;
+    rows.push(dcProgressHistoryRowToObject(row));
+  }
+
+  return jsonResponse({ ok: true, rows, total: rows.length });
+}
+
+function startDcProgress(payload) {
+  const dcName = normalizeDcProgressText(payload?.dcName);
+  const baselineCount = toNonNegativeNumber(payload?.baselineCount);
+  const baselineTotal = toPositiveNumber(payload?.baselineTotal);
+  const baselineRate = toFiniteNumber(payload?.baselineRate);
+  const baselineRank = toPositiveInteger(payload?.baselineRank);
+  const baselineTop5 = normalizeBoolean(payload?.baselineTop5);
+  const baselineStart = parseOptionalDate(payload?.baselineStart);
+  const baselineEnd = parseOptionalDate(payload?.baselineEnd);
+  const baselineDuration = normalizeDcProgressText(payload?.baselineDuration);
+
+  if (!dcName) return jsonResponse({ ok: false, error: 'DC name tidak valid.' });
+  if (baselineCount === null || baselineTotal === null || baselineCount > baselineTotal) {
+    return jsonResponse({ ok: false, error: 'Baseline count/total tidak valid.' });
+  }
+  if (baselineRate === null || baselineRate < 0) {
+    return jsonResponse({ ok: false, error: 'Baseline rate tidak valid.' });
+  }
+  if (baselineRank === null) return jsonResponse({ ok: false, error: 'Baseline rank tidak valid.' });
+  if (!baselineStart || !baselineEnd || baselineEnd < baselineStart) {
+    return jsonResponse({ ok: false, error: 'Periode baseline tidak valid.' });
+  }
+  if (baselineDuration.length > 100) return jsonResponse({ ok: false, error: 'Durasi baseline terlalu panjang.' });
+
+  const lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+
+  try {
+    const sheet = getDcProgressSheet();
+    const data = sheet.getDataRange().getValues();
+
+    let maxLifecycle = 0;
+    for (let r = 1; r < data.length; r++) {
+      if (String(data[r][1] || '').trim().toLowerCase() !== dcName.toLowerCase()) continue;
+      const lifecycleNo = Number(data[r][2] || 0);
+      if (Number.isFinite(lifecycleNo)) maxLifecycle = Math.max(maxLifecycle, Math.floor(lifecycleNo));
+    }
+
+    const lifecycleNo = maxLifecycle + 1;
+    const progressId = 'DCP-' + Utilities.getUuid().replace(/-/g, '').slice(0, 16).toUpperCase();
+    const now = new Date();
+
+    sheet.getRange(sheet.getLastRow() + 1, 1, 1, DC_PROGRESS_HEADERS.length).setValues([[
+      progressId, dcName, lifecycleNo,
+      baselineCount, baselineTotal, baselineRate, baselineRank, baselineTop5,
+      baselineStart, baselineEnd, baselineDuration,
+      baselineCount, baselineTotal, baselineRate, baselineRank, baselineTop5,
+      0, now, now
+    ]]);
+
+    SpreadsheetApp.flush();
+
+    return jsonResponse({
+      ok: true,
+      action: 'startDcProgress',
+      progress: {
+        progressId,
+        dcName,
+        lifecycleNo,
+        baselineCount,
+        baselineTotal,
+        baselineRate,
+        baselineRank,
+        baselineTop5,
+        baselineStart: baselineStart.toISOString(),
+        baselineEnd: baselineEnd.toISOString(),
+        baselineDuration,
+        currentCount: baselineCount,
+        currentTotal: baselineTotal,
+        currentRate: baselineRate,
+        currentRank: baselineRank,
+        currentTop5: baselineTop5,
+        progressPercent: 0,
+        startedAt: now.toISOString(),
+        updatedAt: now.toISOString()
+      }
+    });
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function saveDcProgressCheckpoint(payload) {
+  const progressId = String(payload?.progressId || '').trim();
+  const count = toNonNegativeNumber(payload?.count);
+  const total = toPositiveNumber(payload?.total);
+  const rate = toFiniteNumber(payload?.rate);
+  const rank = toPositiveInteger(payload?.rank);
+  const isTop5 = normalizeBoolean(payload?.isTop5);
+  const periodStart = parseOptionalDate(payload?.periodStart);
+  const periodEnd = parseOptionalDate(payload?.periodEnd);
+  const duration = normalizeDcProgressText(payload?.duration);
+  const requestId = String(payload?.requestId || '').trim();
+
+  if (!progressId) return jsonResponse({ ok: false, error: 'Progress ID tidak valid.' });
+  if (count === null || total === null || count > total) {
+    return jsonResponse({ ok: false, error: 'Checkpoint count/total tidak valid.' });
+  }
+  if (rate === null || rate < 0) return jsonResponse({ ok: false, error: 'Checkpoint rate tidak valid.' });
+  if (rank === null) return jsonResponse({ ok: false, error: 'Checkpoint rank tidak valid.' });
+  if (!periodStart || !periodEnd || periodEnd < periodStart) {
+    return jsonResponse({ ok: false, error: 'Periode checkpoint tidak valid.' });
+  }
+  if (duration.length > 100) return jsonResponse({ ok: false, error: 'Durasi checkpoint terlalu panjang.' });
+  if (requestId.length > 200) return jsonResponse({ ok: false, error: 'Request ID terlalu panjang.' });
+
+  const lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+
+  try {
+    const progressSheet = getDcProgressSheet();
+    const historySheet = getDcProgressHistorySheet();
+    const progressData = progressSheet.getDataRange().getValues();
+
+    let progressRow = -1;
+    let progress = null;
+
+    for (let r = 1; r < progressData.length; r++) {
+      if (String(progressData[r][0] || '').trim() !== progressId) continue;
+      progressRow = r + 1;
+      progress = dcProgressRowToObject(progressData[r]);
+      break;
+    }
+
+    if (!progress) return jsonResponse({ ok: false, error: 'Lifecycle DC tidak ditemukan.' });
+
+    const historyData = historySheet.getDataRange().getValues();
+    if (requestId) {
+      for (let r = 1; r < historyData.length; r++) {
+        if (String(historyData[r][0] || '').trim() === requestId) {
+          return jsonResponse({
+            ok: true,
+            action: 'saveDcProgressCheckpoint',
+            duplicate: true,
+            history: dcProgressHistoryRowToObject(historyData[r]),
+            progress
+          });
+        }
+      }
+    }
+
+    let maxCheckpoint = 0;
+    for (let r = 1; r < historyData.length; r++) {
+      if (String(historyData[r][1] || '').trim() !== progressId) continue;
+      const checkpointNo = Number(historyData[r][4] || 0);
+      if (Number.isFinite(checkpointNo)) maxCheckpoint = Math.max(maxCheckpoint, Math.floor(checkpointNo));
+    }
+
+    const checkpointNo = maxCheckpoint + 1;
+    const progressPercent = progress.baselineCount === 0
+      ? (count === 0 ? 0 : 0)
+      : ((progress.baselineCount - count) / progress.baselineCount) * 100;
+    const countChange = count - progress.baselineCount;
+    const rateChange = rate - progress.baselineRate;
+    const historyId = requestId || ('DCPH-' + Utilities.getUuid().replace(/-/g, '').slice(0, 16).toUpperCase());
+    const now = new Date();
+
+    historySheet.getRange(historySheet.getLastRow() + 1, 1, 1, DC_PROGRESS_HISTORY_HEADERS.length).setValues([[
+      historyId, progressId, progress.dcName, progress.lifecycleNo, checkpointNo,
+      count, total, rate, progressPercent, countChange, rateChange,
+      rank, isTop5, periodStart, periodEnd, duration, now
+    ]]);
+
+    progressSheet.getRange(progressRow, 12, 1, 8).setValues([[
+      count, total, rate, rank, isTop5, progressPercent, progress.startedAt ? new Date(progress.startedAt) : progressData[progressRow - 1][17], now
+    ]]);
+
+    SpreadsheetApp.flush();
+
+    const updatedProgress = dcProgressRowToObject(
+      progressSheet.getRange(progressRow, 1, 1, DC_PROGRESS_HEADERS.length).getValues()[0]
+    );
+    const history = dcProgressHistoryRowToObject(
+      historySheet.getRange(historySheet.getLastRow(), 1, 1, DC_PROGRESS_HISTORY_HEADERS.length).getValues()[0]
+    );
+
+    return jsonResponse({
+      ok: true,
+      action: 'saveDcProgressCheckpoint',
+      duplicate: false,
+      history,
+      progress: updatedProgress
+    });
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function getDcProgressSheet() {
+  const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
+  let sheet = spreadsheet.getSheetByName(DC_PROGRESS_SHEET_NAME);
+  if (!sheet) sheet = spreadsheet.insertSheet(DC_PROGRESS_SHEET_NAME);
+  ensureDcProgressSchema(sheet);
+  return sheet;
+}
+
+function getDcProgressHistorySheet() {
+  const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
+  let sheet = spreadsheet.getSheetByName(DC_PROGRESS_HISTORY_SHEET_NAME);
+  if (!sheet) sheet = spreadsheet.insertSheet(DC_PROGRESS_HISTORY_SHEET_NAME);
+  ensureDcProgressHistorySchema(sheet);
+  return sheet;
+}
+
+function ensureDcProgressSchema(sheet) {
+  ensureSheetSchema(sheet, DC_PROGRESS_HEADERS);
+}
+
+function ensureDcProgressHistorySchema(sheet) {
+  ensureSheetSchema(sheet, DC_PROGRESS_HISTORY_HEADERS);
+}
+
+function ensureSheetSchema(sheet, expectedHeaders) {
+  const lastColumn = sheet.getLastColumn();
+  const lastRow = sheet.getLastRow();
+
+  if (!lastColumn || lastRow === 0) {
+    sheet.getRange(1, 1, 1, expectedHeaders.length).setValues([expectedHeaders]);
+    sheet.setFrozenRows(1);
+    return;
+  }
+
+  const currentHeaders = sheet.getRange(1, 1, 1, lastColumn).getValues()[0]
+    .map(value => String(value || '').trim());
+  const sameSchema = expectedHeaders.length === currentHeaders.length &&
+    expectedHeaders.every((header, index) => header === currentHeaders[index]);
+  if (sameSchema) return;
+
+  const headerIndex = new Map();
+  currentHeaders.forEach((header, index) => {
+    if (header) headerIndex.set(header, index);
+  });
+
+  const rows = lastRow > 1 ? sheet.getRange(2, 1, lastRow - 1, lastColumn).getValues() : [];
+  const migratedRows = rows.map(row => expectedHeaders.map(header => {
+    const index = headerIndex.get(header);
+    return index === undefined ? '' : row[index];
+  }));
+
+  sheet.clearContents();
+  sheet.getRange(1, 1, 1, expectedHeaders.length).setValues([expectedHeaders]);
+  if (migratedRows.length) {
+    sheet.getRange(2, 1, migratedRows.length, expectedHeaders.length).setValues(migratedRows);
+  }
+  sheet.setFrozenRows(1);
+  SpreadsheetApp.flush();
+}
+
+function dcProgressRowToObject(row) {
+  return {
+    progressId: String(row[0] || '').trim(),
+    dcName: String(row[1] || '').trim(),
+    lifecycleNo: Number(row[2] || 0),
+    baselineCount: Number(row[3] || 0),
+    baselineTotal: Number(row[4] || 0),
+    baselineRate: Number(row[5] || 0),
+    baselineRank: Number(row[6] || 0),
+    baselineTop5: normalizeBoolean(row[7]),
+    baselineStart: toIsoOrText(row[8]),
+    baselineEnd: toIsoOrText(row[9]),
+    baselineDuration: String(row[10] || '').trim(),
+    currentCount: Number(row[11] || 0),
+    currentTotal: Number(row[12] || 0),
+    currentRate: Number(row[13] || 0),
+    currentRank: Number(row[14] || 0),
+    currentTop5: normalizeBoolean(row[15]),
+    progressPercent: Number(row[16] || 0),
+    startedAt: toIsoOrText(row[17]),
+    updatedAt: toIsoOrText(row[18])
+  };
+}
+
+function dcProgressHistoryRowToObject(row) {
+  return {
+    historyId: String(row[0] || '').trim(),
+    progressId: String(row[1] || '').trim(),
+    dcName: String(row[2] || '').trim(),
+    lifecycleNo: Number(row[3] || 0),
+    checkpointNo: Number(row[4] || 0),
+    count: Number(row[5] || 0),
+    total: Number(row[6] || 0),
+    rate: Number(row[7] || 0),
+    progressPercent: Number(row[8] || 0),
+    countChange: Number(row[9] || 0),
+    rateChange: Number(row[10] || 0),
+    rank: Number(row[11] || 0),
+    isTop5: normalizeBoolean(row[12]),
+    periodStart: toIsoOrText(row[13]),
+    periodEnd: toIsoOrText(row[14]),
+    duration: String(row[15] || '').trim(),
+    recordedAt: toIsoOrText(row[16])
+  };
+}
+
+function normalizeDcProgressText(value) {
+  return String(value ?? '').replace(/\\s+/g, ' ').trim();
+}
+
+function toNonNegativeNumber(value) {
+  const number = Number(value);
+  return Number.isFinite(number) && number >= 0 ? number : null;
+}
+
+function toPositiveNumber(value) {
+  const number = Number(value);
+  return Number.isFinite(number) && number > 0 ? number : null;
+}
+
+function toFiniteNumber(value) {
+  const number = Number(value);
+  return Number.isFinite(number) ? number : null;
+}
+
+function toPositiveInteger(value) {
+  const number = Number(value);
+  return Number.isInteger(number) && number > 0 ? number : null;
+}
+
+function normalizeBoolean(value) {
+  if (value === true || value === false) return value;
+  const normalized = String(value ?? '').trim().toLowerCase();
+  return ['true', '1', 'yes', 'y'].includes(normalized);
+}
+
+function parseOptionalDate(value) {
+  if (value instanceof Date && !Number.isNaN(value.getTime())) return value;
+  const text = String(value ?? '').trim();
+  if (!text) return null;
+  const date = new Date(text);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function toIsoOrText(value) {
+  if (value instanceof Date && !Number.isNaN(value.getTime())) return value.toISOString();
+  const text = String(value ?? '').trim();
+  const date = text ? new Date(text) : null;
+  return date && !Number.isNaN(date.getTime()) ? date.toISOString() : text;
 }
 
 function jsonResponse(data) {
