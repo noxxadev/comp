@@ -118,65 +118,64 @@
         </section>
 
         <div class="dc-result-note" id="resultNote" aria-live="polite"></div>
-
-        <section id="trackedProgressCard" class="hub-card dc-card dc-tracked-card" aria-labelledby="trackedProgressTitle">
-          <div class="dc-card-heading">
-            <div class="dc-heading-icon"><i class="fas fa-chart-line"></i></div>
-            <div>
-              <h2 id="trackedProgressTitle">Progress yang Sedang Dipantau</h2>
-              <p>Snapshot berikutnya akan tersimpan otomatis saat file dihitung.</p>
-            </div>
-          </div>
-          <div class="dc-tracked-access" id="trackedAccess" hidden>
-            <div>
-              <strong>DC yang dipantau</strong>
-              <span>Pilih DC untuk membuka detail progress.</span>
-            </div>
-            <div class="dc-tracked-controls">
-              <select id="trackedDcSelect"></select>
-              <button id="openTrackedBtn" class="dc-btn dc-btn-secondary" type="button"><i class="fas fa-chart-line"></i> Buka Progress</button>
-            </div>
-          </div>
-          <div id="trackedEmpty" class="dc-empty" hidden>
-            <i class="fas fa-chart-line"></i>
-            <h3>Belum ada DC yang dipantau</h3>
-            <p>Gunakan tombol <strong>Progress</strong> pada Top 5 untuk mulai memantau DC.</p>
-          </div>
-        </section>
-
-        <section id="progressPanel" class="hub-card dc-card dc-progress-card" hidden aria-labelledby="progressTitle">
-          <div class="dc-progress-panel-head">
-            <div>
-              <div class="dc-progress-kicker">DC PROGRESS</div>
-              <h3 id="progressTitle">Progress DC</h3>
-            </div>
-            <button id="closeProgressBtn" class="dc-icon-btn" type="button" aria-label="Tutup progress"><i class="fas fa-xmark"></i></button>
-          </div>
-          <div id="progressSummary" class="dc-progress-summary"></div>
-          <div class="dc-progress-chart-card">
-            <div class="dc-progress-chart-head">
-              <div>
-                <strong>Trend Jumlah IP</strong>
-                <span>Setiap upload file menjadi satu snapshot.</span>
-              </div>
-            </div>
-            <div id="progressChart" class="dc-progress-chart" role="img" aria-label="Grafik progress DC"></div>
-          </div>
-          <div class="dc-table-wrap">
-            <table class="dc-table dc-history-table">
-              <thead><tr><th>Snapshot</th><th>Jumlah IP</th><th>Rate</th><th>Perubahan</th><th>% Perubahan</th><th>Top 5</th><th>Recorded At</th></tr></thead>
-              <tbody id="progressHistoryBody"></tbody>
-            </table>
-          </div>
-          <div id="progressEmpty" class="dc-empty" hidden>
-            <i class="fas fa-clock-rotate-left"></i>
-            <h3>Belum ada snapshot</h3>
-            <p>Snapshot akan tersimpan otomatis setiap kali file baru dihitung.</p>
-          </div>
-        </section>
-
       </section>
-    </div>
+
+      <section id="trackedProgressCard" class="hub-card dc-card dc-tracked-card" aria-labelledby="trackedProgressTitle">
+        <div class="dc-card-heading">
+          <div class="dc-heading-icon"><i class="fas fa-chart-line"></i></div>
+          <div>
+            <h2 id="trackedProgressTitle">Progress yang Sedang Dipantau</h2>
+            <p>Snapshot berikutnya akan tersimpan otomatis saat file dihitung.</p>
+          </div>
+        </div>
+        <div class="dc-tracked-access" id="trackedAccess" hidden>
+          <div>
+            <strong>DC yang dipantau</strong>
+            <span>Pilih DC untuk membuka detail progress.</span>
+          </div>
+          <div class="dc-tracked-controls">
+            <select id="trackedDcSelect"></select>
+            <button id="openTrackedBtn" class="dc-btn dc-btn-secondary" type="button"><i class="fas fa-chart-line"></i> Buka Progress</button>
+          </div>
+        </div>
+        <div id="trackedEmpty" class="dc-empty" hidden>
+          <i class="fas fa-chart-line"></i>
+          <h3>Belum ada DC yang dipantau</h3>
+          <p>Gunakan tombol <strong>Progress</strong> pada Top 5 untuk mulai memantau DC.</p>
+        </div>
+      </section>
+
+      <section id="progressPanel" class="hub-card dc-card dc-progress-card" hidden aria-labelledby="progressTitle">
+        <div class="dc-progress-panel-head">
+          <div>
+            <div class="dc-progress-kicker">DC PROGRESS</div>
+            <h3 id="progressTitle">Progress DC</h3>
+          </div>
+          <button id="closeProgressBtn" class="dc-icon-btn" type="button" aria-label="Tutup progress"><i class="fas fa-xmark"></i></button>
+        </div>
+        <div id="progressSummary" class="dc-progress-summary"></div>
+        <div class="dc-progress-chart-card">
+          <div class="dc-progress-chart-head">
+            <div>
+              <strong>Trend Jumlah IP</strong>
+              <span>Setiap upload file menjadi satu snapshot.</span>
+            </div>
+          </div>
+          <div id="progressChart" class="dc-progress-chart" role="img" aria-label="Grafik progress DC"></div>
+        </div>
+        <div class="dc-table-wrap">
+          <table class="dc-table dc-history-table">
+            <thead><tr><th>Snapshot</th><th>Jumlah IP</th><th>Rate</th><th>Perubahan</th><th>% Perubahan</th><th>Top 5</th><th>Recorded At</th></tr></thead>
+            <tbody id="progressHistoryBody"></tbody>
+          </table>
+        </div>
+        <div id="progressEmpty" class="dc-empty" hidden>
+          <i class="fas fa-clock-rotate-left"></i>
+          <h3>Belum ada snapshot</h3>
+          <p>Snapshot akan tersimpan otomatis setiap kali file baru dihitung.</p>
+        </div>
+      </section>
+
   </main>
 </div>
 
