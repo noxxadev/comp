@@ -500,3 +500,9 @@ Validation required:
 - The workflow nodes remain draggable on desktop/tablet and static on mobile, following the existing Tools Hub workflow behavior.
 - Added connector lines between the five workflow steps.
 - Updated `index-hub.css` only for the new workflow canvas height; existing workflow styling and behavior remain unchanged.
+
+
+## 2026-10-03 — DC High Zero Workflow step update
+- Renamed the second workflow step from **Otomatis Snapshot** to **Pilih Top 5 DC**.
+- Updated the step description and icon to reflect the actual workflow.
+- No feature logic or backend behavior was changed.
