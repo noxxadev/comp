@@ -420,6 +420,15 @@ Live validation required:
 - Confirm unmapped IP handling.
 - Confirm Light/Dark theme and mobile navigation.
 
+
+## 2026-10-03 — DC HighTemp Progress Viewer tanpa Upload
+- **Status:** IMPLEMENTED — VALIDATION PENDING
+- Kartu **Progress yang Sedang Dipantau** sekarang dimuat secara independen dari hasil upload.
+- Saat halaman dibuka, daftar DC yang sedang dipantau diambil dari penyimpanan progress yang sudah ada.
+- User dapat memilih DC dari dropdown dan membuka detail progress, termasuk summary, grafik, dan history snapshot, tanpa perlu meng-upload file baru.
+- Upload file tetap hanya digunakan untuk membuat/memperbarui snapshot progress; tidak diperlukan untuk melihat history yang sudah tersimpan.
+- Tidak ada perubahan pada perhitungan Top 5, baseline, snapshot, atau schema Google Sheets.
+
 ## 2026-10-03 — DC HighTemp Progress Tracking
 - **Status:** IMPLEMENTED — END-TO-END VALIDATION PENDING
 - Simplified the Progress model to use **automatic upload snapshots**; lifecycle, checkpoint, and period concepts were removed.
