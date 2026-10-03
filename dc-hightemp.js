@@ -75,6 +75,25 @@
 
   const formatNumber = (v) => Number(v || 0).toLocaleString('id-ID');
 
+  const formatDateTime = (value) => {
+    if (!value) return '-';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return String(value);
+    const parts = new Intl.DateTimeFormat('id-ID', {
+      timeZone: 'Asia/Jakarta',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    }).formatToParts(date);
+    const get = (type) => parts.find(part => part.type === type)?.value || '';
+    return get('day') + '/' + get('month') + '/' + get('year') + ' ' +
+      get('hour') + ':' + get('minute') + ':' + get('second') + ' WIB';
+  };
+
   const escapeHtml = (value) => String(value ?? '')
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
@@ -376,7 +395,7 @@
         '</td>' +
         '<td>' + (Number(item.percentChange || 0) > 0 ? '+' : '') + formatRate(item.percentChange) + '</td>' +
         '<td class="' + (item.isTop5 ? 'yes' : 'no') + '">' + (item.isTop5 ? 'Ya' : 'Tidak') + '</td>' +
-        '<td>' + escapeHtml(item.recordedAt || '-') + '</td>' +
+        '<td>' + escapeHtml(formatDateTime(item.recordedAt)) + '</td>' +
         '</tr>'
       ).join('');
 
@@ -497,7 +516,7 @@
       Number(item.countChange || 0),
       Number(item.percentChange || 0).toFixed(2) + '%',
       item.isTop5 ? 'Ya' : 'Tidak',
-      item.recordedAt || ''
+      formatDateTime(item.recordedAt)
     ]);
 
     const csvEscape = (value) => '"' + String(value ?? '').replace(/"/g, '""') + '"';
