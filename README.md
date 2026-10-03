@@ -352,6 +352,12 @@ Status: PLANNED
 - Live validation for a record beyond event 2,000 / around event 2,500 remains pending until the dataset is large enough.
 - No application code was changed during this regression audit.
 
+## 2026-10-03 — DC Progress XLSX export
+- Changed the DC Progress Download output from CSV to Excel `.xlsx`.
+- Export columns are exactly `Record At`, `Nama DC`, `Baseline`, `Perubahan`, and `Perubahan %`.
+- `Baseline` uses the saved baseline count for the selected DC; `Perubahan` and `Perubahan %` use the recorded progress history values.
+- `Perubahan %` is stored as a real Excel percentage value with `0.00%` formatting.
+
 ## 2026-10-03 — DC Progress save confirmation + download
 - Removed the non-functional Exit/Close control from the DC Progress card.
 - Fixed `Recorded At` display to Indonesian date/time format `DD/MM/YYYY HH:mm:ss WIB` using Asia/Jakarta timezone, including CSV downloads.
