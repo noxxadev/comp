@@ -19,6 +19,17 @@ The roadmap is executed phase-by-phase. Completed phases are not changed casuall
 - Kept the existing standalone tools and page behavior unchanged.
 - Group headers collapse to icon-only in the desktop collapsed sidebar and remain fully visible on mobile.
 
+## 2026-10-05 — Cleaning Count reset from latest uploaded dashboard
+- Added the agreed reset rule to IP Repeat Analyzer: the uploaded MinerPlus dashboard is treated as the latest/current location snapshot.
+- For each uploaded IP, the analyzer reads the location from the uploaded Excel file and resolves the current Serial Number from Machine List Current.
+- The analyzer reads existing Serial Numbers from **Work Items**. If the resolved SN is already present in Work Items and its location in the latest uploaded file is exactly `GBE_RC.A-1` or `GBE_RC.A-3`, the displayed **Cleaning Count is reset to 0**.
+- If the SN is not present in Work Items, or the latest uploaded location is not `GBE_RC.A-1` / `GBE_RC.A-3`, Cleaning Count continues to use completed events from **Work History**.
+- Uploading/processing an Excel file does **not** create a Work History record. Work History remains recorded only when the user manually saves the selected IP as a work event.
+- Existing Work History records are never deleted or modified by the reset rule; the reset is a derived display value for the current uploaded snapshot.
+- Added reading of the existing `getWorkItems` endpoint; no Google Apps Script backend schema or save logic was changed.
+- Updated IP Repeat cache-busting versions so the browser loads the new analyzer/resolver logic.
+- SN matching for the reset rule uses the dashboard/Work Items value as-is after trimming; no additional SN normalization was introduced for this rule.
+
 # Roadmap
 
 ## Phase 0 — Requirement Freeze
