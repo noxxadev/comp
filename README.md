@@ -525,3 +525,19 @@ Validation required:
 - Added **Record Data Snapshot** to explicitly record the current analyzed data for DCs that are already being monitored.
 - Existing Top 5 analysis and Progress baseline behavior remain unchanged.
 - No authentication, security, or unrelated feature logic was changed.
+## 2026-10-05 — Work Items mengikuti Serial Number terbaru
+- **Status:** IMPLEMENTED — DEPLOYMENT REQUIRED
+- Work Items sekarang menggunakan **Serial Number sebagai identitas utama** saat melakukan upsert jika Serial Number berhasil di-resolve dari Machine List Current.
+- Jika SN sudah ada di Work Items, baris tersebut diperbarui dengan **IP dan Nama DC terbaru**, sehingga perubahan IP/lokasi tidak membuat Work Item baru untuk mesin yang sama.
+- Jika SN belum ada, sistem tetap membuat Work Item baru seperti sebelumnya.
+- Jika SN tidak dapat di-resolve, mekanisme lama berbasis IP tetap digunakan sebagai fallback.
+- Work History tetap append-only dan tidak diubah/dihapus oleh perubahan ini.
+- Cleaning Count tetap dihitung dari Work History seperti mekanisme yang sudah berjalan.
+- Data Work Items lama yang sudah terlanjur memiliki duplicate SN **tidak dihapus otomatis**.
+- Authentication, security, frontend, dan fitur lain tidak diubah.
+
+Validation required:
+- Simpan SN yang sama dengan IP/lokasi lama, lalu simpan lagi setelah IP/lokasi berubah.
+- Pastikan Work Items tetap hanya memakai satu baris untuk SN tersebut dan IP/Nama DC menjadi data terbaru.
+- Pastikan Work History tetap membuat event baru setiap kali pekerjaan disimpan.
+- Pastikan Cleaning Count tetap mengikuti riwayat Work History.
