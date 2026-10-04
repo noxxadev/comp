@@ -355,7 +355,7 @@
       const location = getLocationFromRow(row);
       const ip = String(row.querySelector('.ip-cell')?.textContent ?? '').replace(/\s+/g, '').trim();
       const uploadLocation = ipRepeatUploadLocations.get(ip) || location;
-      const serial = locationMap.get(location) || '';
+      const serial = locationMap.get(uploadLocation) || locationMap.get(location) || '';
       const normalizedSerial = normalizeSerialNumber(serial);
       const historicalCount = serial ? (cleaningCounts.get(normalizedSerial) || 0) : 0;
       const count = serial ? getEffectiveCleaningCount(serial, historicalCount, uploadLocation) : 0;
@@ -434,13 +434,13 @@
         Object.entries(window.masterData).forEach(([rawIp, rawLocation]) => {
           const ip = String(rawIp || '').replace(/\s+/g, '').trim();
           const location = normalizeLocationId(rawLocation);
-          const serial = String(locationMap.get(location) || '').trim();
+          const uploadLocation = ipRepeatUploadLocations.get(ip) || location;
+          const serial = String(locationMap.get(uploadLocation) || locationMap.get(location) || '').trim();
           if (!ip || !serial) return;
 
           const normalizedSerial = normalizeSerialNumber(serial);
           serialByIp.set(ip, serial);
           const historicalCount = Number(cleaningCounts.get(normalizedSerial) || 0);
-          const uploadLocation = ipRepeatUploadLocations.get(ip) || location;
           cleaningCountByIp.set(ip, getEffectiveCleaningCount(serial, historicalCount, uploadLocation));
         });
       }
