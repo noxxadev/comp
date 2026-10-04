@@ -298,7 +298,8 @@
       if (state.selectedDc && !progressPanel.hidden) await renderProgress(state.selectedDc);
     } catch (e) {
       console.warn('Snapshot DC Progress gagal disimpan:', e);
-      showError('Hasil Top 5 berhasil dihitung, tetapi snapshot progress belum tersimpan: ' + e.message);
+      showError('Snapshot progress belum tersimpan: ' + e.message);
+      throw e;
     }
   };
 
