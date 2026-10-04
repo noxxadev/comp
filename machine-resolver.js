@@ -169,6 +169,20 @@
       .toUpperCase();
   }
 
+  async function loadWorkItems(limit = 5000) {
+    const config = window.CompGoogleSheetsConfig || { webAppUrl: '', requestKey: '' };
+    const baseUrl = String(config.webAppUrl || '').trim();
+    if (!baseUrl) throw new Error('Google Sheets belum dikonfigurasi.');
+    const params = new URLSearchParams({ action: 'getWorkItems', limit: String(limit) });
+    if (config.requestKey) params.set('requestKey', String(config.requestKey));
+    const response = await fetch(`${baseUrl}${baseUrl.includes('?') ? '&' : '?'}${params.toString()}`, { method: 'GET', cache: 'no-store', credentials: 'omit', redirect: 'follow' });
+    const text = await response.text();
+    let result;
+    try { result = JSON.parse(text); } catch (_) { throw new Error(`Google Apps Script mengembalikan response tidak valid (HTTP ${response.status}).`); }
+    if (!response.ok || !result?.ok || !Array.isArray(result.rows)) throw new Error(result?.error || `Gagal membaca Work Items (HTTP ${response.status}).`);
+    return result.rows;
+  }
+
   function buildCleaningCountMap(historyRows) {
     const counts = new Map();
 
@@ -303,6 +317,24 @@
     headerRow.appendChild(th);
   }
 
+  let ipRepeatUploadLocations = new Map();
+  let workItemSerials = new Set();
+
+  function setIpRepeatUploadLocations(locationsByIp) {
+    ipRepeatUploadLocations = locationsByIp instanceof Map ? new Map(locationsByIp) : new Map();
+  }
+
+  function isResetLocation(value) {
+    const location = String(value ?? '').trim().toUpperCase();
+    return location === 'GBE_RC.A-1' || location === 'GBE_RC.A-3';
+  }
+
+  function getEffectiveCleaningCount(serial, historicalCount, location) {
+    const cleanSerial = String(serial ?? '').trim();
+    if (cleanSerial && workItemSerials.has(cleanSerial) && isResetLocation(location)) return 0;
+    return historicalCount;
+  }
+
   function augmentIpRepeatTable(records, cleaningCounts = new Map(), lastCleaningMap = new Map()) {
     const table = document.querySelector('.repeat-table');
     if (!table) return;
@@ -321,9 +353,12 @@
       row.querySelector('[data-last-cleaning-cell="true"]')?.remove();
 
       const location = getLocationFromRow(row);
+      const ip = String(row.querySelector('.ip-cell')?.textContent ?? '').replace(/\s+/g, '').trim();
+      const uploadLocation = ipRepeatUploadLocations.get(ip) || location;
       const serial = locationMap.get(location) || '';
       const normalizedSerial = normalizeSerialNumber(serial);
-      const count = serial ? (cleaningCounts.get(normalizedSerial) || 0) : 0;
+      const historicalCount = serial ? (cleaningCounts.get(normalizedSerial) || 0) : 0;
+      const count = serial ? getEffectiveCleaningCount(serial, historicalCount, uploadLocation) : 0;
       const lastCleaning = serial ? lastCleaningMap.get(normalizedSerial) : null;
 
       const serialTd = document.createElement('td');
@@ -404,10 +439,9 @@
 
           const normalizedSerial = normalizeSerialNumber(serial);
           serialByIp.set(ip, serial);
-          cleaningCountByIp.set(
-            ip,
-            Number(cleaningCounts.get(normalizedSerial) || 0)
-          );
+          const historicalCount = Number(cleaningCounts.get(normalizedSerial) || 0);
+          const uploadLocation = ipRepeatUploadLocations.get(ip) || location;
+          cleaningCountByIp.set(ip, getEffectiveCleaningCount(serial, historicalCount, uploadLocation));
         });
       }
 
@@ -417,7 +451,8 @@
     };
 
     refreshCleaningDataHandler = async () => {
-      const historyRows = await loadCleaningHistory();
+      const [historyRows, workItemRows] = await Promise.all([loadCleaningHistory(), loadWorkItems()]);
+      workItemSerials = new Set(workItemRows.map(row => String(row?.serialNumber ?? '').trim()).filter(Boolean));
       cleaningCounts = buildCleaningCountMap(historyRows);
       lastCleaningMap = buildLastCleaningMap(historyRows);
       augmentIpRepeatTable(records, cleaningCounts, lastCleaningMap);
@@ -432,7 +467,8 @@
       augmentIpRepeatTable(records, cleaningCounts, lastCleaningMap);
 
       try {
-        const historyRows = await loadCleaningHistory();
+        const [historyRows, workItemRows] = await Promise.all([loadCleaningHistory(), loadWorkItems()]);
+        workItemSerials = new Set(workItemRows.map(row => String(row?.serialNumber ?? '').trim()).filter(Boolean));
         cleaningCounts = buildCleaningCountMap(historyRows);
         lastCleaningMap = buildLastCleaningMap(historyRows);
         augmentIpRepeatTable(records, cleaningCounts, lastCleaningMap);
@@ -487,6 +523,8 @@
     loadStoredRecords,
     loadCurrentRecords,
     loadCleaningHistory,
+    loadWorkItems,
+    setIpRepeatUploadLocations,
     buildCleaningCountMap,
     refreshCleaningData: async () => {
       if (typeof refreshCleaningDataHandler !== 'function') {
