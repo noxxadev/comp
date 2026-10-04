@@ -72,7 +72,7 @@
           </div>
         </div>
 
-        <div class="dc-snapshot-note"><strong>Mode Snapshot</strong><span>Setiap file yang di-upload menjadi satu snapshot. Rate dan Progress dihitung hanya dari data pada file tersebut.</span></div><div class="dc-actions">
+        <div class="dc-snapshot-note"><strong>Mode Snapshot</strong><span>Upload file hanya untuk analisis. Snapshot hanya direcord saat tombol Record Data Snapshot ditekan.</span></div><div class="dc-actions">
           <div id="fileStatus" class="dc-file-status" aria-live="polite">Belum ada data.</div>
           <div class="dc-action-buttons">
             <button id="processBtn" class="dc-btn dc-btn-primary" type="button" disabled>
@@ -125,7 +125,7 @@
           <div class="dc-heading-icon"><i class="fas fa-chart-line"></i></div>
           <div>
             <h2 id="trackedProgressTitle">Progress yang Sedang Dipantau</h2>
-            <p>Snapshot berikutnya akan tersimpan otomatis saat file dihitung.</p>
+            <p>Snapshot hanya tersimpan saat Anda menekan Record Data Snapshot setelah analisis.</p>
           </div>
         </div>
         <div class="dc-tracked-access" id="trackedAccess" hidden>
@@ -163,7 +163,7 @@
           <div class="dc-progress-chart-head">
             <div>
               <strong>Trend Jumlah IP</strong>
-              <span>Setiap upload file menjadi satu snapshot.</span>
+              <span>Snapshot hanya tercatat saat data direcord.</span>
             </div>
           </div>
           <div id="progressChart" class="dc-progress-chart" role="img" aria-label="Grafik progress DC"></div>
@@ -177,7 +177,7 @@
         <div id="progressEmpty" class="dc-empty" hidden>
           <i class="fas fa-clock-rotate-left"></i>
           <h3>Belum ada snapshot</h3>
-          <p>Snapshot akan tersimpan otomatis setiap kali file baru dihitung.</p>
+          <p>Gunakan Record Data Snapshot setelah analisis jika data ini memang ingin dimasukkan ke history.</p>
         </div>
       </section>
 
@@ -186,7 +186,7 @@
 
 <script src="https://cdn.sheetjs.com/xlsx-0.18.5/package/dist/xlsx.full.min.js"></script>
 <script src="master-data.js"></script>
-<script src="dc-hightemp.js?v=20261003-7"></script>
+<script src="dc-hightemp.js?v=20261003-8"></script>
 <script src="theme-toggle.js"></script>
 </body>
 </html>
