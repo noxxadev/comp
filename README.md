@@ -506,3 +506,11 @@ Validation required:
 - Renamed the second workflow step from **Otomatis Snapshot** to **Pilih Top 5 DC**.
 - Updated the step description and icon to reflect the actual workflow.
 - No feature logic or backend behavior was changed.
+
+
+## 2026-10-03 — DC High Zero snapshot recording control
+- Separated file analysis from snapshot recording.
+- Uploading and calculating a file no longer automatically writes progress snapshots.
+- Added **Record Data Snapshot** to explicitly record the current analyzed data for DCs that are already being monitored.
+- Existing Top 5 analysis and Progress baseline behavior remain unchanged.
+- No authentication, security, or unrelated feature logic was changed.
