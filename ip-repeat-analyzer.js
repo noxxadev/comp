@@ -69,6 +69,15 @@
     });
   }
 
+  function findLocationColumn(headers) {
+    const normalized = headers.map(header => String(header ?? '').replace(/\uFEFF/g, '').replace(/\s+/g, '').toLowerCase());
+    return normalized.findIndex(header => ['locationid', 'location', 'locationname'].includes(header));
+  }
+
+  function normalizeUploadedLocation(value) {
+    return String(value ?? '').replace(/\s+/g, ' ').trim().toUpperCase();
+  }
+
   function findIpColumn(headers) {
     const normalized = headers.map(header => String(header ?? '').replace(/\uFEFF/g, '').replace(/\s+/g, '').toLowerCase());
     let index = normalized.findIndex(header => header === 'ip');
@@ -444,6 +453,7 @@
     const fragment = document.createDocumentFragment();
     state.filteredRows.forEach((row, index) => {
       const tr = document.createElement('tr');
+      tr.dataset.ipRepeatLocation = String(row.location || '').trim();
       if (state.selectedIps.has(row.ip)) tr.classList.add('is-selected');
 
       const selection = document.createElement('td');
@@ -534,6 +544,7 @@
 
       let headerRowIndex = -1;
       let ipColumnIndex = -1;
+      let locationColumnIndex = -1;
 
       const scanLimit = Math.min(matrix.length, 20);
       for (let i = 0; i < scanLimit; i++) {
@@ -541,6 +552,7 @@
         if (candidate !== -1) {
           headerRowIndex = i;
           ipColumnIndex = candidate;
+          locationColumnIndex = findLocationColumn(matrix[i] || []);
           break;
         }
       }
@@ -552,6 +564,7 @@
       state.sourceColumn = String(matrix[headerRowIndex][ipColumnIndex] ?? 'IP').trim() || 'IP';
 
       const counts = new Map();
+      const locationsByIp = new Map();
       let validIpRows = 0;
 
       for (let i = headerRowIndex + 1; i < matrix.length; i++) {
@@ -560,6 +573,10 @@
 
         validIpRows++;
         counts.set(ip, (counts.get(ip) || 0) + 1);
+        if (locationColumnIndex !== -1) {
+          const location = normalizeUploadedLocation(matrix[i]?.[locationColumnIndex]);
+          if (location && !locationsByIp.has(ip)) locationsByIp.set(ip, location);
+        }
       }
 
       state.rows = Array.from(counts, ([ip, repeat]) => {
@@ -570,6 +587,7 @@
         return {
           ip,
           repeat,
+          location: locationsByIp.get(ip) || normalizeUploadedLocation(masterName),
           name: masterName || 'Bukan IP DC',
           isMaster: Boolean(masterName),
           zone: getZoneFromMasterName(masterName)
@@ -577,6 +595,9 @@
       });
 
       state.selectedIps.clear();
+      if (window.CompMachineResolver?.setIpRepeatUploadLocations) {
+        window.CompMachineResolver.setIpRepeatUploadLocations(locationsByIp);
+      }
       state.sourceFileName = state.file.name;
       state.loadedAt = '';
       state.dataSource = 'local';
