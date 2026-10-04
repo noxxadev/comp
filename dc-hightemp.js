@@ -19,6 +19,7 @@
   const fileName = $('fileName');
   const fileStatus = $('fileStatus');
   const processBtn = $('processBtn');
+  const recordSnapshotBtn = $('recordSnapshotBtn');
   const clearBtn = $('clearBtn');
   const errorMessage = $('errorMessage');
   const loading = $('loading');
@@ -567,6 +568,25 @@
 
   uploadArea.addEventListener('drop', (event) => handleFile(event.dataTransfer?.files?.[0]));
 
+  recordSnapshotBtn.addEventListener('click', async () => {
+    if (!state.file || !state.progressRows.length || !state.allRanking.length) return;
+
+    showError('');
+    recordSnapshotBtn.disabled = true;
+    recordSnapshotBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Merekam Snapshot...';
+
+    try {
+      await persistTrackedSnapshot();
+      progressSaveStatus.innerHTML = '<i class="fas fa-circle-check"></i> Data snapshot berhasil direcord untuk DC yang sedang dipantau.';
+      progressSaveStatus.classList.add('visible');
+    } catch (e) {
+      showError(e.message || 'Gagal merecord snapshot.');
+    } finally {
+      recordSnapshotBtn.disabled = false;
+      recordSnapshotBtn.innerHTML = '<i class="fas fa-camera"></i> Record Data Snapshot';
+    }
+  });
+
   processBtn.addEventListener('click', async () => {
     if (!state.file || state.ipColumn < 0) return;
 
@@ -577,7 +597,7 @@
     try {
       calculateSnapshot();
       await loadProgress();
-      await persistTrackedSnapshot();
+      recordSnapshotBtn.disabled = !(state.file && state.progressRows.length && state.allRanking.length);
     } catch (e) {
       showError(e.message || 'Gagal menghitung snapshot.');
     } finally {
@@ -597,6 +617,7 @@
     fileName.textContent = 'Belum ada file dipilih';
     fileStatus.textContent = 'Belum ada data.';
     processBtn.disabled = true;
+    recordSnapshotBtn.disabled = true;
     resultsSection.hidden = true;
     progressPanel.hidden = true;
     state.progressHistory = [];
