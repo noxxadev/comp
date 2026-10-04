@@ -771,10 +771,13 @@ function upsertWorkItems(items) {
     const cleaningCountBySerial = loadCleaningCountsBySerial();
     const data = sheet.getDataRange().getValues();
     const rowByIp = new Map();
+    const rowBySerial = new Map();
 
     for (let r = 1; r < data.length; r++) {
       const ip = String(data[r][0] || '').trim();
+      const serialNumber = String(data[r][4] || '').trim();
       if (ip) rowByIp.set(ip, r + 1);
+      if (serialNumber) rowBySerial.set(normalizeSerialKey(serialNumber), r + 1);
     }
 
     const now = new Date();
@@ -802,14 +805,23 @@ function upsertWorkItems(items) {
         ip, name, zone, repeat, serialNumber, cleaningCount,
         engineerId, engineerName, status, now, note
       ]];
-      const existingRow = rowByIp.get(ip);
+      // Prefer Serial Number as the Work Item identity so a machine keeps
+      // one current row even when its IP/location changes. Fall back to IP
+      // for records whose Serial Number cannot be resolved.
+      const normalizedSerial = serialNumber ? normalizeSerialKey(serialNumber) : '';
+      const existingRow = normalizedSerial
+        ? (rowBySerial.get(normalizedSerial) || rowByIp.get(ip))
+        : rowByIp.get(ip);
 
       if (existingRow) {
         sheet.getRange(existingRow, 1, 1, HEADERS.length).setValues(values);
+        rowByIp.set(ip, existingRow);
+        if (normalizedSerial) rowBySerial.set(normalizedSerial, existingRow);
       } else {
         const newRow = sheet.getLastRow() + 1;
         sheet.getRange(newRow, 1, 1, HEADERS.length).setValues(values);
         rowByIp.set(ip, newRow);
+        if (normalizedSerial) rowBySerial.set(normalizedSerial, newRow);
       }
       saved++;
     });
