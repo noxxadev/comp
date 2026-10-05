@@ -1,5 +1,12 @@
 # COMP — Roadmap & Change Log
 
+## 2026-10-06 — Machine List workshop location exception
+- Updated Machine List validation so `GBE_RC.A-1` and `GBE_RC.A-3` may contain multiple Serial Numbers because both are workshop/repair locations.
+- Location IDs other than those two remain protected by the existing duplicate-location validation.
+- Duplicate Serial Numbers remain rejected.
+- No changes were made to Cleaning Count calculation, Work History storage, or Work Item identity logic.
+- The Google Apps Script source in `google-apps-script/Code.gs` must be deployed as a new version before the live endpoint uses this validation change.
+
 ## 2026-10-03 — Collapsible sidebar groups
 - Added hide/show behavior to the **Pool Vs Dashboard** and **IP Repeat** sidebar groups.
 - Clicking a group header collapses or expands only that group's child pages.
