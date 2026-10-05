@@ -40,6 +40,10 @@
   const trackedAccess = $('trackedAccess');
   const trackedDcSelect = $('trackedDcSelect');
   const openTrackedBtn = $('openTrackedBtn');
+  const targetDcSearch = $('targetDcSearch');
+  const targetDcList = $('targetDcList');
+  const recordTargetBtn = $('recordTargetBtn');
+  const targetDcInfo = $('targetDcInfo');
 
   const getConfig = () => window.CompGoogleSheetsConfig || { webAppUrl: '', requestKey: '' };
 
@@ -251,6 +255,7 @@
 
     resultsSection.hidden = false;
     updateTrackedAccess();
+    updateTargetDc();
   };
 
   const getRankMap = () => {
@@ -300,6 +305,99 @@
       console.warn('Snapshot DC Progress gagal disimpan:', e);
       showError('Snapshot progress belum tersimpan: ' + e.message);
       throw e;
+    }
+  };
+
+  const getTargetDcItem = () => {
+    const value = String(targetDcSearch?.value || '').trim();
+    if (!value) return null;
+    return state.allRanking.find(item => item.name.toLowerCase() === value.toLowerCase()) || null;
+  };
+
+  const updateTargetDc = () => {
+    if (!targetDcSearch || !recordTargetBtn) return;
+    const hasData = Boolean(state.file && state.allRanking.length);
+    targetDcSearch.disabled = !hasData;
+
+    targetDcList.innerHTML = state.allRanking.map(item =>
+      '<option value="' + escapeHtml(item.name) + '"></option>'
+    ).join('');
+
+    const item = getTargetDcItem();
+    if (!item) {
+      targetDcInfo.textContent = hasData ? 'Pilih atau ketik Nama DC yang ingin direcord.' : '';
+      recordTargetBtn.disabled = true;
+      return;
+    }
+
+    const tracked = state.progressRows.some(row =>
+      String(row.dcName || '').toLowerCase() === item.name.toLowerCase()
+    );
+
+    const rank = state.allRanking.findIndex(row => row.name === item.name) + 1;
+    targetDcInfo.textContent =
+      item.name + ' • ' + formatNumber(item.count) + ' IP • ' +
+      formatRate(item.rate) + ' • Rank #' + rank +
+      (tracked ? ' • Sedang dipantau' : ' • Belum masuk Progress');
+
+    recordTargetBtn.disabled = !tracked;
+  };
+
+  const recordTargetSnapshot = async () => {
+    const item = getTargetDcItem();
+    if (!item || !state.file?.name || !state.total) return;
+
+    const progress = state.progressRows.find(row =>
+      String(row.dcName || '').toLowerCase() === item.name.toLowerCase()
+    );
+    if (!progress) {
+      showError(item.name + ' belum ada di daftar Progress. Tambahkan DC ke Progress terlebih dahulu.');
+      return;
+    }
+
+    const rank = state.allRanking.findIndex(row => row.name === item.name) + 1;
+    const isTop5 = rank > 0 && rank <= 5;
+
+    showError('');
+    recordTargetBtn.disabled = true;
+    recordTargetBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Merekam...';
+
+    try {
+      const result = await apiPost({
+        action: 'saveDcProgressSnapshot',
+        sourceFile: state.file.name,
+        snapshotId: makeSnapshotId(),
+        total: state.total,
+        items: [{
+          dcName: progress.dcName,
+          count: item.count,
+          total: state.total,
+          rate: item.rate,
+          rank,
+          isTop5
+        }]
+      });
+
+      await loadProgress();
+      await renderProgress(progress.dcName);
+
+      if (result.saved) {
+        targetDcInfo.textContent = item.name + ' • ' + formatNumber(item.count) + ' IP • ' +
+          formatRate(item.rate) + ' • Rank #' + rank + ' • Data berhasil direcord.';
+        progressSaveStatus.innerHTML = '<i class="fas fa-circle-check"></i> Data ' +
+          escapeHtml(item.name) + ' berhasil direcord.';
+        progressSaveStatus.classList.add('visible');
+      } else {
+        targetDcInfo.textContent = item.name + ' • Data pada file ini sudah pernah direcord.';
+        progressSaveStatus.innerHTML = '<i class="fas fa-circle-check"></i> Data ' +
+          escapeHtml(item.name) + ' sudah pernah direcord dari file ini.';
+        progressSaveStatus.classList.add('visible');
+      }
+    } catch (e) {
+      showError('Data ' + item.name + ' belum tersimpan: ' + e.message);
+    } finally {
+      updateTargetDc();
+      recordTargetBtn.innerHTML = '<i class="fas fa-camera"></i> Record Data DC';
     }
   };
 
@@ -505,6 +603,9 @@
 
   openTrackedBtn.addEventListener('click', () => openProgress(trackedDcSelect.value));
 
+  targetDcSearch.addEventListener('input', updateTargetDc);
+  recordTargetBtn.addEventListener('click', recordTargetSnapshot);
+
   downloadProgressBtn.addEventListener('click', () => {
     const dcName = state.selectedDc || 'DC';
     const history = Array.isArray(state.progressHistory) ? state.progressHistory : [];
@@ -621,6 +722,10 @@
     recordSnapshotBtn.disabled = true;
     resultsSection.hidden = true;
     progressPanel.hidden = true;
+    targetDcSearch.value = '';
+    targetDcInfo.textContent = '';
+    targetDcSearch.disabled = true;
+    recordTargetBtn.disabled = true;
     state.progressHistory = [];
     progressSaveStatus.classList.remove('visible');
     progressSaveStatus.textContent = '';
