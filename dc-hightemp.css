@@ -138,3 +138,14 @@
   .dc-progress-panel-head{align-items:flex-start}
   .dc-progress-panel-actions .dc-btn{min-height:36px;padding:0 11px}
 }
+
+/* Targeted DC snapshot */
+.dc-target-record{margin-top:14px;padding:14px 20px;border-top:1px solid var(--border);background:var(--surface-2);display:grid;grid-template-columns:minmax(0,1fr) minmax(420px,1.4fr);gap:12px;align-items:center}
+.dc-target-record strong{display:block;font-size:12px}
+.dc-target-record span{display:block;margin-top:3px;color:var(--muted);font-size:10px;line-height:1.4}
+.dc-target-controls{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px}
+.dc-target-controls input{min-height:40px;padding:0 11px;border:1px solid var(--border);border-radius:10px;background:var(--surface);color:var(--text);font:500 12px Inter,system-ui,sans-serif;outline:none}
+.dc-target-controls input:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(37,99,235,.10)}
+.dc-target-info{grid-column:2;color:var(--muted);font-size:10px;min-height:14px}
+@media(max-width:780px){.dc-target-record{grid-template-columns:1fr}.dc-target-controls{grid-template-columns:1fr}.dc-target-info{grid-column:auto}}
+@media(max-width:480px){.dc-target-record{padding:14px}.dc-target-controls{grid-template-columns:1fr}}
