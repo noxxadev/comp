@@ -1061,6 +1061,7 @@ function replaceMachineList(records, sourceFileName) {
   const normalizedRows = [];
   const seenSerialNumbers = new Set();
   const seenLocations = new Set();
+  const WORKSHOP_LOCATIONS = new Set(['GBE_RC.A-1', 'GBE_RC.A-3']);
 
   for (let i = 0; i < rows.length; i++) {
     const record = rows[i] || {};
@@ -1074,7 +1075,10 @@ function replaceMachineList(records, sourceFileName) {
     const serialKey = serialNumber.toUpperCase();
     const locationKey = locationId.toUpperCase();
     if (seenSerialNumbers.has(serialKey)) return jsonResponse({ ok: false, error: `Serial Number duplikat pada record ke-${i + 1}: ${serialNumber}. Dataset lama tidak diubah.` });
-    if (seenLocations.has(locationKey)) return jsonResponse({ ok: false, error: `Location ID duplikat pada record ke-${i + 1}: ${locationId}. Dataset lama tidak diubah.` });
+    // Workshop boleh menampung banyak SN. Lokasi normal tetap wajib unik.
+    if (!WORKSHOP_LOCATIONS.has(locationKey) && seenLocations.has(locationKey)) {
+      return jsonResponse({ ok: false, error: `Location ID duplikat pada record ke-${i + 1}: ${locationId}. Dataset lama tidak diubah.` });
+    }
     seenSerialNumbers.add(serialKey);
     seenLocations.add(locationKey);
     normalizedRows.push([serialNumber, locationId, installedDate, uninstalledDate]);
