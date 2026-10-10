@@ -58,7 +58,8 @@ function doPost(e) {
     }
     if (action === 'saveWork') {
       const user = csiRequireUser_(payload.session);
-      const rows = csiSaveWork_(payload, user);\n      return csiJson_({ ok: true, saved: rows.length, rows });
+      const rows = csiSaveWork_(payload, user);
+      return csiJson_({ ok: true, saved: rows.length, rows });
     }
     return csiJson_({ ok: false, error: 'Unsupported action.' });
   } catch (error) {
