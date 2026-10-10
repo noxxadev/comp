@@ -37,94 +37,100 @@ const CSI_SUMMARY_HEADERS = [
 
 function doGet(e) {
   const action = String(e && e.parameter && e.parameter.action || 'health').trim();
-  if (action !== 'health') {
-    return csiJson_({ ok: false, error: 'Unsupported action.' });
-  }
-
-  return csiJson_({
-    ok: true,
-    service: 'COMP CSI',
-    configured: Boolean(csiGetProperty_('CSI_SPREADSHEET_ID') && csiGetProperty_('COMP_WEB_APP_URL'))
-  });
+  if (action !== 'health') return csiJson_({ ok: false, error: 'Unsupported action.' });
+  return csiJson_({ ok: true, service: 'COMP CSI', configured: Boolean(csiGetProperty_('CSI_SPREADSHEET_ID') && csiGetProperty_('COMP_WEB_APP_URL')) });
 }
 
 function doPost(e) {
   try {
     const payload = JSON.parse(e && e.postData && e.postData.contents || '{}');
     const action = String(payload.action || '').trim();
-
     if (action === 'validateAccess') {
       const user = csiRequireUser_(payload.session);
-      return csiJson_({
-        ok: true,
-        authenticated: true,
-        authorized: true,
-        user: { id: user.id, username: user.username, role: user.role }
-      });
+      return csiJson_({ ok: true, authenticated: true, authorized: true, user: { id: user.id, username: user.username, role: user.role } });
     }
-
     if (action === 'getHistory') {
       csiRequireUser_(payload.session);
       const sheet = csiGetSheet_(CSI_HISTORY_SHEET, CSI_HISTORY_HEADERS);
       const lastRow = sheet.getLastRow();
-      const rows = lastRow > 1
-        ? sheet.getRange(2, 1, lastRow - 1, CSI_HISTORY_HEADERS.length).getValues()
-        : [];
+      const rows = lastRow > 1 ? sheet.getRange(2, 1, lastRow - 1, CSI_HISTORY_HEADERS.length).getValues() : [];
       return csiJson_({ ok: true, rows: rows.map(csiSerializeRow_) });
     }
-
+    if (action === 'saveWork') {
+      const user = csiRequireUser_(payload.session);
+      const rows = csiSaveWork_(payload, user);\n      return csiJson_({ ok: true, saved: rows.length, rows });
+    }
     return csiJson_({ ok: false, error: 'Unsupported action.' });
   } catch (error) {
     console.error(error);
-    return csiJson_({
-      ok: false,
-      error: error && error.message ? error.message : 'CSI request failed.'
-    });
+    return csiJson_({ ok: false, error: error && error.message ? error.message : 'CSI request failed.' });
   }
 }
 
-/**
- * Run manually from the Apps Script editor after setting CSI_SPREADSHEET_ID.
- * Creates/initializes only CSI-owned tabs; does not touch COMP sheets.
- */
 function setupCsiSheets() {
   const spreadsheetId = csiGetProperty_('CSI_SPREADSHEET_ID');
-  if (!spreadsheetId) {
-    throw new Error('Set CSI_SPREADSHEET_ID in Script Properties first.');
-  }
-
-  // Log the exact destination so setup can be verified in Apps Script > Executions.
-  // The full URL is available only in the private execution log, not in GitHub.
+  if (!spreadsheetId) throw new Error('Set CSI_SPREADSHEET_ID in Script Properties first.');
   console.log('[CSI setup] Opening spreadsheet ID suffix: ' + spreadsheetId.slice(-6));
-
   const spreadsheet = SpreadsheetApp.openById(spreadsheetId);
   console.log('[CSI setup] Destination spreadsheet: ' + spreadsheet.getName());
   console.log('[CSI setup] Destination URL: ' + spreadsheet.getUrl());
-
   const historySheet = csiEnsureSheet_(spreadsheet, CSI_HISTORY_SHEET, CSI_HISTORY_HEADERS);
   const summarySheet = csiEnsureSheet_(spreadsheet, CSI_SUMMARY_SHEET, CSI_SUMMARY_HEADERS);
   SpreadsheetApp.flush();
-
-  // Re-read the workbook after flush and verify that both tabs and headers exist.
   const actualSheetNames = spreadsheet.getSheets().map(sheet => sheet.getName());
-  const historyVerified = spreadsheet.getSheetByName(CSI_HISTORY_SHEET);
-  const summaryVerified = spreadsheet.getSheetByName(CSI_SUMMARY_SHEET);
-  if (!historyVerified || !summaryVerified) {
-    throw new Error(
-      'Setup belum lengkap. Tab yang terbaca: ' + actualSheetNames.join(', ')
-    );
-  }
-
-  const result = {
-    ok: true,
-    spreadsheetName: spreadsheet.getName(),
-    spreadsheetUrl: spreadsheet.getUrl(),
-    sheets: actualSheetNames,
-    historyHeaderColumns: historySheet.getLastColumn(),
-    summaryHeaderColumns: summarySheet.getLastColumn()
-  };
+  if (!spreadsheet.getSheetByName(CSI_HISTORY_SHEET) || !spreadsheet.getSheetByName(CSI_SUMMARY_SHEET)) throw new Error('Setup belum lengkap. Tab yang terbaca: ' + actualSheetNames.join(', '));
+  const result = { ok: true, spreadsheetName: spreadsheet.getName(), spreadsheetUrl: spreadsheet.getUrl(), sheets: actualSheetNames, historyHeaderColumns: historySheet.getLastColumn(), summaryHeaderColumns: summarySheet.getLastColumn() };
   console.log('[CSI setup] Verification result: ' + JSON.stringify(result));
   return result;
+}
+
+function csiSaveWork_(payload, user) {
+  const dcName = String(payload.dcName || '').trim().toUpperCase();
+  const workDateText = String(payload.workDate || '').trim();
+  const frameSide = String(payload.frameSide || '').trim();
+  const jobType = String(payload.jobType || '').trim();
+  const notes = String(payload.notes || '').trim().slice(0, 500);
+  if (!/^GBE\\.[A-F]\\d+[A-Z]?$/.test(dcName)) throw new Error('Nama DC tidak valid. Pilih DC dari daftar master data.');
+  if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(workDateText)) throw new Error('Tanggal pekerjaan tidak valid.');
+  const workDate = new Date(workDateText + 'T12:00:00');
+  if (isNaN(workDate.getTime()) || Utilities.formatDate(workDate, Session.getScriptTimeZone(), 'yyyy-MM-dd') !== workDateText) throw new Error('Tanggal pekerjaan tidak valid.');
+  const sides = frameSide === 'Both' ? ['A', 'B'] : [frameSide];
+  if (!sides.every(side => side === 'A' || side === 'B')) throw new Error('Pilih sisi A, sisi B, atau kedua sisi.');
+  if (jobType !== 'Cleaning' && jobType !== 'Replace') throw new Error('Jenis pekerjaan harus Cleaning atau Replace.');
+  if (workDate.getTime() > new Date().getTime() + 86400000) throw new Error('Tanggal pekerjaan tidak boleh di masa depan.');
+  const lock = LockService.getScriptLock();
+  lock.waitLock(15000);
+  try {
+    const history = csiGetSheet_(CSI_HISTORY_SHEET, CSI_HISTORY_HEADERS);
+    const now = new Date();
+    const rows = sides.map(side => [Utilities.getUuid(), now, workDate, dcName, side, jobType, user.id, user.username, notes]);
+    history.getRange(history.getLastRow() + 1, 1, rows.length, CSI_HISTORY_HEADERS.length).setValues(rows);
+    sides.forEach(side => csiRefreshSummary_(dcName, side));
+    SpreadsheetApp.flush();
+    return rows.map(row => csiSerializeRow_(row));
+  } finally { lock.releaseLock(); }
+}
+
+function csiRefreshSummary_(dcName, side) {
+  const spreadsheet = SpreadsheetApp.openById(csiGetProperty_('CSI_SPREADSHEET_ID'));
+  const history = csiEnsureSheet_(spreadsheet, CSI_HISTORY_SHEET, CSI_HISTORY_HEADERS);
+  const summary = csiEnsureSheet_(spreadsheet, CSI_SUMMARY_SHEET, CSI_SUMMARY_HEADERS);
+  const lastRow = history.getLastRow();
+  const values = lastRow > 1 ? history.getRange(2, 1, lastRow - 1, CSI_HISTORY_HEADERS.length).getValues() : [];
+  const matching = values.filter(row => String(row[3]) === dcName && String(row[4]) === side)
+    .sort((a,b) => new Date(b[2]).getTime() - new Date(a[2]).getTime() || new Date(b[1]).getTime() - new Date(a[1]).getTime());
+  if (!matching.length) return;
+  const latest = matching[0];
+  const date = latest[2] instanceof Date ? latest[2] : new Date(latest[2]);
+  const tz = Session.getScriptTimeZone();
+  const todayText = Utilities.formatDate(new Date(), tz, 'yyyy-MM-dd');
+  const dateText = Utilities.formatDate(date, tz, 'yyyy-MM-dd');
+  const ageDays = Math.max(0, Math.floor((Date.parse(todayText + 'T00:00:00Z') - Date.parse(dateText + 'T00:00:00Z')) / 86400000));
+  const summaryRow = [dcName, side, date, String(latest[5]), ageDays, ageDays >= 30 ? 'Perlu Cleaning' : 'Normal', new Date()];
+  const existing = summary.getLastRow() > 1 ? summary.getRange(2, 1, summary.getLastRow() - 1, 2).getDisplayValues() : [];
+  const index = existing.findIndex(row => row[0] === dcName && row[1] === side);
+  if (index >= 0) summary.getRange(index + 2, 1, 1, summaryRow.length).setValues([summaryRow]);
+  else summary.getRange(summary.getLastRow() + 1, 1, 1, summaryRow.length).setValues([summaryRow]);
 }
 
 function csiRequireUser_(sessionToken) {
