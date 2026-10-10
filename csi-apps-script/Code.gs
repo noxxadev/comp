@@ -91,8 +91,8 @@ function csiSaveWork_(payload, user) {
   const frameSide = String(payload.frameSide || '').trim();
   const jobType = String(payload.jobType || '').trim();
   const notes = String(payload.notes || '').trim().slice(0, 500);
-  if (!/^GBE\\.[A-F]\\d+[A-Z]?$/.test(dcName)) throw new Error('Nama DC tidak valid. Pilih DC dari daftar master data.');
-  if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(workDateText)) throw new Error('Tanggal pekerjaan tidak valid.');
+  if (!/^GBE\.[A-F]\d+[A-Z]?$/.test(dcName)) throw new Error('Nama DC tidak valid. Pilih DC dari daftar master data.');
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(workDateText)) throw new Error('Tanggal pekerjaan tidak valid.');
   const workDate = new Date(workDateText + 'T12:00:00');
   if (isNaN(workDate.getTime()) || Utilities.formatDate(workDate, Session.getScriptTimeZone(), 'yyyy-MM-dd') !== workDateText) throw new Error('Tanggal pekerjaan tidak valid.');
   const sides = frameSide === 'Both' ? ['A', 'B'] : [frameSide];
