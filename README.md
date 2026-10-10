@@ -1,5 +1,23 @@
 # COMP — Roadmap & Change Log
 
+## 2026-10-11 — CSI foundation (Phase 1)
+- Created an isolated CSI Apps Script backend at `csi-apps-script/Code.gs`; the existing `google-apps-script/Code.gs` remains untouched.
+- Added `csi-google-sheets-config.js` as a public endpoint configuration template. The CSI Web App URL is filled in only after deployment.
+- CSI backend configuration uses Apps Script Script Properties: `CSI_SPREADSHEET_ID` and `COMP_WEB_APP_URL`. Neither spreadsheet ID nor private configuration is stored in GitHub.
+- Added manual setup function `setupCsiSheets()` to initialize the dedicated `CSI Work History` and `CSI Summary` tabs without modifying COMP sheets.
+- Added server-side CSI role enforcement: every protected request validates the submitted session against the existing COMP authentication Web App and requires an active user with role `CSI`. Browser-side role checks alone are not treated as security.
+- Added protected `validateAccess` and read-only `getHistory` actions as backend foundation.
+- No changes to `auth.js`, `page-guard.js`, the existing COMP Apps Script backend, DC HighTemp logic, or existing spreadsheets.
+- Status: source added to branch `feature/csi-foundation`; deployment and live validation have not yet been performed. Save/write action and the CSI page are planned for later phases.
+
+### CSI Phase 1 setup checklist
+1. Create a separate, initially empty Google Spreadsheet for CSI.
+2. In the new Apps Script project, add Script Properties `CSI_SPREADSHEET_ID` (the new spreadsheet ID) and `COMP_WEB_APP_URL` (the active COMP Web App `/exec` URL).
+3. Run `setupCsiSheets()` manually and approve the requested Google permissions.
+4. Deploy the CSI project as a Web App executing as the owner. The endpoint must be reachable by signed-in COMP users; every protected action still validates the session and CSI role server-side.
+5. Copy the new deployment's `/exec` URL into `csi-google-sheets-config.js` only when the CSI frontend is added.
+6. Test with one active CSI-role account and one account with a different role. The second account must be denied by the backend.
+
 ## 2026-10-06 — Machine List workshop location exception
 - Updated Machine List validation so `GBE_RC.A-1` and `GBE_RC.A-3` may contain multiple Serial Numbers because both are workshop/repair locations.
 - Location IDs other than those two remain protected by the existing duplicate-location validation.
