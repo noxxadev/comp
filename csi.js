@@ -160,6 +160,22 @@
   $('clearFiltersBtn').addEventListener('click', () => {
     $('filterDc').value = ''; $('filterJob').value = ''; $('filterFrom').value = ''; $('filterTo').value = ''; $('filterOld').checked = false; renderHistory();
   });
+  const menuToggle = $('csiMenuToggle');
+  const sidebar = $('sidebar');
+  const sidebarOverlay = $('sidebarOverlay');
+  function closeSidebar() {
+    sidebar?.classList.remove('active');
+    sidebarOverlay?.classList.remove('active');
+    menuToggle?.setAttribute('aria-expanded', 'false');
+  }
+  menuToggle?.addEventListener('click', () => {
+    const isOpen = sidebar?.classList.toggle('active') || false;
+    sidebarOverlay?.classList.toggle('active', isOpen);
+    menuToggle.setAttribute('aria-expanded', String(isOpen));
+  });
+  sidebarOverlay?.addEventListener('click', closeSidebar);
+  sidebar?.querySelectorAll('.hub-nav a').forEach(link => link.addEventListener('click', closeSidebar));
+
   init().catch(error => {
     showNotice(error.message || 'CSI gagal dimuat.', 'error');
     historyBody.innerHTML = '<tr><td colspan="7" class="csi-empty">Gagal memuat data. Periksa konfigurasi dan deployment CSI.</td></tr>';
