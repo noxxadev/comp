@@ -93,16 +93,38 @@ function setupCsiSheets() {
     throw new Error('Set CSI_SPREADSHEET_ID in Script Properties first.');
   }
 
+  // Log the exact destination so setup can be verified in Apps Script > Executions.
+  // The full URL is available only in the private execution log, not in GitHub.
+  console.log('[CSI setup] Opening spreadsheet ID suffix: ' + spreadsheetId.slice(-6));
+
   const spreadsheet = SpreadsheetApp.openById(spreadsheetId);
-  csiEnsureSheet_(spreadsheet, CSI_HISTORY_SHEET, CSI_HISTORY_HEADERS);
-  csiEnsureSheet_(spreadsheet, CSI_SUMMARY_SHEET, CSI_SUMMARY_HEADERS);
+  console.log('[CSI setup] Destination spreadsheet: ' + spreadsheet.getName());
+  console.log('[CSI setup] Destination URL: ' + spreadsheet.getUrl());
+
+  const historySheet = csiEnsureSheet_(spreadsheet, CSI_HISTORY_SHEET, CSI_HISTORY_HEADERS);
+  const summarySheet = csiEnsureSheet_(spreadsheet, CSI_SUMMARY_SHEET, CSI_SUMMARY_HEADERS);
   SpreadsheetApp.flush();
 
-  return {
+  // Re-read the workbook after flush and verify that both tabs and headers exist.
+  const actualSheetNames = spreadsheet.getSheets().map(sheet => sheet.getName());
+  const historyVerified = spreadsheet.getSheetByName(CSI_HISTORY_SHEET);
+  const summaryVerified = spreadsheet.getSheetByName(CSI_SUMMARY_SHEET);
+  if (!historyVerified || !summaryVerified) {
+    throw new Error(
+      'Setup belum lengkap. Tab yang terbaca: ' + actualSheetNames.join(', ')
+    );
+  }
+
+  const result = {
     ok: true,
     spreadsheetName: spreadsheet.getName(),
-    sheets: [CSI_HISTORY_SHEET, CSI_SUMMARY_SHEET]
+    spreadsheetUrl: spreadsheet.getUrl(),
+    sheets: actualSheetNames,
+    historyHeaderColumns: historySheet.getLastColumn(),
+    summaryHeaderColumns: summarySheet.getLastColumn()
   };
+  console.log('[CSI setup] Verification result: ' + JSON.stringify(result));
+  return result;
 }
 
 function csiRequireUser_(sessionToken) {
