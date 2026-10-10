@@ -7,6 +7,13 @@
 - No existing COMP backend, spreadsheet, authentication, or DC HighTemp logic was changed.
 - Validation status: source updated on `feature/csi-foundation`; user must copy the updated file into the CSI Apps Script project and run setup again.
 
+## 2026-10-11 — CSI work form and history API (Phase 2 in progress)
+- Extended the isolated CSI Apps Script backend with the protected `saveWork` action. Every write revalidates the COMP session and requires an active account with role `CSI`.
+- Saving a single side creates one history row. Selecting both sides creates two rows (A and B) so each side can have its own cleaning age.
+- Each saved event refreshes the corresponding DC + frame-side row in `CSI Summary`; age is calculated from the latest work date, with `Perlu Cleaning` at 30 days or more.
+- Added server-side validation for DC format, work date, side, job type, future dates, notes length, and concurrent writes.
+- Existing COMP Apps Script and DC HighTemp logic remain untouched. Frontend page creation and live tests are still pending.
+
 ## 2026-10-11 — CSI foundation (Phase 1)
 - Created an isolated CSI Apps Script backend at `csi-apps-script/Code.gs`; the existing `google-apps-script/Code.gs` remains untouched.
 - Added `csi-google-sheets-config.js` as a public endpoint configuration template. The CSI Web App URL is filled in only after deployment.
