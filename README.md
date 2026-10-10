@@ -1,3 +1,11 @@
+## 2026-10-11 — CSI page frontend (Phase 2 in progress)
+- Added `csi.html`, `csi.css`, and `csi.js` on `feature/csi-foundation`; the existing `main` branch and legacy COMP backend remain unchanged.
+- The page includes a Cleaning/Replace work form, DC options derived from `master-data.js`, A/B/Both side selection, work date, optional notes, history table, date/DC/job filters, and a filter for frame sides whose latest Cleaning is at least 30 days old.
+- Frontend access calls the CSI backend's `validateAccess` action, while each backend request independently verifies the COMP session and CSI role. Saving Both is intended to create two separate history records.
+- Fixed the CSI backend's DC/date validation regex patterns while auditing the integration.
+- Validation so far: JavaScript and Apps Script source passed a JavaScript syntax parse check. Live browser/save/history/role tests have not yet been run.
+- Remaining before user setup: review the page visually and test the API end-to-end; then update `csi-google-sheets-config.js` with the user's deployed CSI `/exec` URL (never commit spreadsheet IDs or private settings). Do not merge into `main` until tested.
+
 # COMP — Roadmap & Change Log
 
 ## 2026-10-11 — CSI setup diagnostics
