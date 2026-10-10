@@ -1,3 +1,10 @@
+## 2026-10-11 — CSI frontend and cleaning-age refinement
+- Added `csi.html`, `csi.css`, and `csi.js` on `feature/csi-foundation`, including a responsive page and mobile sidebar toggle. The `main` branch and existing COMP authentication backend were not changed.
+- The page supports work date, DC from `master-data.js`, side A/B/Both, Cleaning/Replace, notes, history, DC/date/job filters, and a filter for sides whose most recent Cleaning is at least 30 days old.
+- Backend summary keeps the latest work date/type, but computes age/status from the latest `Cleaning` record. If no Cleaning record exists, status is `Belum ada data cleaning`.
+- Static JavaScript syntax checks passed for `csi.js` and `csi-apps-script/Code.gs`. Browser UI, live API, access-denial, and real spreadsheet save/read tests remain outstanding.
+- Before live testing, the deployed CSI Web App URL must be set in `csi-google-sheets-config.js`; do not commit spreadsheet IDs or private configuration. Keep changes on `feature/csi-foundation` until validation is complete.
+
 ## 2026-10-11 — CSI page frontend (Phase 2 in progress)
 - Added `csi.html`, `csi.css`, and `csi.js` on `feature/csi-foundation`; the existing `main` branch and legacy COMP backend remain unchanged.
 - The page includes a Cleaning/Replace work form, DC options derived from `master-data.js`, A/B/Both side selection, work date, optional notes, history table, date/DC/job filters, and a filter for frame sides whose latest Cleaning is at least 30 days old.
