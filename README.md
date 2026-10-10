@@ -1,3 +1,7 @@
+## 2026-10-11 — CSI frontend routing
+- Added a `CSI Cleaning` link to the COMP hub sidebar on `feature/csi-foundation`; the existing `main` branch is unchanged.
+- Added cache-busting version strings to CSI page assets to reduce stale-browser-cache issues during testing.
+
 ## 2026-10-11 — CSI frontend and cleaning-age refinement
 - Added `csi.html`, `csi.css`, and `csi.js` on `feature/csi-foundation`, including a responsive page and mobile sidebar toggle. The `main` branch and existing COMP authentication backend were not changed.
 - The page supports work date, DC from `master-data.js`, side A/B/Both, Cleaning/Replace, notes, history, DC/date/job filters, and a filter for sides whose most recent Cleaning is at least 30 days old.
