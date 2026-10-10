@@ -1,5 +1,12 @@
 # COMP — Roadmap & Change Log
 
+## 2026-10-11 — CSI setup diagnostics
+- Improved `setupCsiSheets()` to log the destination spreadsheet name and URL in the private Apps Script execution log.
+- After creating the two CSI tabs, the function re-reads the spreadsheet and verifies both tabs exist; it throws a clear error if verification fails.
+- The returned/logged result includes the actual tab list and header-column counts, making it easier to distinguish a wrong spreadsheet ID from a tab-creation issue.
+- No existing COMP backend, spreadsheet, authentication, or DC HighTemp logic was changed.
+- Validation status: source updated on `feature/csi-foundation`; user must copy the updated file into the CSI Apps Script project and run setup again.
+
 ## 2026-10-11 — CSI foundation (Phase 1)
 - Created an isolated CSI Apps Script backend at `csi-apps-script/Code.gs`; the existing `google-apps-script/Code.gs` remains untouched.
 - Added `csi-google-sheets-config.js` as a public endpoint configuration template. The CSI Web App URL is filled in only after deployment.
