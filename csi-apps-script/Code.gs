@@ -121,13 +121,20 @@ function csiRefreshSummary_(dcName, side) {
   const matching = values.filter(row => String(row[3]) === dcName && String(row[4]) === side)
     .sort((a,b) => new Date(b[2]).getTime() - new Date(a[2]).getTime() || new Date(b[1]).getTime() - new Date(a[1]).getTime());
   if (!matching.length) return;
-  const latest = matching[0];
-  const date = latest[2] instanceof Date ? latest[2] : new Date(latest[2]);
-  const tz = Session.getScriptTimeZone();
-  const todayText = Utilities.formatDate(new Date(), tz, 'yyyy-MM-dd');
-  const dateText = Utilities.formatDate(date, tz, 'yyyy-MM-dd');
-  const ageDays = Math.max(0, Math.floor((Date.parse(todayText + 'T00:00:00Z') - Date.parse(dateText + 'T00:00:00Z')) / 86400000));
-  const summaryRow = [dcName, side, date, String(latest[5]), ageDays, ageDays >= 30 ? 'Perlu Cleaning' : 'Normal', new Date()];
+
+  const latestWork = matching[0];
+  const latestCleaning = matching.find(row => String(row[5]) === 'Cleaning') || null;
+  const now = new Date();
+  let ageDays = '';
+  let status = 'Belum ada data cleaning';
+  if (latestCleaning) {
+    const tz = Session.getScriptTimeZone();
+    const todayText = Utilities.formatDate(now, tz, 'yyyy-MM-dd');
+    const dateText = Utilities.formatDate(latestCleaning[2] instanceof Date ? latestCleaning[2] : new Date(latestCleaning[2]), tz, 'yyyy-MM-dd');
+    ageDays = Math.max(0, Math.floor((Date.parse(todayText + 'T00:00:00Z') - Date.parse(dateText + 'T00:00:00Z')) / 86400000));
+    status = ageDays >= 30 ? 'Perlu Cleaning' : 'Normal';
+  }
+  const summaryRow = [dcName, side, latestWork[2], String(latestWork[5]), ageDays, status, now];
   const existing = summary.getLastRow() > 1 ? summary.getRange(2, 1, summary.getLastRow() - 1, 2).getDisplayValues() : [];
   const index = existing.findIndex(row => row[0] === dcName && row[1] === side);
   if (index >= 0) summary.getRange(index + 2, 1, 1, summaryRow.length).setValues([summaryRow]);
