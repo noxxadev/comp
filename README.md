@@ -1,4 +1,37 @@
+## 2026-10-11 — CSI frontend routing
+- Added a `CSI Cleaning` link to the COMP hub sidebar on `feature/csi-foundation`; the existing `main` branch is unchanged.
+- Added cache-busting version strings to CSI page assets to reduce stale-browser-cache issues during testing.
+
+## 2026-10-11 — CSI frontend and cleaning-age refinement
+- Added `csi.html`, `csi.css`, and `csi.js` on `feature/csi-foundation`, including a responsive page and mobile sidebar toggle. The `main` branch and existing COMP authentication backend were not changed.
+- The page supports work date, DC from `master-data.js`, side A/B/Both, Cleaning/Replace, notes, history, DC/date/job filters, and a filter for sides whose most recent Cleaning is at least 30 days old.
+- Backend summary keeps the latest work date/type, but computes age/status from the latest `Cleaning` record. If no Cleaning record exists, status is `Belum ada data cleaning`.
+- Static JavaScript syntax checks passed for `csi.js` and `csi-apps-script/Code.gs`. Browser UI, live API, access-denial, and real spreadsheet save/read tests remain outstanding.
+- Before live testing, the deployed CSI Web App URL must be set in `csi-google-sheets-config.js`; do not commit spreadsheet IDs or private configuration. Keep changes on `feature/csi-foundation` until validation is complete.
+
+## 2026-10-11 — CSI page frontend (Phase 2 in progress)
+- Added `csi.html`, `csi.css`, and `csi.js` on `feature/csi-foundation`; the existing `main` branch and legacy COMP backend remain unchanged.
+- The page includes a Cleaning/Replace work form, DC options derived from `master-data.js`, A/B/Both side selection, work date, optional notes, history table, date/DC/job filters, and a filter for frame sides whose latest Cleaning is at least 30 days old.
+- Frontend access calls the CSI backend's `validateAccess` action, while each backend request independently verifies the COMP session and CSI role. Saving Both is intended to create two separate history records.
+- Fixed the CSI backend's DC/date validation regex patterns while auditing the integration.
+- Validation so far: JavaScript and Apps Script source passed a JavaScript syntax parse check. Live browser/save/history/role tests have not yet been run.
+- Remaining before user setup: review the page visually and test the API end-to-end; then update `csi-google-sheets-config.js` with the user's deployed CSI `/exec` URL (never commit spreadsheet IDs or private settings). Do not merge into `main` until tested.
+
 # COMP — Roadmap & Change Log
+
+## 2026-10-11 — CSI setup diagnostics
+- Improved `setupCsiSheets()` to log the destination spreadsheet name and URL in the private Apps Script execution log.
+- After creating the two CSI tabs, the function re-reads the spreadsheet and verifies both tabs exist; it throws a clear error if verification fails.
+- The returned/logged result includes the actual tab list and header-column counts, making it easier to distinguish a wrong spreadsheet ID from a tab-creation issue.
+- No existing COMP backend, spreadsheet, authentication, or DC HighTemp logic was changed.
+- Validation status: source updated on `feature/csi-foundation`; user must copy the updated file into the CSI Apps Script project and run setup again.
+
+## 2026-10-11 — CSI work form and history API (Phase 2 in progress)
+- Extended the isolated CSI Apps Script backend with the protected `saveWork` action. Every write revalidates the COMP session and requires an active account with role `CSI`.
+- Saving a single side creates one history row. Selecting both sides creates two rows (A and B) so each side can have its own cleaning age.
+- Each saved event refreshes the corresponding DC + frame-side row in `CSI Summary`; age is calculated from the latest work date, with `Perlu Cleaning` at 30 days or more.
+- Added server-side validation for DC format, work date, side, job type, future dates, notes length, and concurrent writes.
+- Existing COMP Apps Script and DC HighTemp logic remain untouched. Frontend page creation and live tests are still pending.
 
 ## 2026-10-11 — CSI foundation (Phase 1)
 - Created an isolated CSI Apps Script backend at `csi-apps-script/Code.gs`; the existing `google-apps-script/Code.gs` remains untouched.
