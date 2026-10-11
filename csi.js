@@ -19,7 +19,7 @@
   function configUrl() {
     const url = String(window.CompCsiConfig?.webAppUrl || '').trim();
     if (!url) throw new Error('URL Web App CSI belum diatur di csi-google-sheets-config.js.');
-    if (!/^https:\/\/script\.google\.com\/macros\/s\/[^/]+\/exec(?:\?.*)?$/.test(url)) throw new Error('URL Web App CSI tidak valid. Gunakan URL deployment yang berakhiran /exec.');
+    if (!/^https:\/\/script\.google\.com\/(?:a\/macros\/[^/]+\/s|macros\/s)\/[^/]+\/exec(?:\?.*)?$/.test(url)) throw new Error('URL Web App CSI tidak valid. Gunakan URL deployment yang berakhiran /exec.');
     return url;
   }
   async function request(action, payload = {}) {
