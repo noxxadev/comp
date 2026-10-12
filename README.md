@@ -607,3 +607,8 @@ Validation required:
 - Tombol menu pada layar kecil CSI menggunakan kelas dan ID toggle bersama.
 - Hanya perubahan tampilan dan navigasi; login, validasi role, penyimpanan CSI, filter riwayat, serta koneksi Google Sheets tidak diubah.
 - **Validasi browser masih diperlukan:** cek sidebar desktop/mobile, pilihan Light/Dark, akses halaman CSI, dan simpan satu catatan uji.
+
+## 2026-10-13 — Posisi tombol Reset Filter CSI
+- Tombol **Reset Filter** diposisikan di sisi paling kanan pada baris filter untuk desktop dan tetap di sisi kanan pada layout tablet/mobile.
+- Hanya tata letak CSS yang diubah; fungsi reset filter dan logika CSI tidak diubah.
+- Validasi visual browser masih diperlukan.
