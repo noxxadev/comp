@@ -27,6 +27,7 @@
       ]
     },
     { href: 'dc-hightemp.html', icon: 'fa-temperature-high', label: 'DC HighTemp' },
+    { href: 'csi.html', icon: 'fa-broom', label: 'CSI Cleaning' },
     { href: 'theme-preview.html', icon: 'fa-palette', label: 'Theme Preview' }
   ];
 
