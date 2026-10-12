@@ -138,8 +138,8 @@
   }
   function parsePersonnelNames(value) {
     const seen = new Set();
-    return String(value || '').split(/[,;\\n]+/)
-      .map(name => name.trim().replace(/\\s+/g, ' '))
+    return String(value || '').split(/[,;\n]+/)
+      .map(name => name.trim().replace(/\s+/g, ' '))
       .filter(name => {
         const key = name.toLocaleLowerCase('id-ID');
         if (!name || seen.has(key)) return false;
