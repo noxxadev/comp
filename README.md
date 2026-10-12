@@ -599,3 +599,11 @@ Validation required:
 - Pastikan Work Items tetap hanya memakai satu baris untuk SN tersebut dan IP/Nama DC menjadi data terbaru.
 - Pastikan Work History tetap membuat event baru setiap kali pekerjaan disimpan.
 - Pastikan Cleaning Count tetap mengikuti riwayat Work History.
+
+
+## 2026-10-13 — CSI mengikuti tema dan sidebar bersama COMP
+- CSI memuat `theme-toggle.js` agar tema Light/Dark dan navigasi sidebar menggunakan sistem bersama COMP.
+- Menambahkan **CSI Cleaning** ke navigasi sidebar bersama, termasuk penanda menu aktif.
+- Tombol menu pada layar kecil CSI menggunakan kelas dan ID toggle bersama.
+- Hanya perubahan tampilan dan navigasi; login, validasi role, penyimpanan CSI, filter riwayat, serta koneksi Google Sheets tidak diubah.
+- **Validasi browser masih diperlukan:** cek sidebar desktop/mobile, pilihan Light/Dark, akses halaman CSI, dan simpan satu catatan uji.
