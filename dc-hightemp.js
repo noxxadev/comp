@@ -91,7 +91,7 @@
     (Array.isArray(result.rows) ? result.rows : []).forEach(row => {
       // CSI stores names such as "GBE.A1"; HighTemp ranking uses the mapped suffix "A1".
       const rawName = String(row.dcName || '').trim().toUpperCase();
-      const key = rawName.replace(/^GBE\\./, '');
+      const key = rawName.replace(/^GBE\./, '');
       if (!key) return;
       if (!state.csiSummaryByDc.has(key)) state.csiSummaryByDc.set(key, {});
       state.csiSummaryByDc.get(key)[String(row.frameSide || '').trim().toUpperCase()] = row;
