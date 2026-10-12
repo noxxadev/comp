@@ -14,7 +14,7 @@
   <script src="page-guard.js"></script>
   <script src="master-data.js"></script>
   <script src="csi-google-sheets-config.js?v=20261011-csi"></script>
-  <link rel="stylesheet" href="csi.css?v=20261011-csi">
+  <link rel="stylesheet" href="csi.css?v=20261013-whatsapp-report">
 </head>
 <body>
 <div class="hub-shell">
@@ -45,6 +45,18 @@
         <div class="csi-form-actions"><button id="saveWorkBtn" class="csi-primary-btn" type="submit"><i class="fas fa-floppy-disk"></i> Simpan Pekerjaan</button><span class="csi-help">Jika memilih kedua sisi, sistem menyimpan dua catatan terpisah.</span></div>
       </form>
     </section>
+    <section class="csi-card" id="csiReportCard">
+      <div class="csi-card-head"><div><span class="csi-section-tag">LAPORAN HARIAN</span><h2>Report CSI WhatsApp</h2></div><i class="fab fa-whatsapp csi-card-icon"></i></div>
+      <div class="csi-report-form">
+        <label>Tanggal laporan (default hari ini; bisa diubah)<input id="reportDate" type="date" required></label>
+        <div class="csi-report-actions">
+          <button id="generateReportBtn" class="csi-primary-btn" type="button"><i class="fas fa-file-lines"></i> Buat Report WhatsApp</button>
+          <button id="sendReportBtn" class="csi-secondary-btn" type="button" disabled><i class="fab fa-whatsapp"></i> Kirim via WhatsApp</button>
+        </div>
+        <label>Pratinjau pesan<textarea id="reportPreview" rows="12" readonly placeholder="Pilih tanggal, lalu klik Buat Report WhatsApp."></textarea></label>
+        <p class="csi-help">Laporan hanya memuat pekerjaan yang tersimpan pada tanggal terpilih. Tombol WhatsApp membuka pesan yang sudah disiapkan; pilih grup tujuan dan tekan Kirim di WhatsApp.</p>
+      </div>
+    </section>
     <section class="csi-card">
       <div class="csi-card-head"><div><span class="csi-section-tag">DATA TERSIMPAN</span><h2>Riwayat Pekerjaan CSI</h2></div><button id="refreshHistoryBtn" class="csi-secondary-btn" type="button"><i class="fas fa-rotate"></i> Muat Ulang</button></div>
       <div class="csi-filters">
@@ -61,6 +73,6 @@
     <footer class="csi-footer">COMP Tools · CSI Work History</footer>
   </main>
 </div>
-<script src="csi.js?v=20261013-dc-name"></script>
+<script src="csi.js?v=20261013-whatsapp-report"></script>
 </body>
 </html>
