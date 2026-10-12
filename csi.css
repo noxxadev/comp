@@ -25,6 +25,7 @@
 .csi-filters{display:grid;grid-template-columns:repeat(4,minmax(130px,1fr));gap:12px;align-items:end}
 .csi-old-filter{grid-column:span 2;display:flex!important;flex-direction:row!important;align-items:center;gap:9px!important;min-height:39px;font-weight:600!important}
 .csi-old-filter input{accent-color:var(--csi-accent);width:16px;height:16px}
+.csi-filters #clearFiltersBtn{grid-column:4;justify-self:end}
 .csi-table-summary{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:20px 0 10px;color:var(--muted,#778195);font-size:11px}
 .csi-status-legend{display:inline-flex;align-items:center;gap:6px}.csi-status-legend i{width:7px;height:7px;border-radius:50%;background:#e9a23b}
 .csi-table-wrap{overflow:auto;border:1px solid var(--border,#e4e8ef);border-radius:10px}
@@ -32,7 +33,7 @@
 .csi-table th,.csi-table td{padding:12px 13px;border-bottom:1px solid var(--border,#e8ebf0);vertical-align:top}.csi-table tbody tr:last-child td{border-bottom:0}.csi-table tbody tr:hover{background:rgba(127,127,127,.035)}
 .csi-pill{display:inline-flex;padding:4px 7px;border-radius:6px;font-size:10px;font-weight:800;white-space:nowrap}.csi-pill.cleaning{background:rgba(22,160,133,.12);color:#087f68}.csi-pill.replace{background:rgba(59,130,246,.12);color:#2563eb}.csi-pill.old{background:rgba(234,158,45,.15);color:#a56600}.csi-pill.normal{background:rgba(100,116,139,.12);color:var(--muted,#64748b)}
 .csi-empty{text-align:center;color:var(--muted,#778195);padding:28px!important}.csi-footer{text-align:center;color:var(--muted,#8992a2);font-size:10px;padding:2px 0 8px}
-@media(max-width:900px){.csi-filters{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:900px){.csi-filters{grid-template-columns:repeat(2,minmax(0,1fr))}.csi-filters #clearFiltersBtn{grid-column:2;justify-self:end}}
 @media(max-width:600px){.csi-main{padding:58px 16px 30px;gap:15px}.csi-page-head{gap:10px}.csi-page-head h1{font-size:24px}.csi-subtitle{font-size:12px}.csi-role-chip{padding:7px 9px;font-size:10px}.csi-form{grid-template-columns:1fr}.csi-notes-field,.csi-form-actions{grid-column:1}.csi-filters{grid-template-columns:1fr 1fr}.csi-old-filter{grid-column:1/-1}.csi-card-head{align-items:flex-start}.csi-card-head h2{font-size:17px}.csi-table-summary{align-items:flex-start;flex-direction:column}}
 
 .csi-menu-toggle{display:none;align-items:center;justify-content:center;width:38px;height:38px;border:1px solid var(--border,#dfe4ec);border-radius:9px;background:var(--surface,#fff);color:var(--text,var(--text-primary,#263247));font-size:15px;cursor:pointer}
