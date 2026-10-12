@@ -83,11 +83,6 @@
       location.replace('csi.html');
       return;
     }
-    if (role !== 'CSI' && currentPage === 'csi.html') {
-      location.replace('index.html');
-      return;
-    }
-
     showPage();
     console.debug(`[COMP PERF] page-guard total: ${(performance.now() - perfStart).toFixed(0)} ms (${location.pathname})`);
     if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',addLogoutUI,{once:true});else addLogoutUI();
