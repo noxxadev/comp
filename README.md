@@ -1,3 +1,10 @@
+## 2026-10-13 — DC HighTemp: perbaikan pembacaan lokasi Mesin Cleaning
+- **Status:** IMPLEMENTED — DEPLOYMENT & LIVE VALIDATION PENDING.
+- Memperbaiki regex backend agar normalisasi spasi dan pembacaan lokasi `GBE.A1...` berjalan benar. Regex sebelumnya memakai escape berlebih sehingga lokasi mesin tidak dikenali dan ringkasan per DC dapat kosong.
+- Mesin tetap dihitung berdasarkan SN unik di **Machine List Current**; riwayat cleaning tetap berasal dari **Work History** berstatus `Selesai`. Lokasi workshop `GBE_RC.A-1` dan `GBE_RC.A-3` tetap dikecualikan.
+- Tidak mengecualikan mesin hanya karena kolom `Uninstalled Date` terisi, sesuai keputusan audit sebelumnya.
+- **Wajib:** deploy versi terbaru `google-apps-script/Code.gs` pada Apps Script yang dipakai aplikasi; perubahan GitHub saja tidak memperbarui deployment.
+
 ## 2026-10-13 — DC HighTemp: perbaikan urutan kolom
 - **Status:** IMPLEMENTED — LIVE VALIDATION PENDING.
 - Memperbaiki urutan sel pada tabel TOP 5 agar kolom **Mesin Cleaning** menampilkan ringkasan jumlah mesin yang sudah cleaning dan **Detail Celldeck** menampilkan ringkasan CSI sisi A/B.
@@ -7,11 +14,11 @@
 ## 2026-10-13 — DC HighTemp: jumlah mesin yang sudah cleaning
 - **Status:** IMPLEMENTED — LIVE VALIDATION PENDING.
 - Menambahkan kolom **Mesin Cleaning** pada TOP 5 DC HIGHTEMP dengan format jumlah SN unik yang memiliki riwayat Selesai dibanding total SN unik aktif per DC, beserta persentase cleaning.
-- Total mesin bersumber dari **Machine List Current**; SN yang sama hanya dihitung satu kali. Record dengan tanggal Uninstalled terisi dan lokasi workshop `GBE_RC.A-1` / `GBE_RC.A-3` dikecualikan dari daftar mesin aktif per DC.
+- Total mesin bersumber dari **Machine List Current**; SN yang sama hanya dihitung satu kali. Lokasi workshop `GBE_RC.A-1` / `GBE_RC.A-3` dikecualikan dari daftar mesin per DC; kolom Uninstalled Date tidak menjadi filter.
 - Backend memindai seluruh Work History dan membuat himpunan SN unik berstatus `Selesai`, bukan memakai jumlah event atau batas hasil API 5.000 baris.
 - Jika API ringkasan gagal, kolom menampilkan status data tidak tersedia; tidak memakai cache lokal yang berpotensi kedaluwarsa.
 - Tidak mengubah ranking IP, Rate, Detail Celldeck CSI, snapshot, baseline, Progress, atau struktur Google Sheets.
-- **Validasi live diperlukan:** deploy versi baru `google-apps-script/Code.gs`, lalu uji TOP 5 dengan beberapa SN yang memiliki beberapa riwayat Selesai, SN tanpa riwayat, mesin yang sudah uninstalled, serta lokasi workshop.
+- **Validasi live diperlukan:** deploy versi baru `google-apps-script/Code.gs`, lalu uji TOP 5 dengan beberapa SN yang memiliki beberapa riwayat Selesai, SN tanpa riwayat, mesin dengan Uninstalled Date terisi, serta lokasi workshop.
 
 ## 2026-10-13 — CSI WhatsApp Report: Nama Personil
 - **Status:** IMPLEMENTED — LIVE VALIDATION PENDING.
