@@ -276,23 +276,25 @@
       showNotice('Template Daily Report menyediakan maksimal empat nama personil.', 'error');
       return;
     }
+    const win = window.open('', '_blank');
+    if (!win) {
+      showNotice('Pop-up diblokir browser. Izinkan pop-up untuk halaman ini lalu coba lagi.', 'error');
+      return;
+    }
     button.disabled = true;
     try {
       await loadHistory();
       const report = buildPrintableReport(dateValue, siteName, $('printSiteAddress').value.trim(), personnel, $('printPicName').value.trim(), $('printLeaderName').value.trim());
       if (!report) {
+        win.close();
         showNotice('Tidak ada pekerjaan CSI tersimpan pada tanggal laporan yang dipilih.', 'error');
         return;
       }
-      const win = window.open('', '_blank');
-      if (!win) {
-        showNotice('Pop-up diblokir browser. Izinkan pop-up untuk halaman ini lalu coba lagi.', 'error');
-        return;
-      }
-      win.document.open(); win.document.write(report); win.document.close();
       win.onload = () => { win.focus(); win.print(); };
+      win.document.open(); win.document.write(report); win.document.close();
       showNotice('Daily Report siap dicetak. Periksa centang treatment lalu cetak atau simpan sebagai PDF.', 'success');
     } catch (error) {
+      win.close();
       showNotice('Gagal menyiapkan Daily Report: ' + (error.message || 'periksa koneksi CSI.'), 'error');
     } finally { button.disabled = false; }
   }
