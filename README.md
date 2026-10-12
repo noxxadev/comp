@@ -1,3 +1,9 @@
+## 2026-10-13 — DC HighTemp: perbaikan urutan kolom
+- **Status:** IMPLEMENTED — LIVE VALIDATION PENDING.
+- Memperbaiki urutan sel pada tabel TOP 5 agar kolom **Mesin Cleaning** menampilkan ringkasan jumlah mesin yang sudah cleaning dan **Detail Celldeck** menampilkan ringkasan CSI sisi A/B.
+- Perubahan hanya pada urutan rendering kolom di `dc-hightemp.js`; tidak mengubah sumber data, perhitungan Top 5, snapshot, baseline, Progress, atau struktur Google Sheets.
+- Validasi browser diperlukan setelah hard refresh untuk memastikan data muncul di kolom yang benar.
+
 ## 2026-10-13 — DC HighTemp: jumlah mesin yang sudah cleaning
 - **Status:** IMPLEMENTED — LIVE VALIDATION PENDING.
 - Menambahkan kolom **Mesin Cleaning** pada TOP 5 DC HIGHTEMP dengan format jumlah SN unik yang memiliki riwayat Selesai dibanding total SN unik aktif per DC, beserta persentase cleaning.
