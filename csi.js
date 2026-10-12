@@ -145,7 +145,7 @@
     rows.forEach(row => {
       const key = JSON.stringify([
         String(row[2] || '').slice(0, 10),
-        String(row[3] || '').trim().toUpperCase().replace(/^GBE\\./, ''),
+        String(row[3] || '').trim().toUpperCase().replace(/^GBE\./, ''),
         String(row[4] || '').trim(),
         String(row[5] || '').trim(),
         String(row[8] || '').trim()
