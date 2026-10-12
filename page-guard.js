@@ -62,13 +62,32 @@
       if(!session){showPage();return;}
       if(!window.CompAuth?.validateSession){clearAuth();showPage();return;}
       const result=await window.CompAuth.validateSession();
-      if(result?.authenticated) goHome(); else showPage();
+      if (result?.authenticated) {
+        const role = String(result.user?.role || '').trim().toUpperCase();
+        location.replace(role === 'CSI' ? 'csi.html' : 'index.html');
+      } else {
+        showPage();
+      }
       return;
     }
     if(!session){goLogin();return;}
     if(!window.CompAuth?.validateSession){clearAuth();goLogin();return;}
     const result=await window.CompAuth.validateSession();
     if(!result?.authenticated){clearAuth();goLogin();return;}
+
+    // Enforce the role's allowed page area before revealing protected content.
+    // CSI accounts are restricted to csi.html; other roles cannot open CSI directly.
+    const currentPage = location.pathname.split('/').pop() || 'index.html';
+    const role = String(result.user?.role || '').trim().toUpperCase();
+    if (role === 'CSI' && currentPage !== 'csi.html') {
+      location.replace('csi.html');
+      return;
+    }
+    if (role !== 'CSI' && currentPage === 'csi.html') {
+      location.replace('index.html');
+      return;
+    }
+
     showPage();
     console.debug(`[COMP PERF] page-guard total: ${(performance.now() - perfStart).toFixed(0)} ms (${location.pathname})`);
     if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',addLogoutUI,{once:true});else addLogoutUI();
