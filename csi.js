@@ -137,17 +137,27 @@
     busy = true; saveButton.disabled = true;
     saveButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan...';
     showNotice('', '');
+    let savedCount = 0;
     try {
       const result = await request('saveWork', {
         dcName: $('dcName').value, workDate: $('workDate').value,
         frameSide: $('frameSide').value, jobType: $('jobType').value,
         notes: $('notes').value.trim()
       });
-      await loadHistory();
+      savedCount = Number(result.saved) || 0;
       $('notes').value = '';
-      showNotice('Berhasil menyimpan ' + result.saved + ' catatan pekerjaan.', 'success');
-    } catch (error) { showNotice(error.message || 'Gagal menyimpan pekerjaan.', 'error'); }
-    finally {
+    } catch (error) {
+      showNotice(error.message || 'Gagal menyimpan pekerjaan.', 'error');
+      busy = false; saveButton.disabled = false;
+      saveButton.innerHTML = '<i class="fas fa-floppy-disk"></i> Simpan Pekerjaan';
+      return;
+    }
+    try {
+      await loadHistory();
+      showNotice('Berhasil menyimpan ' + savedCount + ' catatan pekerjaan.', 'success');
+    } catch (error) {
+      showNotice('Pekerjaan tersimpan (' + savedCount + ' catatan), tetapi riwayat belum berhasil dimuat ulang. Tekan Muat Ulang; jangan simpan ulang pekerjaan yang sama.', 'error');
+    } finally {
       busy = false; saveButton.disabled = false;
       saveButton.innerHTML = '<i class="fas fa-floppy-disk"></i> Simpan Pekerjaan';
     }
