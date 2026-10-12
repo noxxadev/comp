@@ -692,3 +692,12 @@ Validation required:
 - Area Cleaning dibentuk dari Nama DC + sisi A/B + jenis pekerjaan. Daftar treatment pada setiap area menampilkan centang sesuai data tersimpan; layout cetak A4 landscape mengikuti bagian utama template PDF.
 - Fitur Report WhatsApp yang sudah ada tetap dipertahankan.
 - Pemeriksaan kode sumber dilakukan; **validasi browser, Google Sheets, dan deployment Apps Script masih diperlukan**.
+
+
+## 2026-10-13 — CSI Daily Report portrait dan popup WhatsApp
+- Daily Report cetak diubah ke A4 portrait dengan penyesuaian lebar kolom dan ruang penulisan.
+- Nama Site dan Alamat dikunci menjadi **CWUP Karawang** dan **Karawang** agar tidak perlu diisi manual.
+- Menambahkan field manual **Nama TIM CSI** untuk nama pada bagian tanda tangan DIBUAT.
+- Menghapus card WhatsApp terpisah; tombol **Buat Report WhatsApp** sekarang berada di card Daily Report.
+- Report WhatsApp ditampilkan dalam popup dengan tombol **Edit** dan **Kirim via WhatsApp**. Isi pesan dapat diedit sebelum membuka WhatsApp; pengiriman tetap dilakukan oleh pengguna di WhatsApp.
+- Validasi sumber: pemeriksaan sintaks JavaScript dan pemeriksaan struktur HTML/CSS; uji browser, print PDF portrait, serta alur popup masih perlu dilakukan.
