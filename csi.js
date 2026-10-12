@@ -7,6 +7,18 @@
   const notice = $('csiNotice');
   let allRows = [];
   let busy = false;
+  const TREATMENTS = ["Pencopotan Frame","Pemasangan Frame","Penyemprotan Celldeck","Pembersihan Kisi-kisi","Perapihan/Penggantian Kain Flanel","Penggantian Celldeck","Perapihan pipa dan pengecekan saluran air"];
+  function selectedTreatments() {
+    return [...form.querySelectorAll('input[name="treatments"]:checked')].map(input => input.value);
+  }
+  function parseTreatments(value) {
+    if (Array.isArray(value)) return value.filter(item => TREATMENTS.includes(item));
+    if (!value) return [];
+    try {
+      const parsed = JSON.parse(String(value));
+      return Array.isArray(parsed) ? parsed.filter(item => TREATMENTS.includes(item)) : [];
+    } catch (_) { return []; }
+  }
 
   function showNotice(message, kind) {
     notice.textContent = message;
@@ -111,7 +123,8 @@
       const age = cleaning ? ageDays(cleaning[2]) : null;
       const status = !cleaning ? '<span class="csi-pill normal">Belum ada cleaning</span>' : age >= 30 ? '<span class="csi-pill old">Perlu Cleaning · ' + age + ' hari</span>' : '<span class="csi-pill normal">Normal · ' + age + ' hari</span>';
       const jobClass = row[5] === 'Replace' ? 'replace' : 'cleaning';
-      return '<tr><td>' + escapeHtml(dateText(row[1], true)) + '</td><td>' + escapeHtml(dateText(row[2])) + '</td><td><strong>' + escapeHtml(row[3]) + '</strong></td><td>' + escapeHtml(row[4]) + '</td><td><span class="csi-pill ' + jobClass + '">' + escapeHtml(row[5]) + '</span></td><td>' + escapeHtml(row[8] || '—') + '</td><td>' + status + '</td></tr>';
+      const treatmentText = parseTreatments(row[9]).join(', ');
+      return '<tr><td>' + escapeHtml(dateText(row[1], true)) + '</td><td>' + escapeHtml(dateText(row[2])) + '</td><td><strong>' + escapeHtml(row[3]) + '</strong></td><td>' + escapeHtml(row[4]) + '</td><td><span class="csi-pill ' + jobClass + '">' + escapeHtml(row[5]) + '</span></td><td>' + escapeHtml([row[8], treatmentText ? 'Treatment: ' + treatmentText : ''].filter(Boolean).join(' · ') || '—') + '</td><td>' + status + '</td></tr>';
     }).join('');
   }
   async function loadHistory() {
@@ -207,11 +220,88 @@
     lines.push('- Total: ' + (totals.Cleaning + totals.Replace) + ' sisi');
     return lines.join('\n');
   }
+  function buildPrintableReport(dateValue, siteName, siteAddress, personnel, picName, leaderName) {
+    const rows = allRows.filter(row => String(row[2] || '').slice(0, 10) === dateValue);
+    if (!rows.length) return '';
+    const areas = new Map();
+    rows.forEach(row => {
+      const dc = String(row[3] || '').trim().replace(/^GBE\./i, '');
+      const side = String(row[4] || '').trim();
+      const job = String(row[5] || '').trim();
+      const key = [dc, side, job].join('|');
+      if (!areas.has(key)) areas.set(key, { dc, side, job, treatments: new Set(), notes: [] });
+      const area = areas.get(key);
+      parseTreatments(row[9]).forEach(treatment => area.treatments.add(treatment));
+      const note = String(row[8] || '').trim();
+      if (note && !area.notes.includes(note)) area.notes.push(note);
+    });
+    const areaList = [...areas.values()].sort((a,b) => a.dc.localeCompare(b.dc, undefined, {numeric:true}) || a.side.localeCompare(b.side) || a.job.localeCompare(b.job));
+    const esc = escapeHtml;
+    const treatmentRows = areaList.map((area, index) => {
+      const treatmentLines = TREATMENTS.map(t => '<div class="treatment-line"><span class="check">' + (area.treatments.has(t) ? '✓' : '') + '</span><span>' + esc(t) + '</span></div>').join('');
+      return '<tr><td class="number">' + (index + 1) + '</td><td><strong>' + esc(area.dc) + '</strong><br><span class="sub">' + esc('Sisi ' + area.side + ' · ' + area.job) + '</span></td><td>' + treatmentLines + '</td><td class="write-cell"></td><td>' + esc(area.notes.join('; ')) + '</td></tr>';
+    }).join('');
+    const people = personnel.slice(0,4);
+    while (people.length < 4) people.push('');
+    const dayName = new Intl.DateTimeFormat('id-ID', {weekday:'long'}).format(new Date(dateValue + 'T12:00:00'));
+    const styles = `
+      @page { size: A4 landscape; margin: 10mm; }
+      * { box-sizing:border-box; } body { font-family:Arial,sans-serif;color:#111;margin:0;font-size:9px; }
+      .header { display:grid;grid-template-columns:90px 1fr 230px;align-items:center;border:1px solid #222;padding:8px;gap:10px; }
+      .logo {font-weight:900;font-size:18px;color:#147f66;text-align:center;letter-spacing:1px}.title{text-align:center}.title h1{font-size:17px;margin:0 0 5px}.title p{margin:0;font-size:9px;font-weight:bold}
+      .meta {display:grid;grid-template-columns:1fr 1fr;gap:4px;margin:8px 0}.meta div{border:1px solid #555;padding:5px;min-height:22px}.people{grid-row:span 3}
+      table {border-collapse:collapse;width:100%;table-layout:fixed} th,td{border:1px solid #222;padding:4px;vertical-align:top} th{background:#e9efed;text-align:center;font-size:9px}
+      th:nth-child(1){width:4%} th:nth-child(2){width:20%} th:nth-child(3){width:33%} th:nth-child(4){width:21%} th:nth-child(5){width:22%}
+      .number{text-align:center;font-weight:bold}.sub{font-size:8px;color:#444}.treatment-line{display:flex;gap:5px;align-items:flex-start;margin:0 0 3px}.check{display:inline-flex;border:1px solid #333;width:11px;height:11px;min-width:11px;align-items:center;justify-content:center;font-weight:bold;font-size:10px}
+      .write-cell{height:110px}.signatures{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:14px;text-align:center}.sign{min-height:75px}.sign strong{display:block}.sign .space{height:45px}.sign .name{border-top:1px solid #333;display:inline-block;min-width:170px;padding-top:4px}
+      .footer{margin-top:5px;font-size:8px;color:#555}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+    `;
+    return '<!doctype html><html lang="id"><head><meta charset="utf-8"><title>Daily Report Cleaning Celldeck</title><style>' + styles + '</style></head><body>' +
+      '<header class="header"><div class="logo">CAKRAWALA</div><div class="title"><h1>DAILY REPORT CLEANING CELLDECK</h1><p>PT. CAKRAWALA SEJAHTERA INSANI - GREENBOX (DATA CENTER)</p></div><div><strong>FORM CSI</strong><br>Dokumentasi pekerjaan</div></header>' +
+      '<section class="meta"><div><strong>HARI:</strong> ' + esc(dayName) + '</div><div><strong>TANGGAL:</strong> ' + esc(reportDateText(dateValue)) + '</div><div><strong>NAMA SITE:</strong> ' + esc(siteName) + '</div><div><strong>ALAMAT:</strong> ' + esc(siteAddress || '-') + '</div><div><strong>JUMLAH PERSONIL:</strong> ' + people.filter(Boolean).length + '</div><div class="people"><strong>NAMA PERSONIL</strong><br>' + people.map((p,i) => (i+1) + ') ' + esc(p || '________________') + '<br>').join('') + '</div></section>' +
+      '<table><thead><tr><th>NO</th><th>AREA CLEANING</th><th>JENIS TREATMENT</th><th>TEMUAN DILAPANGAN</th><th>PENANGANAN</th></tr></thead><tbody>' + treatmentRows + '</tbody></table>' +
+      '<div class="signatures"><div class="sign"><strong>DIBUAT</strong><span>TIM CSI</span><div class="space"></div><span class="name">Nama Jelas</span></div><div class="sign"><strong>DIKETAHUI</strong><span>PIC SITE</span><div class="space"></div><span class="name">' + esc(picName || 'Nama Jelas') + '</span></div><div class="sign"><strong>DISETUJUI</strong><span>SITE LEADER</span><div class="space"></div><span class="name">' + esc(leaderName || 'Nama Jelas') + '</span></div></div>' +
+      '<p class="footer">Dibuat dari catatan pekerjaan CSI tersimpan · Area cleaning dipecah per Nama DC, sisi Celldeck, dan jenis pekerjaan.</p></body></html>';
+  }
+  async function printDailyReport() {
+    const button = $('printDailyReportBtn');
+    const dateValue = $('printReportDate').value;
+    const siteName = $('printSiteName').value.trim();
+    const personnel = parsePersonnelNames($('printPersonnel').value);
+    if (!dateValue || !siteName || !personnel.length) {
+      showNotice('Lengkapi tanggal, nama site, dan minimal satu nama personil.', 'error');
+      return;
+    }
+    if (personnel.length > 4) {
+      showNotice('Template Daily Report menyediakan maksimal empat nama personil.', 'error');
+      return;
+    }
+    button.disabled = true;
+    try {
+      await loadHistory();
+      const report = buildPrintableReport(dateValue, siteName, $('printSiteAddress').value.trim(), personnel, $('printPicName').value.trim(), $('printLeaderName').value.trim());
+      if (!report) {
+        showNotice('Tidak ada pekerjaan CSI tersimpan pada tanggal laporan yang dipilih.', 'error');
+        return;
+      }
+      const win = window.open('', '_blank');
+      if (!win) {
+        showNotice('Pop-up diblokir browser. Izinkan pop-up untuk halaman ini lalu coba lagi.', 'error');
+        return;
+      }
+      win.document.open(); win.document.write(report); win.document.close();
+      win.onload = () => { win.focus(); win.print(); };
+      showNotice('Daily Report siap dicetak. Periksa centang treatment lalu cetak atau simpan sebagai PDF.', 'success');
+    } catch (error) {
+      showNotice('Gagal menyiapkan Daily Report: ' + (error.message || 'periksa koneksi CSI.'), 'error');
+    } finally { button.disabled = false; }
+  }
   async function init() {
     if (!session()) { location.replace('login.html'); return; }
     populateDcOptions();
     $('workDate').value = localDateValue();
     $('reportDate').value = localDateValue();
+    $('printReportDate').value = localDateValue();
     await request('validateAccess');
     await loadHistory();
     showNotice('Akses CSI terverifikasi. Riwayat berhasil dimuat.', 'success');
@@ -227,10 +317,11 @@
       const result = await request('saveWork', {
         dcName: $('dcName').value, workDate: $('workDate').value,
         frameSide: $('frameSide').value, jobType: $('jobType').value,
-        notes: $('notes').value.trim()
+        notes: $('notes').value.trim(), treatments: selectedTreatments()
       });
       savedCount = Number(result.saved) || 0;
       $('notes').value = '';
+      form.querySelectorAll('input[name="treatments"]').forEach(input => { input.checked = false; });
     } catch (error) {
       showNotice(error.message || 'Gagal menyimpan pekerjaan.', 'error');
       busy = false; saveButton.disabled = false;
@@ -247,6 +338,7 @@
       saveButton.innerHTML = '<i class="fas fa-floppy-disk"></i> Simpan Pekerjaan';
     }
   });
+  $('printDailyReportBtn').addEventListener('click', printDailyReport);
   $('refreshHistoryBtn').addEventListener('click', async () => {
     try { await loadHistory(); showNotice('Riwayat berhasil diperbarui.', 'success'); }
     catch (error) { showNotice(error.message, 'error'); }
