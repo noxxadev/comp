@@ -272,10 +272,27 @@ function csiEnsureSheet_(spreadsheet, sheetName, headers) {
     return sheet;
   }
 
+  // CSI Work History v1 -> v2: append Treatments at the end.
+  // Preserve any existing rows; older rows naturally return an empty Treatments value.
+  const legacyHistoryHeaders = [
+    'Record ID', 'Record At', 'Work Date', 'Nama DC', 'Frame Side',
+    'Job Type', 'Recorded By User ID', 'Recorded By Username', 'Notes'
+  ];
+  const isLegacyHistory = sheetName === CSI_HISTORY_SHEET &&
+    firstRow.length === legacyHistoryHeaders.length &&
+    legacyHistoryHeaders.every((header, index) => firstRow[index] === header) &&
+    headers.length === legacyHistoryHeaders.length + 1 &&
+    headers[headers.length - 1] === 'Treatments';
+  if (isLegacyHistory) {
+    sheet.getRange(1, headers.length).setValue('Treatments');
+    sheet.setFrozenRows(1);
+    return sheet;
+  }
+
   const matches = firstRow.length === headers.length &&
     headers.every((header, index) => firstRow[index] === header);
   if (!matches) {
-    throw new Error('Struktur kolom sheet "' + sheetName + '" tidak sesuai. Header tidak diubah otomatis untuk mencegah kehilangan data.');
+    throw new Error('Struktur kolom sheet "' + sheetName + '" tidak sesuai. Header tidak diubah otomatis karena struktur tidak dikenali.');
   }
   return sheet;
 }
