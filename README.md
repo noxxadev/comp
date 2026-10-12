@@ -664,3 +664,11 @@ Validation required:
 - Role lain mempertahankan navigasi yang sudah ada.
 - Perubahan terbatas pada tampilan navigasi; mekanisme login, validasi sesi, backend, dan fitur tiap halaman tidak diubah.
 - Validasi browser diperlukan dengan login sebagai CSI dan Admin, termasuk hard refresh.
+
+
+## 2026-10-13 — CSI login routing dan pembatasan halaman
+- Setelah login, akun dengan role **CSI** diarahkan langsung ke `csi.html`; role lain tetap diarahkan ke `index.html`.
+- `page-guard.js` memeriksa role dari hasil validasi sesi sebelum menampilkan halaman. Jika role CSI membuka `index.html` atau halaman COMP lain secara langsung, halaman diarahkan ke `csi.html`.
+- Halaman COMP yang ada telah diperiksa dan semuanya memuat `auth.js` serta `page-guard.js`.
+- Sidebar role CSI tetap hanya menampilkan **CSI Cleaning**. Perubahan ini tidak mengubah logika fitur, backend CSI, atau penyimpanan.
+- **Validasi browser masih diperlukan:** login sebagai CSI, pastikan masuk ke CSI; coba buka `index.html` dan URL halaman fitur secara langsung; lalu login sebagai Admin dan pastikan navigasi tetap seperti sebelumnya.
