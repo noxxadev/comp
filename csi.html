@@ -14,7 +14,7 @@
   <script src="page-guard.js"></script>
   <script src="master-data.js"></script>
   <script src="csi-google-sheets-config.js?v=20261011-csi"></script>
-  <link rel="stylesheet" href="csi.css?v=20261013-csi-treatment-print">
+  <link rel="stylesheet" href="csi.css?v=20261013-csi-portrait-popup">
 </head>
 <body>
 <div class="hub-shell">
@@ -54,31 +54,18 @@
         <div class="csi-form-actions"><button id="saveWorkBtn" class="csi-primary-btn" type="submit"><i class="fas fa-floppy-disk"></i> Simpan Pekerjaan</button><span class="csi-help">Jika memilih kedua sisi, sistem menyimpan dua catatan terpisah.</span></div>
       </form>
     </section>
-    <section class="csi-card" id="csiReportCard">
-      <div class="csi-card-head"><div><span class="csi-section-tag">LAPORAN HARIAN</span><h2>Report CSI WhatsApp</h2></div><i class="fab fa-whatsapp csi-card-icon"></i></div>
-      <div class="csi-report-form">
-        <label>Tanggal laporan (default hari ini; bisa diubah)<input id="reportDate" type="date" required></label>
-        <label>Nama Personil (pisahkan dengan koma atau baris baru)<textarea id="reportPersonnel" rows="3" placeholder="Contoh: Riko, Agus, Raka, Ace" required></textarea></label>
-        <div class="csi-report-actions">
-          <button id="generateReportBtn" class="csi-primary-btn" type="button"><i class="fas fa-file-lines"></i> Buat Report WhatsApp</button>
-          <button id="sendReportBtn" class="csi-secondary-btn" type="button" disabled><i class="fab fa-whatsapp"></i> Kirim via WhatsApp</button>
-        </div>
-        <label>Pratinjau pesan<textarea id="reportPreview" rows="12" readonly placeholder="Pilih tanggal, lalu klik Buat Report WhatsApp."></textarea></label>
-        <p class="csi-help">Laporan hanya memuat pekerjaan yang tersimpan pada tanggal terpilih. Tombol WhatsApp membuka pesan yang sudah disiapkan; pilih grup tujuan dan tekan Kirim di WhatsApp.</p>
-      </div>
-    </section>
-
     <section class="csi-card" id="csiPrintableReportCard">
       <div class="csi-card-head"><div><span class="csi-section-tag">FORMULIR CETAK</span><h2>Daily Report Cleaning Celldeck</h2></div><i class="fas fa-print csi-card-icon"></i></div>
       <div class="csi-print-form">
         <label>Tanggal laporan<input id="printReportDate" type="date" required></label>
-        <label>Nama Site<input id="printSiteName" type="text" placeholder="Contoh: CWUP KARAWANG" required></label>
-        <label>Alamat Site<input id="printSiteAddress" type="text" placeholder="Alamat lokasi"></label>
+        <label>Nama Site<input id="printSiteName" type="text" value="CWUP Karawang" readonly></label>
+        <label>Alamat Site<input id="printSiteAddress" type="text" value="Karawang" readonly></label>
         <label>Nama Personil (maksimal 4; pisahkan dengan koma/baris baru)<textarea id="printPersonnel" rows="2" placeholder="Riko, Agus, Raka, Ace" required></textarea></label>
+        <label>Nama TIM CSI<input id="printTeamName" type="text" placeholder="Nama tim CSI" required></label>
         <label>Nama PIC Site<input id="printPicName" type="text" placeholder="Nama PIC site"></label>
         <label>Nama Site Leader<input id="printLeaderName" type="text" placeholder="Nama site leader"></label>
-        <div class="csi-report-actions"><button id="printDailyReportBtn" class="csi-primary-btn" type="button"><i class="fas fa-print"></i> Buat & Cetak Daily Report</button></div>
-        <p class="csi-help">Laporan dibuat dari pekerjaan CSI yang tersimpan pada tanggal terpilih. Treatment akan diberi tanda centang sesuai catatan pekerjaan. Browser akan membuka dialog cetak; pilih “Save as PDF” bila ingin menyimpan PDF.</p>
+        <div class="csi-report-actions"><button id="printDailyReportBtn" class="csi-primary-btn" type="button"><i class="fas fa-print"></i> Buat & Cetak Daily Report</button><button id="generateReportBtn" class="csi-secondary-btn" type="button"><i class="fab fa-whatsapp"></i> Buat Report WhatsApp</button></div>
+        <p class="csi-help">Nama site dan alamat sudah ditetapkan. Isi nama TIM CSI, personil, PIC, dan Site Leader sesuai kebutuhan. Laporan dibuat dari pekerjaan CSI tersimpan. Browser akan membuka dialog cetak; pilih “Save as PDF” bila ingin menyimpan PDF.</p>
       </div>
     </section>
     <section class="csi-card">
@@ -94,9 +81,18 @@
       <div class="csi-table-summary"><span id="historyCount">Memuat riwayat...</span><span class="csi-status-legend"><i></i> Perlu Cleaning = ≥ 30 hari</span></div>
       <div class="csi-table-wrap"><table class="csi-table"><thead><tr><th>Record At</th><th>Tanggal Kerja</th><th>Nama DC</th><th>Sisi</th><th>Jenis</th><th>Catatan</th><th>Status Cleaning</th></tr></thead><tbody id="historyBody"><tr><td colspan="7" class="csi-empty">Memuat data...</td></tr></tbody></table></div>
     </section>
+    <div id="whatsappReportModal" class="csi-modal" hidden role="dialog" aria-modal="true" aria-labelledby="whatsappModalTitle">
+      <div class="csi-modal-backdrop" data-close-modal="true"></div>
+      <section class="csi-modal-panel">
+        <div class="csi-card-head"><div><span class="csi-section-tag">LAPORAN HARIAN</span><h2 id="whatsappModalTitle">Preview Report WhatsApp</h2></div><button id="closeWhatsappModalBtn" class="csi-secondary-btn" type="button" aria-label="Tutup popup"><i class="fas fa-xmark"></i></button></div>
+        <p class="csi-help">Periksa laporan berikut. Tekan Edit untuk mengubah isi pesan sebelum dikirim.</p>
+        <textarea id="reportPreview" rows="16" aria-label="Isi report WhatsApp" readonly></textarea>
+        <div class="csi-report-actions"><button id="editReportBtn" class="csi-secondary-btn" type="button"><i class="fas fa-pen"></i> Edit</button><button id="sendReportBtn" class="csi-primary-btn" type="button"><i class="fab fa-whatsapp"></i> Kirim via WhatsApp</button></div>
+      </section>
+    </div>
     <footer class="csi-footer">COMP Tools · CSI Work History</footer>
   </main>
 </div>
-<script src="csi.js?v=20261013-csi-treatment-print"></script>
+<script src="csi.js?v=20261013-csi-portrait-popup"></script>
 </body>
 </html>
