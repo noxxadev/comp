@@ -245,8 +245,8 @@
     const styles = `
       @page { size: A4 portrait; margin: 10mm; }
       * { box-sizing:border-box; } body { font-family:Arial,sans-serif;color:#111;margin:0;font-size:9px; }
-      .header { display:grid;grid-template-columns:62px 1fr 100px;align-items:center;border:1px solid #222;padding:8px;gap:10px; }
-      .logo {font-weight:900;font-size:18px;color:#147f66;text-align:center;letter-spacing:1px}.title{text-align:center}.title h1{font-size:14px;margin:0 0 5px}.title p{margin:0;font-size:9px;font-weight:bold}
+      .header { display:grid;grid-template-columns:76px 1fr 100px;align-items:center;border:1px solid #222;padding:8px;gap:10px; }
+      .logo {display:flex;align-items:center;justify-content:center}.logo img{display:block;max-width:72px;max-height:58px;width:auto;height:auto;object-fit:contain}.title{text-align:center}.title h1{font-size:14px;margin:0 0 5px}.title p{margin:0;font-size:9px;font-weight:bold}
       .meta {display:grid;grid-template-columns:1fr 1fr;gap:4px;margin:8px 0}.meta div{border:1px solid #555;padding:5px;min-height:22px}.people{grid-row:span 3}
       table {border-collapse:collapse;width:100%;table-layout:fixed} th,td{border:1px solid #222;padding:4px;vertical-align:top} th{background:#e9efed;text-align:center;font-size:9px}
       th:nth-child(1){width:4%} th:nth-child(2){width:22%} th:nth-child(3){width:34%} th:nth-child(4){width:20%} th:nth-child(5){width:20%}
@@ -255,7 +255,7 @@
       .footer{margin-top:5px;font-size:8px;color:#555}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
     `;
     return '<!doctype html><html lang="id"><head><meta charset="utf-8"><title>Daily Report Cleaning Celldeck</title><style>' + styles + '</style></head><body>' +
-      '<header class="header"><div class="logo">CAKRAWALA</div><div class="title"><h1>DAILY REPORT CLEANING CELLDECK</h1><p>PT. CAKRAWALA SEJAHTERA INSANI - GREENBOX (DATA CENTER)</p></div><div><strong>FORM CSI</strong><br>Dokumentasi pekerjaan</div></header>' +
+      '<header class="header"><div class="logo"><img src="https://raw.githubusercontent.com/noxxadev/comp/main/csi.png" alt="Logo CSI"></div><div class="title"><h1>DAILY REPORT CLEANING CELLDECK</h1><p>PT. CAKRAWALA SEJAHTERA INSANI - GREENBOX (DATA CENTER)</p></div><div><strong>FORM CSI</strong><br>Dokumentasi pekerjaan</div></header>' +
       '<section class="meta"><div><strong>HARI:</strong> ' + esc(dayName) + '</div><div><strong>TANGGAL:</strong> ' + esc(reportDateText(dateValue)) + '</div><div><strong>NAMA SITE:</strong> ' + esc(siteName) + '</div><div><strong>ALAMAT:</strong> ' + esc(siteAddress || '-') + '</div><div><strong>JUMLAH PERSONIL:</strong> ' + people.filter(Boolean).length + '</div><div class="people"><strong>NAMA PERSONIL</strong><br>' + people.map((p,i) => (i+1) + ') ' + esc(p || '________________') + '<br>').join('') + '</div></section>' +
       '<table><thead><tr><th>NO</th><th>AREA CLEANING</th><th>JENIS TREATMENT</th><th>TEMUAN DILAPANGAN</th><th>PENANGANAN</th></tr></thead><tbody>' + treatmentRows + '</tbody></table>' +
       '<div class="signatures"><div class="sign"><strong>DIBUAT</strong><span>TIM CSI</span><div class="space"></div><span class="name">' + esc(teamName || 'Nama Jelas') + '</span></div><div class="sign"><strong>DIKETAHUI</strong><span>PIC SITE</span><div class="space"></div><span class="name">' + esc(picName || 'Nama Jelas') + '</span></div><div class="sign"><strong>DISETUJUI</strong><span>SITE LEADER</span><div class="space"></div><span class="name">' + esc(leaderName || 'Nama Jelas') + '</span></div></div>' +
