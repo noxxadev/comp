@@ -136,7 +136,18 @@
     const parts = String(value || '').split('-');
     return parts.length === 3 ? parts[2] + '/' + parts[1] + '/' + parts[0] : String(value || '');
   }
-  function buildDailyReport(dateValue) {
+  function parsePersonnelNames(value) {
+    const seen = new Set();
+    return String(value || '').split(/[,;\\n]+/)
+      .map(name => name.trim().replace(/\\s+/g, ' '))
+      .filter(name => {
+        const key = name.toLocaleLowerCase('id-ID');
+        if (!name || seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+  }
+  function buildDailyReport(dateValue, personnelNames) {
     const rows = allRows.filter(row => String(row[2] || '').slice(0, 10) === dateValue)
       .sort((a, b) => String(a[3]).localeCompare(String(b[3]), undefined, {numeric: true}) ||
         String(a[5]).localeCompare(String(b[5])) || String(a[4]).localeCompare(String(b[4])));
@@ -170,7 +181,15 @@
         if (job === 'Cleaning' || job === 'Replace') totals[job] += 1;
       }
     });
-    const lines = ['Daily Report CSI', 'Tanggal: ' + reportDateText(dateValue), ''];
+    const names = parsePersonnelNames(personnelNames);
+    const lines = [
+      'Daily Report CSI',
+      'Tanggal: ' + reportDateText(dateValue),
+      'Jumlah Personil: ' + names.length,
+      'Nama Personil:',
+      ...names.map((name, index) => (index + 1) + '. ' + name),
+      ''
+    ];
     [...dcGroups.keys()].sort((a, b) => a.localeCompare(b, undefined, {numeric: true})).forEach(dc => {
       lines.push('Nama DC: ' + dc);
       [...dcGroups.get(dc).values()].forEach(group => {
@@ -240,7 +259,14 @@
     button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyiapkan laporan...';
     try {
       await loadHistory();
-      const message = buildDailyReport(dateValue);
+      const personnelNames = parsePersonnelNames($('reportPersonnel').value);
+      if (!personnelNames.length) {
+        $('reportPreview').value = '';
+        $('sendReportBtn').disabled = true;
+        showNotice('Isi minimal satu nama personil sebelum membuat report.', 'error');
+        return;
+      }
+      const message = buildDailyReport(dateValue, personnelNames);
       if (!message) {
         $('reportPreview').value = 'Tidak ada pekerjaan CSI yang tersimpan pada tanggal ' + reportDateText(dateValue) + '.';
         $('sendReportBtn').disabled = true;
