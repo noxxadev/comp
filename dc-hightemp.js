@@ -336,8 +336,8 @@
       '<td class="dc-name">' + escapeHtml(item.name) + '</td>' +
       '<td class="dc-count">' + formatNumber(item.count) + '</td>' +
       '<td class="dc-rate">' + formatRate(item.rate) + '</td>' +
-      '<td class="dc-csi-detail" data-csi-dc="' + escapeHtml(item.name) + '">Memuat detail...</td>' +
       '<td class="dc-machine-cleaning" data-machine-cleaning-dc="' + escapeHtml(item.name) + '">Memuat data...</td>' +
+      '<td class="dc-csi-detail" data-csi-dc="' + escapeHtml(item.name) + '">Memuat detail...</td>' +
       '<td><button class="dc-progress-btn" type="button" data-progress-dc="' + encodeURIComponent(item.name) + '"><i class="fas fa-chart-line"></i> Progress</button></td>' +
       '</tr>'
     ).join('');
