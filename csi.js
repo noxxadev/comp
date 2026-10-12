@@ -141,9 +141,21 @@
       .sort((a, b) => String(a[3]).localeCompare(String(b[3]), undefined, {numeric: true}) ||
         String(a[5]).localeCompare(String(b[5])) || String(a[4]).localeCompare(String(b[4])));
     if (!rows.length) return '';
+    const uniqueRows = new Map();
+    rows.forEach(row => {
+      const key = JSON.stringify([
+        String(row[2] || '').slice(0, 10),
+        String(row[3] || '').trim().toUpperCase().replace(/^GBE\\./, ''),
+        String(row[4] || '').trim(),
+        String(row[5] || '').trim(),
+        String(row[8] || '').trim()
+      ]);
+      if (!uniqueRows.has(key)) uniqueRows.set(key, row);
+    });
+    const reportRows = [...uniqueRows.values()];
     const dcGroups = new Map();
     const totals = { Cleaning: 0, Replace: 0 };
-    rows.forEach(row => {
+    reportRows.forEach(row => {
       const dc = String(row[3] || '').trim() || 'DC tidak diketahui';
       const job = String(row[5] || '').trim();
       const side = String(row[4] || '').trim();
