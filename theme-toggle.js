@@ -125,10 +125,28 @@
     return file || 'index.html';
   }
 
+  function getCurrentRole() {
+    try {
+      const user = JSON.parse(localStorage.getItem('comp.auth.user') || 'null');
+      return String(user?.role || '').trim().toUpperCase();
+    } catch (_) {
+      return '';
+    }
+  }
+
+  function getVisibleNavItems() {
+    // CSI users only need the CSI workspace in the shared sidebar.
+    // Other roles (including Admin) retain the existing full navigation.
+    if (getCurrentRole() === 'CSI') {
+      return NAV_ITEMS.filter(item => item.href === 'csi.html');
+    }
+    return NAV_ITEMS;
+  }
+
   function syncSidebarNavigation() {
     document.querySelectorAll('.hub-nav').forEach((nav) => {
       const currentPage = getCurrentPage();
-      nav.innerHTML = NAV_ITEMS.map((item) => {
+      nav.innerHTML = getVisibleNavItems().map((item) => {
         if (item.group) {
           const groupActive = item.items.some(child => child.href === currentPage);
           const links = item.items.map(child => {
