@@ -12,7 +12,9 @@
     selectedDc: '',
     progressHistory: [],
     csiSummaryByDc: new Map(),
-    csiSummaryError: ''
+    csiSummaryError: '',
+    machineCleaningByDc: new Map(),
+    machineCleaningError: ''
   };
 
   const $ = (id) => document.getElementById(id);
@@ -97,6 +99,42 @@
       state.csiSummaryByDc.get(key)[String(row.frameSide || '').trim().toUpperCase()] = row;
     });
     renderCsiSummaryCells();
+  };
+
+  const loadMachineCleaningSummary = async () => {
+    try {
+      const result = await apiGet('getDcMachineCleaningSummary');
+      state.machineCleaningByDc = new Map();
+      (Array.isArray(result.rows) ? result.rows : []).forEach(row => {
+        const key = String(row.dcName || '').trim().toUpperCase();
+        if (key) state.machineCleaningByDc.set(key, row);
+      });
+      state.machineCleaningError = '';
+    } catch (error) {
+      state.machineCleaningByDc = new Map();
+      state.machineCleaningError = 'Data mesin tidak tersedia';
+      console.warn('Ringkasan mesin dibersihkan belum dapat dimuat:', error);
+    }
+    renderMachineCleaningCells();
+  };
+
+  const renderMachineCleaningCells = () => {
+    rankingBody.querySelectorAll('[data-machine-cleaning-dc]').forEach(cell => {
+      const dc = String(cell.getAttribute('data-machine-cleaning-dc') || '').trim().toUpperCase();
+      if (state.machineCleaningError) {
+        cell.innerHTML = '<span class="dc-machine-cleaning-unavailable">' + escapeHtml(state.machineCleaningError) + '</span>';
+        return;
+      }
+      const item = state.machineCleaningByDc.get(dc);
+      if (!item) {
+        cell.textContent = '—';
+        cell.title = 'Tidak ada SN aktif untuk DC ini pada Machine List Current.';
+        return;
+      }
+      cell.innerHTML = '<strong>' + formatNumber(item.cleanedMachines) + ' / ' + formatNumber(item.totalMachines) +
+        '</strong><small>' + formatRate(item.cleaningRate) + ' sudah cleaning</small>';
+      cell.title = formatNumber(item.notCleanedMachines) + ' mesin belum memiliki riwayat Selesai.';
+    });
   };
 
   const formatCsiDate = value => {
@@ -299,6 +337,7 @@
       '<td class="dc-count">' + formatNumber(item.count) + '</td>' +
       '<td class="dc-rate">' + formatRate(item.rate) + '</td>' +
       '<td class="dc-csi-detail" data-csi-dc="' + escapeHtml(item.name) + '">Memuat detail...</td>' +
+      '<td class="dc-machine-cleaning" data-machine-cleaning-dc="' + escapeHtml(item.name) + '">Memuat data...</td>' +
       '<td><button class="dc-progress-btn" type="button" data-progress-dc="' + encodeURIComponent(item.name) + '"><i class="fas fa-chart-line"></i> Progress</button></td>' +
       '</tr>'
     ).join('');
@@ -753,6 +792,7 @@
 
     try {
       calculateSnapshot();
+      await loadMachineCleaningSummary();
       await loadProgress();
       try {
         await loadCsiSummary();
