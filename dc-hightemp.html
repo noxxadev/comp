@@ -6,7 +6,7 @@
   <title>DC HighTemp — COMP Tools</title>
   <link rel="icon" href="/favicon.ico" type="image/x-icon">
   <link rel="stylesheet" href="index-hub.css">
-  <link rel="stylesheet" href="dc-hightemp.css?v=20261013-machine-cleaning-center">
+  <link rel="stylesheet" href="dc-hightemp.css?v=20261013-current-dc-condition">
   <link rel="stylesheet" href="theme-toggle.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <script src="google-sheets-config.js"></script>
@@ -176,6 +176,25 @@
         </div>
         <div id="progressSaveStatus" class="dc-progress-save-status" role="status" aria-live="polite"></div>
         <div id="progressSummary" class="dc-progress-summary"></div>
+        <section id="currentDcCondition" class="dc-current-condition" aria-labelledby="currentDcConditionTitle">
+          <div class="dc-current-condition-head">
+            <div>
+              <div class="dc-condition-kicker">KONDISI LIVE</div>
+              <h4 id="currentDcConditionTitle">Kondisi Terkini DC</h4>
+              <p id="currentDcConditionUpdated">Data mesin dan CSI akan diperbarui saat Progress dibuka.</p>
+            </div>
+          </div>
+          <div class="dc-current-condition-grid">
+            <article class="dc-condition-block">
+              <h5><i class="fas fa-microchip"></i> Mesin Cleaning</h5>
+              <div id="currentDcMachine"><div class="dc-condition-loading">Menunggu data…</div></div>
+            </article>
+            <article class="dc-condition-block">
+              <h5><i class="fas fa-fan"></i> Detail Celldeck</h5>
+              <div id="currentDcCelldeck" class="dc-condition-sides"><div class="dc-condition-loading">Menunggu data…</div></div>
+            </article>
+          </div>
+        </section>
         <div class="dc-progress-chart-card">
           <div class="dc-progress-chart-head">
             <div>
@@ -204,7 +223,7 @@
 <script src="https://cdn.sheetjs.com/xlsx-0.18.5/package/dist/xlsx.full.min.js"></script>
 <script src="master-data.js"></script>
 <script src="csi-google-sheets-config.js?v=20261013-1"></script>
-<script src="dc-hightemp.js?v=20261013-column-order-fix"></script>
+<script src="dc-hightemp.js?v=20261013-current-dc-condition"></script>
 <script src="theme-toggle.js"></script>
 </body>
 </html>
