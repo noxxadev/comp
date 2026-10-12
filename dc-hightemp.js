@@ -118,7 +118,12 @@
         const age = item.ageDays === null || item.ageDays === '' ? '' : ' · ' + escapeHtml(item.ageDays) + ' hari';
         const cleaning = item.lastCleaningDate ? 'Cleaning ' + formatCsiDate(item.lastCleaningDate) : 'Belum ada cleaning';
         const replace = item.lastReplaceDate ? ' · Replace ' + formatCsiDate(item.lastReplaceDate) : '';
-        return '<div><strong>' + side + ':</strong> ' + escapeHtml(item.status || 'Belum ada data') + age + '<small class="dc-csi-date">' + escapeHtml(cleaning + replace) + '</small></div>';
+        const lastWork = item.lastWorkDate
+          ? 'Pekerjaan terakhir: ' + String(item.lastJobType || 'Pekerjaan') + ' ' + formatCsiDate(item.lastWorkDate)
+          : 'Belum ada pekerjaan';
+        return '<div><strong>' + side + ':</strong> ' + escapeHtml(item.status || 'Belum ada data') + age +
+          '<small class="dc-csi-date">' + escapeHtml(lastWork) + '</small>' +
+          '<small class="dc-csi-date">' + escapeHtml(cleaning + replace) + '</small></div>';
       };
       cell.innerHTML = line('A') + line('B');
     });
