@@ -174,7 +174,7 @@
     lines.push('- Cleaning: ' + totals.Cleaning + ' sisi');
     lines.push('- Replace: ' + totals.Replace + ' sisi');
     lines.push('- Total: ' + (totals.Cleaning + totals.Replace) + ' sisi');
-    return lines.join('\\n');
+    return lines.join('\n');
   }
   async function init() {
     if (!session()) { location.replace('login.html'); return; }
