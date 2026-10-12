@@ -10,7 +10,8 @@
     total: 0,
     progressRows: [],
     selectedDc: '',
-    progressHistory: []
+    progressHistory: [],
+    csiSummaryByDc: new Map()
   };
 
   const $ = (id) => document.getElementById(id);
@@ -73,6 +74,46 @@
     try { x = JSON.parse(raw); } catch (_) { throw new Error('Google Apps Script mengembalikan response tidak valid.'); }
     if (!r.ok || !x?.ok) throw new Error(x?.error || 'Request gagal.');
     return x;
+  };
+
+  const loadCsiSummary = async () => {
+    const config = window.CompCsiConfig || {};
+    const session = window.CompAuth?.getSession?.() || localStorage.getItem('comp.auth.session') || '';
+    if (!config.webAppUrl || !session) throw new Error('Endpoint CSI atau sesi login belum tersedia.');
+    const response = await fetch(config.webAppUrl, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=UTF-8' }, body: JSON.stringify({ action: 'getHighTempSummary', session }), cache: 'no-store', credentials: 'omit', redirect: 'follow' });
+    const raw = await response.text();
+    let result;
+    try { result = JSON.parse(raw); } catch (_) { throw new Error('Respons ringkasan CSI tidak valid.'); }
+    if (!response.ok || !result?.ok) throw new Error(result?.error || 'Gagal memuat ringkasan CSI.');
+    state.csiSummaryByDc = new Map();
+    (Array.isArray(result.rows) ? result.rows : []).forEach(row => {
+      const key = String(row.dcName || '').trim().toUpperCase();
+      if (!key) return;
+      if (!state.csiSummaryByDc.has(key)) state.csiSummaryByDc.set(key, {});
+      state.csiSummaryByDc.get(key)[String(row.frameSide || '').trim().toUpperCase()] = row;
+    });
+    renderCsiSummaryCells();
+  };
+
+  const formatCsiDate = value => {
+    const match = String(value || '').slice(0, 10).match(/^(\\d{4})-(\\d{2})-(\\d{2})$/);
+    return match ? match[3] + '/' + match[2] + '/' + match[1] : '—';
+  };
+
+  const renderCsiSummaryCells = () => {
+    rankingBody.querySelectorAll('[data-csi-dc]').forEach(cell => {
+      const dc = String(cell.getAttribute('data-csi-dc') || '').trim().toUpperCase();
+      const sides = state.csiSummaryByDc.get(dc) || {};
+      const line = side => {
+        const item = sides[side];
+        if (!item) return '<div><strong>' + side + ':</strong> Belum ada data</div>';
+        const age = item.ageDays === null || item.ageDays === '' ? '' : ' · ' + escapeHtml(item.ageDays) + ' hari';
+        const cleaning = item.lastCleaningDate ? 'Cleaning ' + formatCsiDate(item.lastCleaningDate) : 'Belum ada cleaning';
+        const replace = item.lastReplaceDate ? ' · Replace ' + formatCsiDate(item.lastReplaceDate) : '';
+        return '<div><strong>' + side + ':</strong> ' + escapeHtml(item.status || 'Belum ada data') + age + '<small class="dc-csi-date">' + escapeHtml(cleaning + replace) + '</small></div>';
+      };
+      cell.innerHTML = line('A') + line('B');
+    });
   };
 
   const formatRate = (v) =>
