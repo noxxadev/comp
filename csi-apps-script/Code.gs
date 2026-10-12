@@ -22,7 +22,8 @@ const CSI_HISTORY_HEADERS = [
   'Job Type',
   'Recorded By User ID',
   'Recorded By Username',
-  'Notes'
+  'Notes',
+  'Treatments'
 ];
 
 const CSI_SUMMARY_HEADERS = [
@@ -95,6 +96,20 @@ function csiSaveWork_(payload, user) {
   const frameSide = String(payload.frameSide || '').trim();
   const jobType = String(payload.jobType || '').trim();
   const notes = String(payload.notes || '').trim().slice(0, 500);
+  const allowedTreatments = [
+    'Pencopotan Frame',
+    'Pemasangan Frame',
+    'Penyemprotan Celldeck',
+    'Pembersihan Kisi-kisi',
+    'Perapihan/Penggantian Kain Flanel',
+    'Penggantian Celldeck',
+    'Perapihan pipa dan pengecekan saluran air'
+  ];
+  const requestedTreatments = Array.isArray(payload.treatments) ? payload.treatments.map(value => String(value || '').trim()) : [];
+  const treatments = [...new Set(requestedTreatments)];
+  if (!treatments.length) throw new Error('Pilih minimal satu jenis treatment.');
+  if (treatments.some(value => !allowedTreatments.includes(value))) throw new Error('Pilihan treatment tidak valid.');
+  const treatmentsJson = JSON.stringify(treatments);
   if (!/^[A-F]\d+[A-Z]?$/.test(dcName)) throw new Error('Nama DC tidak valid. Pilih DC dari daftar master data.');
   if (!/^\d{4}-\d{2}-\d{2}$/.test(workDateText)) throw new Error('Tanggal pekerjaan tidak valid.');
   const workDate = new Date(workDateText + 'T12:00:00');
@@ -108,7 +123,7 @@ function csiSaveWork_(payload, user) {
   try {
     const history = csiGetSheet_(CSI_HISTORY_SHEET, CSI_HISTORY_HEADERS);
     const now = new Date();
-    const rows = sides.map(side => [Utilities.getUuid(), now, workDate, dcName, side, jobType, user.id, user.username, notes]);
+    const rows = sides.map(side => [Utilities.getUuid(), now, workDate, dcName, side, jobType, user.id, user.username, notes, treatmentsJson]);
     history.getRange(history.getLastRow() + 1, 1, rows.length, CSI_HISTORY_HEADERS.length).setValues(rows);
     sides.forEach(side => csiRefreshSummary_(dcName, side));
     SpreadsheetApp.flush();
