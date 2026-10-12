@@ -1,3 +1,11 @@
+## 2026-10-13 — DC HighTemp Phase 4: detail pekerjaan CSI
+- **Status:** IMPLEMENTED — LIVE VISUAL VALIDATION PENDING
+- Detail Celldeck pada tabel Top 5 sekarang menampilkan jenis dan tanggal pekerjaan terakhir untuk tiap sisi frame, selain status, umur sejak Cleaning terakhir, tanggal Cleaning terakhir, dan tanggal Replace terakhir.
+- Umur cleaning tetap dihitung dari riwayat bertipe `Cleaning`; pekerjaan `Replace` tidak mereset umur cleaning.
+- Perubahan hanya pada rendering detail CSI di `dc-hightemp.js` dan cache-buster di `dc-hightemp.html`.
+- Perhitungan Top 5, Record Data Snapshot, baseline/progress, struktur Google Sheets, dan backend CSI tidak diubah.
+- Validasi browser masih diperlukan untuk memeriksa tampilan tanggal/jenis pekerjaan dan regresi Top 5, Snapshot, serta Progress.
+
 ## 2026-10-13 — CSI DC name format correction
 - CSI dropdown now stores and displays DC codes without the `GBE.` prefix (for example, `A1`). The list still derives from `master-data.js`.
 - CSI backend normalizes incoming names and accepts both bare names and legacy `GBE.` names, but new history and summary records use the bare format.
