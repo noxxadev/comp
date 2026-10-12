@@ -1,3 +1,11 @@
+## 2026-10-13 — CSI WhatsApp Report: Nama Personil
+- **Status:** IMPLEMENTED — LIVE VALIDATION PENDING.
+- Menambahkan kolom **Nama Personil** pada kartu Report CSI. Nama dapat dipisahkan dengan koma, titik koma, atau baris baru.
+- Report menampilkan jumlah personil otomatis dan daftar nama bernomor; nama duplikat tidak dihitung dua kali (pencocokan tanpa membedakan huruf besar/kecil).
+- Pembuatan laporan membutuhkan minimal satu nama personil. Nama personil hanya digunakan untuk report WhatsApp dan tidak mengubah penyimpanan riwayat CSI, struktur Google Sheets, login, atau integrasi DC HighTemp.
+- Cache-buster aset CSI diperbarui agar GitHub Pages memuat revisi terbaru.
+- **Live validation required:** uji nama satu/beberapa personil, nama duplikat, laporan tanggal custom, dan pesan WhatsApp yang terisi.
+
 ## 2026-10-13 — CSI Daily WhatsApp Report
 - **Status:** FRONTEND IMPLEMENTED — LIVE VALIDATION PENDING.
 - Added a daily report section to the CSI page. The date defaults to the user's local current date and can be changed for an occasional custom-date report.
