@@ -1,3 +1,10 @@
+## 2026-10-13 — CSI DC name format correction
+- CSI dropdown now stores and displays DC codes without the `GBE.` prefix (for example, `A1`). The list still derives from `master-data.js`.
+- CSI backend normalizes incoming names and accepts both bare names and legacy `GBE.` names, but new history and summary records use the bare format.
+- Existing history rows with `GBE.` remain readable; CSI history filtering and DC HighTemp summary normalize legacy values so older records continue matching.
+- DC HighTemp continues matching both formats. No changes to authentication, IP counting, Top 5 ranking, snapshots, or Progress logic.
+- Deployment note: publish the updated `main` frontend and manually update/redeploy `csi-apps-script/Code.gs` in the existing Apps Script Web App; GitHub does not deploy Apps Script automatically.
+
 ## 2026-10-13 — Integrasi ringkasan CSI ke DC HighTemp (Phase 3)
 - Menambahkan kolom **Detail Celldeck** pada tabel Top 5 DC HighTemp untuk menampilkan status sisi A dan B, umur sejak Cleaning terakhir, tanggal Cleaning terakhir, dan tanggal Replace terakhir jika tersedia.
 - DC HighTemp mengambil ringkasan melalui action baca `getHighTempSummary` pada backend CSI. Endpoint memvalidasi sesi COMP dan akun aktif; endpoint ini hanya mengembalikan ringkasan, bukan catatan lengkap atau notes.
