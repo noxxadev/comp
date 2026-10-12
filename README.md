@@ -612,3 +612,9 @@ Validation required:
 - Tombol **Reset Filter** diposisikan di sisi paling kanan pada baris filter untuk desktop dan tetap di sisi kanan pada layout tablet/mobile.
 - Hanya tata letak CSS yang diubah; fungsi reset filter dan logika CSI tidak diubah.
 - Validasi visual browser masih diperlukan.
+
+## 2026-10-13 — CSI Phase 2: penanganan hasil simpan dan muat ulang
+- Memisahkan hasil penyimpanan pekerjaan dari hasil pemuatan ulang riwayat.
+- Jika penyimpanan berhasil tetapi pemuatan ulang riwayat gagal, halaman sekarang menyatakan bahwa catatan sudah tersimpan dan menyarankan **Muat Ulang**; pengguna diperingatkan agar tidak menyimpan pekerjaan yang sama kembali.
+- Tidak mengubah endpoint backend, validasi sesi/role CSI, struktur spreadsheet, atau format catatan.
+- Pemeriksaan kode sumber selesai; pengujian langsung di browser dan Google Sheets tetap diperlukan untuk memastikan hasil save/read, pilihan kedua sisi, filter, dan status 30 hari.
