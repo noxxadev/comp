@@ -124,13 +124,63 @@
         return normalized;
       }) : [];
       renderHistory();
+      $('reportPreview').value = '';
+      $('sendReportBtn').disabled = true;
     } finally { $('refreshHistoryBtn').disabled = false; }
+  }
+
+  function localDateValue(date = new Date()) {
+    return [date.getFullYear(), String(date.getMonth() + 1).padStart(2, '0'), String(date.getDate()).padStart(2, '0')].join('-');
+  }
+  function reportDateText(value) {
+    const parts = String(value || '').split('-');
+    return parts.length === 3 ? parts[2] + '/' + parts[1] + '/' + parts[0] : String(value || '');
+  }
+  function buildDailyReport(dateValue) {
+    const rows = allRows.filter(row => String(row[2] || '').slice(0, 10) === dateValue)
+      .sort((a, b) => String(a[3]).localeCompare(String(b[3]), undefined, {numeric: true}) ||
+        String(a[5]).localeCompare(String(b[5])) || String(a[4]).localeCompare(String(b[4])));
+    if (!rows.length) return '';
+    const dcGroups = new Map();
+    const totals = { Cleaning: 0, Replace: 0 };
+    rows.forEach(row => {
+      const dc = String(row[3] || '').trim() || 'DC tidak diketahui';
+      const job = String(row[5] || '').trim();
+      const side = String(row[4] || '').trim();
+      const notes = String(row[8] || '').trim();
+      if (!dcGroups.has(dc)) dcGroups.set(dc, new Map());
+      const jobGroups = dcGroups.get(dc);
+      const groupKey = job + '|' + notes;
+      if (!jobGroups.has(groupKey)) jobGroups.set(groupKey, { job, notes, sides: { A: 0, B: 0 } });
+      const group = jobGroups.get(groupKey);
+      if (side === 'A' || side === 'B') {
+        group.sides[side] += 1;
+        if (job === 'Cleaning' || job === 'Replace') totals[job] += 1;
+      }
+    });
+    const lines = ['Daily Report CSI', 'Tanggal: ' + reportDateText(dateValue), ''];
+    [...dcGroups.keys()].sort((a, b) => a.localeCompare(b, undefined, {numeric: true})).forEach(dc => {
+      lines.push('Nama DC: ' + dc);
+      [...dcGroups.get(dc).values()].forEach(group => {
+        const sideParts = ['A', 'B'].filter(side => group.sides[side] > 0).map(side =>
+          'Sisi ' + side + (group.sides[side] > 1 ? ' (' + group.sides[side] + ' catatan)' : ''));
+        if (!sideParts.length) return;
+        lines.push('- ' + group.job + ': ' + sideParts.join(', '));
+        if (group.notes) lines.push('  Catatan: ' + group.notes);
+      });
+      lines.push('');
+    });
+    lines.push('Rekap pekerjaan:');
+    lines.push('- Cleaning: ' + totals.Cleaning + ' sisi');
+    lines.push('- Replace: ' + totals.Replace + ' sisi');
+    lines.push('- Total: ' + (totals.Cleaning + totals.Replace) + ' sisi');
+    return lines.join('\\n');
   }
   async function init() {
     if (!session()) { location.replace('login.html'); return; }
     populateDcOptions();
-    const today = new Date();
-    $('workDate').value = [today.getFullYear(),String(today.getMonth()+1).padStart(2,'0'),String(today.getDate()).padStart(2,'0')].join('-');
+    $('workDate').value = localDateValue();
+    $('reportDate').value = localDateValue();
     await request('validateAccess');
     await loadHistory();
     showNotice('Akses CSI terverifikasi. Riwayat berhasil dimuat.', 'success');
@@ -169,6 +219,40 @@
   $('refreshHistoryBtn').addEventListener('click', async () => {
     try { await loadHistory(); showNotice('Riwayat berhasil diperbarui.', 'success'); }
     catch (error) { showNotice(error.message, 'error'); }
+  });
+  $('generateReportBtn').addEventListener('click', async () => {
+    const button = $('generateReportBtn');
+    const dateValue = $('reportDate').value;
+    if (!dateValue) { showNotice('Pilih tanggal laporan terlebih dahulu.', 'error'); return; }
+    button.disabled = true;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyiapkan laporan...';
+    try {
+      await loadHistory();
+      const message = buildDailyReport(dateValue);
+      if (!message) {
+        $('reportPreview').value = 'Tidak ada pekerjaan CSI yang tersimpan pada tanggal ' + reportDateText(dateValue) + '.';
+        $('sendReportBtn').disabled = true;
+        showNotice('Tidak ada pekerjaan tersimpan pada tanggal tersebut. Laporan WhatsApp belum dapat dikirim.', 'info');
+      } else {
+        $('reportPreview').value = message;
+        $('sendReportBtn').disabled = false;
+        showNotice('Report harian berhasil dibuat. Periksa pesan sebelum membuka WhatsApp.', 'success');
+      }
+    } catch (error) {
+      showNotice('Gagal membuat report: ' + (error.message || 'periksa koneksi CSI.'), 'error');
+    } finally {
+      button.disabled = false;
+      button.innerHTML = '<i class="fas fa-file-lines"></i> Buat Report WhatsApp';
+    }
+  });
+  $('sendReportBtn').addEventListener('click', () => {
+    const message = $('reportPreview').value;
+    if (!message || $('sendReportBtn').disabled) return;
+    window.open('https://wa.me/?text=' + encodeURIComponent(message), '_blank', 'noopener,noreferrer');
+  });
+  $('reportDate').addEventListener('change', () => {
+    $('reportPreview').value = '';
+    $('sendReportBtn').disabled = true;
   });
   ['filterDc','filterJob','filterFrom','filterTo','filterOld'].forEach(id => $(id).addEventListener('change', renderHistory));
   $('clearFiltersBtn').addEventListener('click', () => {
