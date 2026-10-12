@@ -686,7 +686,7 @@ Validation required:
 ## 2026-10-13 — CSI Treatment Checklist dan Daily Report cetak
 - Menambahkan tujuh pilihan treatment pada form pekerjaan CSI; minimal satu treatment wajib dipilih.
 - Pilihan treatment disimpan sebagai JSON pada kolom `Treatments` di `CSI Work History`; ketika sisi `Both` dipilih, daftar treatment yang sama tersimpan pada catatan sisi A dan B.
-- Header `CSI Work History` diperbarui menjadi 10 kolom. Karena spreadsheet masih tahap pengujian dan belum berisi data valid, jalankan `setupCsiSheets()` untuk menyiapkan header terbaru. Jika tab berisi header lama, ubah/bersihkan tab uji sebelum setup ulang.
+- Header `CSI Work History` diperbarui menjadi 10 kolom. `setupCsiSheets()` atau akses backend berikutnya akan menambahkan header `Treatments` otomatis jika header yang ditemukan persis cocok dengan struktur lama 9 kolom; baris lama tetap dipertahankan dengan treatment kosong. Header lain yang tidak dikenali tetap ditolak.
 - Riwayat CSI menampilkan treatment tersimpan tanpa mengubah perhitungan status cleaning 30 hari atau ringkasan DC HighTemp.
 - Menambahkan form Daily Report cetak berdasarkan tanggal pekerjaan yang tersimpan, nama site/alamat, maksimal empat personil, serta nama PIC dan Site Leader.
 - Area Cleaning dibentuk dari Nama DC + sisi A/B + jenis pekerjaan. Daftar treatment pada setiap area menampilkan centang sesuai data tersimpan; layout cetak A4 landscape mengikuti bagian utama template PDF.
