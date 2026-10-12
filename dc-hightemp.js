@@ -89,9 +89,9 @@
     state.csiSummaryError = '';
     state.csiSummaryByDc = new Map();
     (Array.isArray(result.rows) ? result.rows : []).forEach(row => {
-      // CSI stores names such as "GBE.A1"; HighTemp ranking uses the mapped suffix "A1".
+      // CSI stores bare names such as "A1"; accept legacy "GBE.A1" records too.
       const rawName = String(row.dcName || '').trim().toUpperCase();
-      const key = rawName.replace(/^GBE\./, '');
+      const key = rawName.replace(/^GBE\./i, '');
       if (!key) return;
       if (!state.csiSummaryByDc.has(key)) state.csiSummaryByDc.set(key, {});
       state.csiSummaryByDc.get(key)[String(row.frameSide || '').trim().toUpperCase()] = row;
