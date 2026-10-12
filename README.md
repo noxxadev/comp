@@ -1,10 +1,10 @@
-## 2026-10-13 — DC HighTemp: format kolom Mesin Cleaning dan rancangan info Progress
-## 2026-10-13 — DC HighTemp: format kolom Mesin Cleaning dan rancangan info Progress
-- **Status format tabel:** IMPLEMENTED — LIVE VALIDATION PENDING.
-- Kolom **Mesin Cleaning** sekarang rata tengah horizontal dan vertikal; angka serta persentase juga disejajarkan ke tengah. Cache-buster CSS diperbarui.
-- **Rancangan tampilan Progress:** tampilkan panel kondisi terkini di bawah ringkasan angka Progress dan sebelum grafik, berisi (1) **Mesin Cleaning**: jumlah SN unik yang sudah cleaning / total SN di DC dan persentase; (2) **Detail Celldeck**: status sisi A dan B, tanggal cleaning terakhir, umur cleaning dalam hari, serta tanggal replace terakhir jika tersedia.
-- Panel kondisi ini bersifat informatif dan terpisah dari grafik/snapshot IP. Sumbernya tetap ringkasan mesin COMP dan ringkasan CSI; tidak mengubah baseline, perhitungan perubahan IP, atau riwayat snapshot.
-- **Implementasi panel Progress belum dilakukan**; perlu disepakati apakah panel harus selalu menampilkan kondisi terkini dari sumber atau menyimpan kondisi mesin/celldeck per tanggal snapshot.
+## 2026-10-13 — DC HighTemp: panel Kondisi Terkini pada Progress
+- **Status:** IMPLEMENTED — LIVE VALIDATION PENDING.
+- Menambahkan panel **Kondisi Terkini DC** di bawah ringkasan Progress dan sebelum grafik IP.
+- Saat Progress DC dibuka, frontend meminta ulang ringkasan **Mesin Cleaning** dari COMP Apps Script dan **Detail Celldeck sisi A/B** dari CSI Apps Script. Panel menampilkan jumlah SN unik cleaning/total dan persentase; status sisi A/B; tanggal cleaning terakhir; umur cleaning; tanggal replace terakhir; serta waktu pemuatan data.
+- Data panel bersifat **live/current**, bukan kondisi historis per snapshot. Jika salah satu sumber gagal, panel menampilkan status tidak tersedia tanpa menghentikan grafik atau riwayat IP.
+- Tidak mengubah perhitungan IP, baseline, rate/perubahan snapshot, aksi Record Data Snapshot, maupun struktur Google Sheets.
+- **Live validation required:** deploy versi terbaru backend COMP hanya jika backend mesin yang digunakan belum diperbarui; refresh halaman dengan Ctrl+F5, buka Progress DC tanpa upload baru, lalu pastikan data mesin dan CSI diperbarui. Frontend CSI memakai endpoint getHighTempSummary yang sudah ada.
 
 ## 2026-10-13 — DC HighTemp: perbaikan pembacaan lokasi Mesin Cleaning
 - **Status:** IMPLEMENTED — DEPLOYMENT & LIVE VALIDATION PENDING.
