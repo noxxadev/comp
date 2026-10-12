@@ -1059,10 +1059,10 @@ function getDcMachineCleaningSummary() {
     const locationId = String(row[1] || '').trim();
     if (!serialNumber || !locationId) continue;
 
-    const normalizedLocation = locationId.replace(/\\s+/g, ' ').trim().toUpperCase();
+    const normalizedLocation = locationId.replace(/\s+/g, ' ').trim().toUpperCase();
     if (workshopLocations.has(normalizedLocation) || normalizedLocation.startsWith('GBE_RC.')) continue;
 
-    const match = normalizedLocation.match(/^GBE\\.([^.]+)(?:\\.|$)/);
+    const match = normalizedLocation.match(/^GBE\.([^.]+)(?:\.|$)/);
     if (!match || !match[1]) continue;
 
     const dcName = match[1].trim().toUpperCase();
