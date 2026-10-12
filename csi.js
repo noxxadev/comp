@@ -160,7 +160,7 @@
   $('clearFiltersBtn').addEventListener('click', () => {
     $('filterDc').value = ''; $('filterJob').value = ''; $('filterFrom').value = ''; $('filterTo').value = ''; $('filterOld').checked = false; renderHistory();
   });
-  const menuToggle = $('csiMenuToggle');
+  const menuToggle = $('menuToggle');
   const sidebar = $('sidebar');
   const sidebarOverlay = $('sidebarOverlay');
   function closeSidebar() {
