@@ -42,7 +42,7 @@
     const names = new Set();
     Object.values(window.masterData || {}).forEach(location => {
       const match = String(location || '').trim().toUpperCase().match(/^(GBE\.[A-F]\d+[A-Z]?)(?:\.|$)/);
-      if (match) names.add(match[1]);
+      if (match) names.add(match[1].replace(/^GBE\./, ''));
     });
     return [...names].sort((a,b) => a.localeCompare(b, undefined, {numeric:true}));
   }
@@ -118,7 +118,11 @@
     $('refreshHistoryBtn').disabled = true;
     try {
       const result = await request('getHistory');
-      allRows = Array.isArray(result.rows) ? result.rows : [];
+      allRows = Array.isArray(result.rows) ? result.rows.map(row => {
+        const normalized = Array.isArray(row) ? row.slice() : row;
+        if (Array.isArray(normalized)) normalized[3] = String(normalized[3] || '').trim().replace(/^GBE\./i, '');
+        return normalized;
+      }) : [];
       renderHistory();
     } finally { $('refreshHistoryBtn').disabled = false; }
   }
