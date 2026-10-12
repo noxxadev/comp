@@ -1,3 +1,11 @@
+## 2026-10-13 — DC HighTemp: format kolom Mesin Cleaning dan rancangan info Progress
+## 2026-10-13 — DC HighTemp: format kolom Mesin Cleaning dan rancangan info Progress
+- **Status format tabel:** IMPLEMENTED — LIVE VALIDATION PENDING.
+- Kolom **Mesin Cleaning** sekarang rata tengah horizontal dan vertikal; angka serta persentase juga disejajarkan ke tengah. Cache-buster CSS diperbarui.
+- **Rancangan tampilan Progress:** tampilkan panel kondisi terkini di bawah ringkasan angka Progress dan sebelum grafik, berisi (1) **Mesin Cleaning**: jumlah SN unik yang sudah cleaning / total SN di DC dan persentase; (2) **Detail Celldeck**: status sisi A dan B, tanggal cleaning terakhir, umur cleaning dalam hari, serta tanggal replace terakhir jika tersedia.
+- Panel kondisi ini bersifat informatif dan terpisah dari grafik/snapshot IP. Sumbernya tetap ringkasan mesin COMP dan ringkasan CSI; tidak mengubah baseline, perhitungan perubahan IP, atau riwayat snapshot.
+- **Implementasi panel Progress belum dilakukan**; perlu disepakati apakah panel harus selalu menampilkan kondisi terkini dari sumber atau menyimpan kondisi mesin/celldeck per tanggal snapshot.
+
 ## 2026-10-13 — DC HighTemp: perbaikan pembacaan lokasi Mesin Cleaning
 - **Status:** IMPLEMENTED — DEPLOYMENT & LIVE VALIDATION PENDING.
 - Memperbaiki regex backend agar normalisasi spasi dan pembacaan lokasi `GBE.A1...` berjalan benar. Regex sebelumnya memakai escape berlebih sehingga lokasi mesin tidak dikenali dan ringkasan per DC dapat kosong.
