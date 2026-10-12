@@ -75,6 +75,7 @@ function doGet(e) {
     if (action === 'getWorkItems') return getWorkItems(e);
     if (action === 'getWorkHistory') return getWorkHistory(e);
     if (action === 'getMachineList') return getMachineList();
+    if (action === 'getDcMachineCleaningSummary') return getDcMachineCleaningSummary();
     if (action === 'getEngineers') return getEngineers();
     if (action === 'getDcProgress') return getDcProgress(e);
     if (action === 'getDcProgressHistory') return getDcProgressHistory(e);
@@ -1029,6 +1030,88 @@ function ensureHistorySchema(sheet) {
   }
   sheet.setFrozenRows(1);
   SpreadsheetApp.flush();
+}
+
+function getDcMachineCleaningSummary() {
+  const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const machineSheet = spreadsheet.getSheetByName(MACHINE_LIST_SHEET_NAME);
+  const historySheet = spreadsheet.getSheetByName(HISTORY_SHEET_NAME);
+  const machineMeta = readMachineListMeta();
+
+  if (!machineSheet || machineSheet.getLastRow() <= 1) {
+    return jsonResponse({
+      ok: true,
+      rows: [],
+      totalMachines: 0,
+      updatedAt: machineMeta.updatedAt || null,
+      sourceFileName: machineMeta.sourceFileName || '',
+      warning: 'Machine List Current belum memiliki data.'
+    });
+  }
+
+  const machineData = machineSheet.getDataRange().getValues();
+  const machinesByDc = new Map();
+  const workshopLocations = new Set(['GBE_RC.A-1', 'GBE_RC.A-3']);
+
+  for (let r = 1; r < machineData.length; r++) {
+    const row = machineData[r];
+    const serialNumber = String(row[0] || '').trim();
+    const locationId = String(row[1] || '').trim();
+    const uninstalledDate = String(row[3] || '').trim();
+    if (!serialNumber || !locationId || uninstalledDate) continue;
+
+    const normalizedLocation = locationId.replace(/\\s+/g, ' ').trim().toUpperCase();
+    if (workshopLocations.has(normalizedLocation) || normalizedLocation.startsWith('GBE_RC.')) continue;
+
+    const match = normalizedLocation.match(/^GBE\\.([^.]+)(?:\\.|$)/);
+    if (!match || !match[1]) continue;
+
+    const dcName = match[1].trim().toUpperCase();
+    if (!machinesByDc.has(dcName)) machinesByDc.set(dcName, new Set());
+    machinesByDc.get(dcName).add(normalizeSerialKey(serialNumber));
+  }
+
+  const completedSerials = new Set();
+  if (historySheet && historySheet.getLastRow() > 1) {
+    ensureHistorySchema(historySheet);
+    const historyData = historySheet.getDataRange().getValues();
+    const statusColumn = HISTORY_HEADERS.indexOf('Status');
+    const serialColumn = HISTORY_HEADERS.indexOf('Serial Number');
+
+    for (let r = 1; r < historyData.length; r++) {
+      const status = String(historyData[r][statusColumn] || '').trim();
+      const serialNumber = String(historyData[r][serialColumn] || '').trim();
+      if (status !== 'Selesai' || !serialNumber) continue;
+      completedSerials.add(normalizeSerialKey(serialNumber));
+    }
+  }
+
+  const rows = [];
+  let totalMachines = 0;
+  machinesByDc.forEach((serials, dcName) => {
+    let cleanedMachines = 0;
+    serials.forEach(serial => {
+      if (completedSerials.has(serial)) cleanedMachines++;
+    });
+    totalMachines += serials.size;
+    rows.push({
+      dcName,
+      totalMachines: serials.size,
+      cleanedMachines,
+      notCleanedMachines: Math.max(serials.size - cleanedMachines, 0),
+      cleaningRate: serials.size ? cleanedMachines / serials.size * 100 : 0
+    });
+  });
+
+  rows.sort((a, b) => a.dcName.localeCompare(b.dcName, undefined, { numeric: true }));
+  return jsonResponse({
+    ok: true,
+    rows,
+    totalMachines,
+    updatedAt: machineMeta.updatedAt || null,
+    sourceFileName: machineMeta.sourceFileName || '',
+    historyRowsScanned: historySheet ? Math.max(historySheet.getLastRow() - 1, 0) : 0
+  });
 }
 
 function getMachineList() {
