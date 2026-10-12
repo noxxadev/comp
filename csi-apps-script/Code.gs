@@ -49,6 +49,10 @@ function doPost(e) {
       const user = csiRequireUser_(payload.session);
       return csiJson_({ ok: true, authenticated: true, authorized: true, user: { id: user.id, username: user.username, role: user.role } });
     }
+    if (action === 'getHighTempSummary') {
+      csiRequireUser_(payload.session, true);
+      return csiJson_({ ok: true, rows: csiBuildHighTempSummary_() });
+    }
     if (action === 'getHistory') {
       csiRequireUser_(payload.session);
       const sheet = csiGetSheet_(CSI_HISTORY_SHEET, CSI_HISTORY_HEADERS);
@@ -141,7 +145,7 @@ function csiRefreshSummary_(dcName, side) {
   else summary.getRange(summary.getLastRow() + 1, 1, 1, summaryRow.length).setValues([summaryRow]);
 }
 
-function csiRequireUser_(sessionToken) {
+function csiRequireUser_(sessionToken, allowAnyActiveRole) {
   const token = String(sessionToken || '').trim();
   if (!token || token.length > 200) {
     throw new Error('Sesi login tidak ditemukan. Silakan login ulang.');
@@ -179,7 +183,7 @@ function csiRequireUser_(sessionToken) {
   if (String(user.status || '').trim().toLowerCase() !== 'active') {
     throw new Error('Akun COMP tidak aktif.');
   }
-  if (String(user.role || '').trim().toUpperCase() !== 'CSI') {
+  if (!allowAnyActiveRole && String(user.role || '').trim().toUpperCase() !== 'CSI') {
     throw new Error('Akses ditolak. Halaman ini khusus anggota CSI.');
   }
   if (!String(user.id || '').trim()) {
@@ -191,6 +195,34 @@ function csiRequireUser_(sessionToken) {
     username: String(user.username || '').trim(),
     role: String(user.role).trim()
   };
+}
+
+
+function csiBuildHighTempSummary_() {
+  const sheet = csiGetSheet_(CSI_HISTORY_SHEET, CSI_HISTORY_HEADERS);
+  const last = sheet.getLastRow();
+  const rows = last > 1 ? sheet.getRange(2, 1, last - 1, CSI_HISTORY_HEADERS.length).getValues() : [];
+  const map = new Map();
+  const tz = Session.getScriptTimeZone();
+  const today = Date.parse(Utilities.formatDate(new Date(), tz, 'yyyy-MM-dd') + 'T00:00:00Z');
+  rows.forEach(row => {
+    const dc = String(row[3] || '').trim(), side = String(row[4] || '').trim(), type = String(row[5] || '').trim();
+    if (!dc || !['A', 'B'].includes(side)) return;
+    const d = row[2] instanceof Date ? row[2] : new Date(row[2]);
+    if (isNaN(d.getTime())) return;
+    const date = Utilities.formatDate(d, tz, 'yyyy-MM-dd');
+    const key = dc + '|' + side;
+    const item = map.get(key) || { dcName: dc, frameSide: side, lastWorkDate: '', lastJobType: '', lastCleaningDate: '', lastReplaceDate: '' };
+    if (!item.lastWorkDate || date >= item.lastWorkDate) { item.lastWorkDate = date; item.lastJobType = type; }
+    if (type === 'Cleaning' && (!item.lastCleaningDate || date > item.lastCleaningDate)) item.lastCleaningDate = date;
+    if (type === 'Replace' && (!item.lastReplaceDate || date > item.lastReplaceDate)) item.lastReplaceDate = date;
+    map.set(key, item);
+  });
+  return [...map.values()].map(item => {
+    item.ageDays = item.lastCleaningDate ? Math.max(0, Math.floor((today - Date.parse(item.lastCleaningDate + 'T00:00:00Z')) / 86400000)) : null;
+    item.status = item.ageDays === null ? 'Belum ada cleaning' : item.ageDays >= 30 ? 'Perlu Cleaning' : 'Normal';
+    return item;
+  });
 }
 
 function csiGetProperty_(name) {
