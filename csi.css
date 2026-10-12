@@ -61,3 +61,13 @@
 .csi-print-form input,.csi-print-form textarea{width:100%;min-width:0;box-sizing:border-box;padding:11px 12px;border:1px solid var(--border,#dfe4ec);border-radius:9px;background:var(--surface-2,var(--surface,#fff));color:var(--text,var(--text-primary,#263247));font:inherit;font-size:13px}
 .csi-print-form .csi-report-actions,.csi-print-form .csi-help{grid-column:1/-1}
 @media(max-width:600px){.csi-treatment-grid,.csi-print-form{grid-template-columns:1fr}.csi-treatment-field,.csi-print-form .csi-report-actions,.csi-print-form .csi-help{grid-column:1}}
+
+/* CSI WhatsApp report modal */
+.csi-modal[hidden]{display:none!important}
+.csi-modal{position:fixed;inset:0;z-index:2000;display:flex;align-items:center;justify-content:center;padding:20px}
+.csi-modal-backdrop{position:absolute;inset:0;background:rgba(12,20,32,.58)}
+.csi-modal-panel{position:relative;z-index:1;width:min(680px,100%);max-height:90vh;overflow:auto;padding:22px;border:1px solid var(--border,#dfe4ec);border-radius:16px;background:var(--surface,#fff);color:var(--text,var(--text-primary,#263247));box-shadow:0 22px 70px rgba(0,0,0,.25);display:grid;gap:14px}
+.csi-modal-panel .csi-card-head{margin:0}
+.csi-modal-panel textarea{width:100%;box-sizing:border-box;resize:vertical;padding:12px;border:1px solid var(--border,#dfe4ec);border-radius:10px;background:var(--surface-2,var(--surface,#fff));color:var(--text,var(--text-primary,#263247));font:inherit;font-size:13px;line-height:1.55}
+.csi-modal-panel textarea:not([readonly]){border-color:var(--csi-accent);outline:2px solid color-mix(in srgb,var(--csi-accent) 20%,transparent)}
+@media(max-width:600px){.csi-modal{padding:10px}.csi-modal-panel{padding:15px}.csi-print-form .csi-report-actions{flex-direction:column;align-items:stretch}.csi-print-form .csi-report-actions button{width:100%}}
