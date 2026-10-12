@@ -90,12 +90,12 @@ function setupCsiSheets() {
 }
 
 function csiSaveWork_(payload, user) {
-  const dcName = String(payload.dcName || '').trim().toUpperCase();
+  const dcName = csiNormalizeDcName_(payload.dcName);
   const workDateText = String(payload.workDate || '').trim();
   const frameSide = String(payload.frameSide || '').trim();
   const jobType = String(payload.jobType || '').trim();
   const notes = String(payload.notes || '').trim().slice(0, 500);
-  if (!/^GBE\.[A-F]\d+[A-Z]?$/.test(dcName)) throw new Error('Nama DC tidak valid. Pilih DC dari daftar master data.');
+  if (!/^[A-F]\d+[A-Z]?$/.test(dcName)) throw new Error('Nama DC tidak valid. Pilih DC dari daftar master data.');
   if (!/^\d{4}-\d{2}-\d{2}$/.test(workDateText)) throw new Error('Tanggal pekerjaan tidak valid.');
   const workDate = new Date(workDateText + 'T12:00:00');
   if (isNaN(workDate.getTime()) || Utilities.formatDate(workDate, Session.getScriptTimeZone(), 'yyyy-MM-dd') !== workDateText) throw new Error('Tanggal pekerjaan tidak valid.');
@@ -122,7 +122,7 @@ function csiRefreshSummary_(dcName, side) {
   const summary = csiEnsureSheet_(spreadsheet, CSI_SUMMARY_SHEET, CSI_SUMMARY_HEADERS);
   const lastRow = history.getLastRow();
   const values = lastRow > 1 ? history.getRange(2, 1, lastRow - 1, CSI_HISTORY_HEADERS.length).getValues() : [];
-  const matching = values.filter(row => String(row[3]) === dcName && String(row[4]) === side)
+  const matching = values.filter(row => csiNormalizeDcName_(row[3]) === dcName && String(row[4]) === side)
     .sort((a,b) => new Date(b[2]).getTime() - new Date(a[2]).getTime() || new Date(b[1]).getTime() - new Date(a[1]).getTime());
   if (!matching.length) return;
 
@@ -140,7 +140,7 @@ function csiRefreshSummary_(dcName, side) {
   }
   const summaryRow = [dcName, side, latestWork[2], String(latestWork[5]), ageDays, status, now];
   const existing = summary.getLastRow() > 1 ? summary.getRange(2, 1, summary.getLastRow() - 1, 2).getDisplayValues() : [];
-  const index = existing.findIndex(row => row[0] === dcName && row[1] === side);
+  const index = existing.findIndex(row => csiNormalizeDcName_(row[0]) === dcName && row[1] === side);
   if (index >= 0) summary.getRange(index + 2, 1, 1, summaryRow.length).setValues([summaryRow]);
   else summary.getRange(summary.getLastRow() + 1, 1, 1, summaryRow.length).setValues([summaryRow]);
 }
@@ -206,7 +206,7 @@ function csiBuildHighTempSummary_() {
   const tz = Session.getScriptTimeZone();
   const today = Date.parse(Utilities.formatDate(new Date(), tz, 'yyyy-MM-dd') + 'T00:00:00Z');
   rows.forEach(row => {
-    const dc = String(row[3] || '').trim(), side = String(row[4] || '').trim(), type = String(row[5] || '').trim();
+    const dc = csiNormalizeDcName_(row[3]), side = String(row[4] || '').trim(), type = String(row[5] || '').trim();
     if (!dc || !['A', 'B'].includes(side)) return;
     const d = row[2] instanceof Date ? row[2] : new Date(row[2]);
     if (isNaN(d.getTime())) return;
@@ -223,6 +223,10 @@ function csiBuildHighTempSummary_() {
     item.status = item.ageDays === null ? 'Belum ada cleaning' : item.ageDays >= 30 ? 'Perlu Cleaning' : 'Normal';
     return item;
   });
+}
+
+function csiNormalizeDcName_(value) {
+  return String(value || '').trim().toUpperCase().replace(/^GBE\./, '');
 }
 
 function csiGetProperty_(name) {
