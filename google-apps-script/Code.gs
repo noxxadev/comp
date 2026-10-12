@@ -1057,8 +1057,7 @@ function getDcMachineCleaningSummary() {
     const row = machineData[r];
     const serialNumber = String(row[0] || '').trim();
     const locationId = String(row[1] || '').trim();
-    const uninstalledDate = String(row[3] || '').trim();
-    if (!serialNumber || !locationId || uninstalledDate) continue;
+    if (!serialNumber || !locationId) continue;
 
     const normalizedLocation = locationId.replace(/\\s+/g, ' ').trim().toUpperCase();
     if (workshopLocations.has(normalizedLocation) || normalizedLocation.startsWith('GBE_RC.')) continue;
