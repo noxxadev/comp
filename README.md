@@ -681,3 +681,14 @@ Validation required:
 - Halaman COMP yang ada telah diperiksa dan semuanya memuat `auth.js` serta `page-guard.js`.
 - Sidebar role CSI tetap hanya menampilkan **CSI Cleaning**. Perubahan ini tidak mengubah logika fitur, backend CSI, atau penyimpanan.
 - **Validasi browser masih diperlukan:** login sebagai CSI, pastikan masuk ke CSI; coba buka `index.html` dan URL halaman fitur secara langsung; lalu login sebagai Admin dan pastikan navigasi tetap seperti sebelumnya.
+
+
+## 2026-10-13 — CSI Treatment Checklist dan Daily Report cetak
+- Menambahkan tujuh pilihan treatment pada form pekerjaan CSI; minimal satu treatment wajib dipilih.
+- Pilihan treatment disimpan sebagai JSON pada kolom `Treatments` di `CSI Work History`; ketika sisi `Both` dipilih, daftar treatment yang sama tersimpan pada catatan sisi A dan B.
+- Header `CSI Work History` diperbarui menjadi 10 kolom. Karena spreadsheet masih tahap pengujian dan belum berisi data valid, jalankan `setupCsiSheets()` untuk menyiapkan header terbaru. Jika tab berisi header lama, ubah/bersihkan tab uji sebelum setup ulang.
+- Riwayat CSI menampilkan treatment tersimpan tanpa mengubah perhitungan status cleaning 30 hari atau ringkasan DC HighTemp.
+- Menambahkan form Daily Report cetak berdasarkan tanggal pekerjaan yang tersimpan, nama site/alamat, maksimal empat personil, serta nama PIC dan Site Leader.
+- Area Cleaning dibentuk dari Nama DC + sisi A/B + jenis pekerjaan. Daftar treatment pada setiap area menampilkan centang sesuai data tersimpan; layout cetak A4 landscape mengikuti bagian utama template PDF.
+- Fitur Report WhatsApp yang sudah ada tetap dipertahankan.
+- Pemeriksaan kode sumber dilakukan; **validasi browser, Google Sheets, dan deployment Apps Script masih diperlukan**.
