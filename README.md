@@ -1,3 +1,12 @@
+## 2026-10-13 — DC HighTemp: jumlah mesin yang sudah cleaning
+- **Status:** IMPLEMENTED — LIVE VALIDATION PENDING.
+- Menambahkan kolom **Mesin Cleaning** pada TOP 5 DC HIGHTEMP dengan format jumlah SN unik yang memiliki riwayat Selesai dibanding total SN unik aktif per DC, beserta persentase cleaning.
+- Total mesin bersumber dari **Machine List Current**; SN yang sama hanya dihitung satu kali. Record dengan tanggal Uninstalled terisi dan lokasi workshop `GBE_RC.A-1` / `GBE_RC.A-3` dikecualikan dari daftar mesin aktif per DC.
+- Backend memindai seluruh Work History dan membuat himpunan SN unik berstatus `Selesai`, bukan memakai jumlah event atau batas hasil API 5.000 baris.
+- Jika API ringkasan gagal, kolom menampilkan status data tidak tersedia; tidak memakai cache lokal yang berpotensi kedaluwarsa.
+- Tidak mengubah ranking IP, Rate, Detail Celldeck CSI, snapshot, baseline, Progress, atau struktur Google Sheets.
+- **Validasi live diperlukan:** deploy versi baru `google-apps-script/Code.gs`, lalu uji TOP 5 dengan beberapa SN yang memiliki beberapa riwayat Selesai, SN tanpa riwayat, mesin yang sudah uninstalled, serta lokasi workshop.
+
 ## 2026-10-13 — CSI WhatsApp Report: Nama Personil
 - **Status:** IMPLEMENTED — LIVE VALIDATION PENDING.
 - Menambahkan kolom **Nama Personil** pada kartu Report CSI. Nama dapat dipisahkan dengan koma, titik koma, atau baris baru.
