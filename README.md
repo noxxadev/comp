@@ -5,7 +5,7 @@
 - Counts are based on saved side-level records. Selecting Both remains represented by the two separate A and B rows already written by the CSI backend; the report does not invent a separate celldeck identifier.
 - **Buat Report WhatsApp** generates a preview; **Kirim via WhatsApp** opens WhatsApp with the message prefilled. The user must choose the destination group and press Send manually. Direct automatic group delivery is not provided by a normal wa.me link.
 - Frontend-only feature: no CSI Apps Script, spreadsheet schema, authentication, or DC HighTemp integration changes.
-- Live validation still required for today's data, a custom date, an empty date, multiple DCs, A/B/Both, Cleaning/Replace, notes, and WhatsApp opening.
+- **Live validation required:** test today's data, a custom date, an empty date, multiple DCs, A/B/Both, Cleaning/Replace, notes, and WhatsApp opening.
 
 ## 2026-10-13 — DC HighTemp Phase 4: detail pekerjaan CSI
 - **Status:** COMPLETED — USER VALIDATED
