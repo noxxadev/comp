@@ -1,3 +1,10 @@
+## 2026-10-13 — Integrasi ringkasan CSI ke DC HighTemp (Phase 3)
+- Menambahkan kolom **Detail Celldeck** pada tabel Top 5 DC HighTemp untuk menampilkan status sisi A dan B, umur sejak Cleaning terakhir, tanggal Cleaning terakhir, dan tanggal Replace terakhir jika tersedia.
+- DC HighTemp mengambil ringkasan melalui action baca `getHighTempSummary` pada backend CSI. Endpoint memvalidasi sesi COMP dan akun aktif; endpoint ini hanya mengembalikan ringkasan, bukan catatan lengkap atau notes.
+- Kegagalan memuat ringkasan CSI tidak menghentikan perhitungan Top 5, penyimpanan snapshot, atau fitur Progress. Kolom akan menampilkan pesan bahwa detail CSI tidak tersedia.
+- Menambahkan cache-busting untuk aset halaman DC HighTemp. Tidak ada perubahan pada mekanisme hitung IP, ranking Top 5, snapshot, atau Progress.
+- **Status: kode frontend sudah di `main`; belum dianggap selesai diuji live.** Web App CSI harus menggunakan deployment yang memuat action `getHighTempSummary`. Setelah memperbarui Apps Script, deploy versi baru lalu uji halaman dengan akun COMP aktif.
+
 ## 2026-10-11 — CSI frontend routing
 - Added a `CSI Cleaning` link to the COMP hub sidebar on `feature/csi-foundation`; the existing `main` branch is unchanged.
 - Added cache-busting version strings to CSI page assets to reduce stale-browser-cache issues during testing.
