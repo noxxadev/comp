@@ -14,7 +14,7 @@
   <script src="page-guard.js"></script>
   <script src="master-data.js"></script>
   <script src="csi-google-sheets-config.js?v=20261011-csi"></script>
-  <link rel="stylesheet" href="csi.css?v=20261013-whatsapp-report">
+  <link rel="stylesheet" href="csi.css?v=20261013-whatsapp-personnel">
 </head>
 <body>
 <div class="hub-shell">
@@ -49,6 +49,7 @@
       <div class="csi-card-head"><div><span class="csi-section-tag">LAPORAN HARIAN</span><h2>Report CSI WhatsApp</h2></div><i class="fab fa-whatsapp csi-card-icon"></i></div>
       <div class="csi-report-form">
         <label>Tanggal laporan (default hari ini; bisa diubah)<input id="reportDate" type="date" required></label>
+        <label>Nama Personil (pisahkan dengan koma atau baris baru)<textarea id="reportPersonnel" rows="3" placeholder="Contoh: Riko, Agus, Raka, Ace" required></textarea></label>
         <div class="csi-report-actions">
           <button id="generateReportBtn" class="csi-primary-btn" type="button"><i class="fas fa-file-lines"></i> Buat Report WhatsApp</button>
           <button id="sendReportBtn" class="csi-secondary-btn" type="button" disabled><i class="fab fa-whatsapp"></i> Kirim via WhatsApp</button>
@@ -73,6 +74,6 @@
     <footer class="csi-footer">COMP Tools · CSI Work History</footer>
   </main>
 </div>
-<script src="csi.js?v=20261013-whatsapp-report"></script>
+<script src="csi.js?v=20261013-whatsapp-personnel"></script>
 </body>
 </html>
