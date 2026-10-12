@@ -137,8 +137,6 @@
         return normalized;
       }) : [];
       renderHistory();
-      $('reportPreview').value = '';
-      $('sendReportBtn').disabled = true;
     } finally { $('refreshHistoryBtn').disabled = false; }
   }
 
@@ -220,7 +218,7 @@
     lines.push('- Total: ' + (totals.Cleaning + totals.Replace) + ' sisi');
     return lines.join('\n');
   }
-  function buildPrintableReport(dateValue, siteName, siteAddress, personnel, picName, leaderName) {
+  function buildPrintableReport(dateValue, siteName, siteAddress, personnel, teamName, picName, leaderName) {
     const rows = allRows.filter(row => String(row[2] || '').slice(0, 10) === dateValue);
     if (!rows.length) return '';
     const areas = new Map();
@@ -245,31 +243,33 @@
     while (people.length < 4) people.push('');
     const dayName = new Intl.DateTimeFormat('id-ID', {weekday:'long'}).format(new Date(dateValue + 'T12:00:00'));
     const styles = `
-      @page { size: A4 landscape; margin: 10mm; }
+      @page { size: A4 portrait; margin: 10mm; }
       * { box-sizing:border-box; } body { font-family:Arial,sans-serif;color:#111;margin:0;font-size:9px; }
-      .header { display:grid;grid-template-columns:90px 1fr 230px;align-items:center;border:1px solid #222;padding:8px;gap:10px; }
-      .logo {font-weight:900;font-size:18px;color:#147f66;text-align:center;letter-spacing:1px}.title{text-align:center}.title h1{font-size:17px;margin:0 0 5px}.title p{margin:0;font-size:9px;font-weight:bold}
+      .header { display:grid;grid-template-columns:62px 1fr 100px;align-items:center;border:1px solid #222;padding:8px;gap:10px; }
+      .logo {font-weight:900;font-size:18px;color:#147f66;text-align:center;letter-spacing:1px}.title{text-align:center}.title h1{font-size:14px;margin:0 0 5px}.title p{margin:0;font-size:9px;font-weight:bold}
       .meta {display:grid;grid-template-columns:1fr 1fr;gap:4px;margin:8px 0}.meta div{border:1px solid #555;padding:5px;min-height:22px}.people{grid-row:span 3}
       table {border-collapse:collapse;width:100%;table-layout:fixed} th,td{border:1px solid #222;padding:4px;vertical-align:top} th{background:#e9efed;text-align:center;font-size:9px}
-      th:nth-child(1){width:4%} th:nth-child(2){width:20%} th:nth-child(3){width:33%} th:nth-child(4){width:21%} th:nth-child(5){width:22%}
+      th:nth-child(1){width:4%} th:nth-child(2){width:22%} th:nth-child(3){width:34%} th:nth-child(4){width:20%} th:nth-child(5){width:20%}
       .number{text-align:center;font-weight:bold}.sub{font-size:8px;color:#444}.treatment-line{display:flex;gap:5px;align-items:flex-start;margin:0 0 3px}.check{display:inline-flex;border:1px solid #333;width:11px;height:11px;min-width:11px;align-items:center;justify-content:center;font-weight:bold;font-size:10px}
-      .write-cell{height:110px}.signatures{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:14px;text-align:center}.sign{min-height:75px}.sign strong{display:block}.sign .space{height:45px}.sign .name{border-top:1px solid #333;display:inline-block;min-width:170px;padding-top:4px}
+      .write-cell{height:70px}.signatures{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:14px;text-align:center}.sign{min-height:75px}.sign strong{display:block}.sign .space{height:45px}.sign .name{border-top:1px solid #333;display:inline-block;min-width:170px;padding-top:4px}
       .footer{margin-top:5px;font-size:8px;color:#555}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
     `;
     return '<!doctype html><html lang="id"><head><meta charset="utf-8"><title>Daily Report Cleaning Celldeck</title><style>' + styles + '</style></head><body>' +
       '<header class="header"><div class="logo">CAKRAWALA</div><div class="title"><h1>DAILY REPORT CLEANING CELLDECK</h1><p>PT. CAKRAWALA SEJAHTERA INSANI - GREENBOX (DATA CENTER)</p></div><div><strong>FORM CSI</strong><br>Dokumentasi pekerjaan</div></header>' +
       '<section class="meta"><div><strong>HARI:</strong> ' + esc(dayName) + '</div><div><strong>TANGGAL:</strong> ' + esc(reportDateText(dateValue)) + '</div><div><strong>NAMA SITE:</strong> ' + esc(siteName) + '</div><div><strong>ALAMAT:</strong> ' + esc(siteAddress || '-') + '</div><div><strong>JUMLAH PERSONIL:</strong> ' + people.filter(Boolean).length + '</div><div class="people"><strong>NAMA PERSONIL</strong><br>' + people.map((p,i) => (i+1) + ') ' + esc(p || '________________') + '<br>').join('') + '</div></section>' +
       '<table><thead><tr><th>NO</th><th>AREA CLEANING</th><th>JENIS TREATMENT</th><th>TEMUAN DILAPANGAN</th><th>PENANGANAN</th></tr></thead><tbody>' + treatmentRows + '</tbody></table>' +
-      '<div class="signatures"><div class="sign"><strong>DIBUAT</strong><span>TIM CSI</span><div class="space"></div><span class="name">Nama Jelas</span></div><div class="sign"><strong>DIKETAHUI</strong><span>PIC SITE</span><div class="space"></div><span class="name">' + esc(picName || 'Nama Jelas') + '</span></div><div class="sign"><strong>DISETUJUI</strong><span>SITE LEADER</span><div class="space"></div><span class="name">' + esc(leaderName || 'Nama Jelas') + '</span></div></div>' +
+      '<div class="signatures"><div class="sign"><strong>DIBUAT</strong><span>TIM CSI</span><div class="space"></div><span class="name">' + esc(teamName || 'Nama Jelas') + '</span></div><div class="sign"><strong>DIKETAHUI</strong><span>PIC SITE</span><div class="space"></div><span class="name">' + esc(picName || 'Nama Jelas') + '</span></div><div class="sign"><strong>DISETUJUI</strong><span>SITE LEADER</span><div class="space"></div><span class="name">' + esc(leaderName || 'Nama Jelas') + '</span></div></div>' +
       '<p class="footer">Dibuat dari catatan pekerjaan CSI tersimpan · Area cleaning dipecah per Nama DC, sisi Celldeck, dan jenis pekerjaan.</p></body></html>';
   }
   async function printDailyReport() {
     const button = $('printDailyReportBtn');
     const dateValue = $('printReportDate').value;
-    const siteName = $('printSiteName').value.trim();
+    const siteName = 'CWUP Karawang';
+    const siteAddress = 'Karawang';
+    const teamName = $('printTeamName').value.trim();
     const personnel = parsePersonnelNames($('printPersonnel').value);
-    if (!dateValue || !siteName || !personnel.length) {
-      showNotice('Lengkapi tanggal, nama site, dan minimal satu nama personil.', 'error');
+    if (!dateValue || !teamName || !personnel.length) {
+      showNotice('Lengkapi tanggal, Nama TIM CSI, dan minimal satu nama personil.', 'error');
       return;
     }
     if (personnel.length > 4) {
@@ -284,7 +284,7 @@
     button.disabled = true;
     try {
       await loadHistory();
-      const report = buildPrintableReport(dateValue, siteName, $('printSiteAddress').value.trim(), personnel, $('printPicName').value.trim(), $('printLeaderName').value.trim());
+      const report = buildPrintableReport(dateValue, siteName, siteAddress, personnel, teamName, $('printPicName').value.trim(), $('printLeaderName').value.trim());
       if (!report) {
         win.close();
         showNotice('Tidak ada pekerjaan CSI tersimpan pada tanggal laporan yang dipilih.', 'error');
@@ -302,7 +302,6 @@
     if (!session()) { location.replace('login.html'); return; }
     populateDcOptions();
     $('workDate').value = localDateValue();
-    $('reportDate').value = localDateValue();
     $('printReportDate').value = localDateValue();
     await request('validateAccess');
     await loadHistory();
@@ -345,46 +344,48 @@
     try { await loadHistory(); showNotice('Riwayat berhasil diperbarui.', 'success'); }
     catch (error) { showNotice(error.message, 'error'); }
   });
+  function closeWhatsappModal() {
+    $('whatsappReportModal').hidden = true;
+    $('reportPreview').readOnly = true;
+    $('editReportBtn').innerHTML = '<i class="fas fa-pen"></i> Edit';
+  }
   $('generateReportBtn').addEventListener('click', async () => {
     const button = $('generateReportBtn');
-    const dateValue = $('reportDate').value;
+    const dateValue = $('printReportDate').value;
     if (!dateValue) { showNotice('Pilih tanggal laporan terlebih dahulu.', 'error'); return; }
+    const personnelNames = parsePersonnelNames($('printPersonnel').value);
+    if (!personnelNames.length) { showNotice('Isi minimal satu nama personil sebelum membuat report.', 'error'); return; }
+    if (personnelNames.length > 4) { showNotice('Maksimal empat nama personil untuk report.', 'error'); return; }
     button.disabled = true;
-    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyiapkan laporan...';
     try {
       await loadHistory();
-      const personnelNames = parsePersonnelNames($('reportPersonnel').value);
-      if (!personnelNames.length) {
-        $('reportPreview').value = '';
-        $('sendReportBtn').disabled = true;
-        showNotice('Isi minimal satu nama personil sebelum membuat report.', 'error');
-        return;
-      }
       const message = buildDailyReport(dateValue, personnelNames);
-      if (!message) {
-        $('reportPreview').value = 'Tidak ada pekerjaan CSI yang tersimpan pada tanggal ' + reportDateText(dateValue) + '.';
-        $('sendReportBtn').disabled = true;
-        showNotice('Tidak ada pekerjaan tersimpan pada tanggal tersebut. Laporan WhatsApp belum dapat dikirim.', 'info');
-      } else {
-        $('reportPreview').value = message;
-        $('sendReportBtn').disabled = false;
-        showNotice('Report harian berhasil dibuat. Periksa pesan sebelum membuka WhatsApp.', 'success');
-      }
+      if (!message) { showNotice('Tidak ada pekerjaan tersimpan pada tanggal tersebut.', 'error'); return; }
+      $('reportPreview').value = message;
+      $('reportPreview').readOnly = true;
+      $('editReportBtn').innerHTML = '<i class="fas fa-pen"></i> Edit';
+      $('whatsappReportModal').hidden = false;
+      showNotice('Report WhatsApp siap diperiksa.', 'success');
     } catch (error) {
       showNotice('Gagal membuat report: ' + (error.message || 'periksa koneksi CSI.'), 'error');
-    } finally {
-      button.disabled = false;
-      button.innerHTML = '<i class="fas fa-file-lines"></i> Buat Report WhatsApp';
-    }
+    } finally { button.disabled = false; }
+  });
+  $('editReportBtn').addEventListener('click', () => {
+    const area = $('reportPreview');
+    area.readOnly = !area.readOnly;
+    $('editReportBtn').innerHTML = area.readOnly ? '<i class="fas fa-pen"></i> Edit' : '<i class="fas fa-check"></i> Selesai Edit';
+    if (!area.readOnly) area.focus();
   });
   $('sendReportBtn').addEventListener('click', () => {
-    const message = $('reportPreview').value;
-    if (!message || $('sendReportBtn').disabled) return;
-    window.open('https://wa.me/?text=' + encodeURIComponent(message), '_blank', 'noopener,noreferrer');
+    const message = $('reportPreview').value.trim();
+    if (message) window.open('https://wa.me/?text=' + encodeURIComponent(message), '_blank', 'noopener,noreferrer');
   });
-  $('reportDate').addEventListener('change', () => {
-    $('reportPreview').value = '';
-    $('sendReportBtn').disabled = true;
+  $('closeWhatsappModalBtn').addEventListener('click', closeWhatsappModal);
+  $('whatsappReportModal').addEventListener('click', event => {
+    if (event.target?.dataset?.closeModal === 'true') closeWhatsappModal();
+  });
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && !$('whatsappReportModal').hidden) closeWhatsappModal();
   });
   ['filterDc','filterJob','filterFrom','filterTo','filterOld'].forEach(id => $(id).addEventListener('change', renderHistory));
   $('clearFiltersBtn').addEventListener('click', () => {
