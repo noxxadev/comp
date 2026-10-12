@@ -657,3 +657,10 @@ Validation required:
 - Jika penyimpanan berhasil tetapi pemuatan ulang riwayat gagal, halaman sekarang menyatakan bahwa catatan sudah tersimpan dan menyarankan **Muat Ulang**; pengguna diperingatkan agar tidak menyimpan pekerjaan yang sama kembali.
 - Tidak mengubah endpoint backend, validasi sesi/role CSI, struktur spreadsheet, atau format catatan.
 - Pemeriksaan kode sumber selesai; pengujian langsung di browser dan Google Sheets tetap diperlukan untuk memastikan hasil save/read, pilihan kedua sisi, filter, dan status 30 hari.
+
+## 2026-10-13 — Sidebar berdasarkan role CSI/Admin
+- Sidebar bersama membaca role dari sesi COMP yang tersimpan setelah login.
+- Role **CSI** hanya menampilkan menu **CSI Cleaning**; role **Admin** tetap melihat seluruh menu COMP.
+- Role lain mempertahankan navigasi yang sudah ada.
+- Perubahan terbatas pada tampilan navigasi; mekanisme login, validasi sesi, backend, dan fitur tiap halaman tidak diubah.
+- Validasi browser diperlukan dengan login sebagai CSI dan Admin, termasuk hard refresh.
