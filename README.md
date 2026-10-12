@@ -1,5 +1,14 @@
+## 2026-10-13 — CSI Daily WhatsApp Report
+- **Status:** FRONTEND IMPLEMENTED — LIVE VALIDATION PENDING.
+- Added a daily report section to the CSI page. The date defaults to the user's local current date and can be changed for an occasional custom-date report.
+- The report refreshes saved CSI history, filters strictly by the selected Work Date, groups records by Nama DC and job type, and lists Frame Side A/B plus optional notes.
+- Counts are based on saved side-level records. Selecting Both remains represented by the two separate A and B rows already written by the CSI backend; the report does not invent a separate celldeck identifier.
+- **Buat Report WhatsApp** generates a preview; **Kirim via WhatsApp** opens WhatsApp with the message prefilled. The user must choose the destination group and press Send manually. Direct automatic group delivery is not provided by a normal wa.me link.
+- Frontend-only feature: no CSI Apps Script, spreadsheet schema, authentication, or DC HighTemp integration changes.
+- Live validation still required for today's data, a custom date, an empty date, multiple DCs, A/B/Both, Cleaning/Replace, notes, and WhatsApp opening.
+
 ## 2026-10-13 — DC HighTemp Phase 4: detail pekerjaan CSI
-- **Status:** IMPLEMENTED — LIVE VISUAL VALIDATION PENDING
+- **Status:** COMPLETED — USER VALIDATED
 - Detail Celldeck pada tabel Top 5 sekarang menampilkan jenis dan tanggal pekerjaan terakhir untuk tiap sisi frame, selain status, umur sejak Cleaning terakhir, tanggal Cleaning terakhir, dan tanggal Replace terakhir.
 - Umur cleaning tetap dihitung dari riwayat bertipe `Cleaning`; pekerjaan `Replace` tidak mereset umur cleaning.
 - Perubahan hanya pada rendering detail CSI di `dc-hightemp.js` dan cache-buster di `dc-hightemp.html`.
