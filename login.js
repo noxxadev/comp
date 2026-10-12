@@ -37,7 +37,11 @@
 
       try {
         await window.CompAuth.login(username.value, password.value);
-        window.location.replace('index.html');
+        const user = window.CompAuth.getUser?.() || {};
+        const destination = String(user.role || '').trim().toUpperCase() === 'CSI'
+          ? 'csi.html'
+          : 'index.html';
+        window.location.replace(destination);
       } catch (error) {
         status.textContent = error.message || 'Login gagal.';
         password.value = '';
