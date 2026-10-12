@@ -11,7 +11,8 @@
     progressRows: [],
     selectedDc: '',
     progressHistory: [],
-    csiSummaryByDc: new Map()
+    csiSummaryByDc: new Map(),
+    csiSummaryError: ''
   };
 
   const $ = (id) => document.getElementById(id);
@@ -85,6 +86,7 @@
     let result;
     try { result = JSON.parse(raw); } catch (_) { throw new Error('Respons ringkasan CSI tidak valid.'); }
     if (!response.ok || !result?.ok) throw new Error(result?.error || 'Gagal memuat ringkasan CSI.');
+    state.csiSummaryError = '';
     state.csiSummaryByDc = new Map();
     (Array.isArray(result.rows) ? result.rows : []).forEach(row => {
       const key = String(row.dcName || '').trim().toUpperCase();
@@ -96,7 +98,7 @@
   };
 
   const formatCsiDate = value => {
-    const match = String(value || '').slice(0, 10).match(/^(\\d{4})-(\\d{2})-(\\d{2})$/);
+    const match = String(value || '').slice(0, 10).match(/^(\d{4})-(\d{2})-(\d{2})$/);
     return match ? match[3] + '/' + match[2] + '/' + match[1] : '—';
   };
 
@@ -104,6 +106,10 @@
     rankingBody.querySelectorAll('[data-csi-dc]').forEach(cell => {
       const dc = String(cell.getAttribute('data-csi-dc') || '').trim().toUpperCase();
       const sides = state.csiSummaryByDc.get(dc) || {};
+      if (state.csiSummaryError) {
+        cell.innerHTML = '<span class="dc-csi-error">' + escapeHtml(state.csiSummaryError) + '</span>';
+        return;
+      }
       const line = side => {
         const item = sides[side];
         if (!item) return '<div><strong>' + side + ':</strong> Belum ada data</div>';
@@ -285,6 +291,7 @@
       '<td class="dc-name">' + escapeHtml(item.name) + '</td>' +
       '<td class="dc-count">' + formatNumber(item.count) + '</td>' +
       '<td class="dc-rate">' + formatRate(item.rate) + '</td>' +
+      '<td class="dc-csi-detail" data-csi-dc="' + escapeHtml(item.name) + '">Memuat detail...</td>' +
       '<td><button class="dc-progress-btn" type="button" data-progress-dc="' + encodeURIComponent(item.name) + '"><i class="fas fa-chart-line"></i> Progress</button></td>' +
       '</tr>'
     ).join('');
@@ -740,6 +747,13 @@
     try {
       calculateSnapshot();
       await loadProgress();
+      try {
+        await loadCsiSummary();
+      } catch (csiError) {
+        state.csiSummaryError = 'Detail CSI tidak tersedia';
+        renderCsiSummaryCells();
+        console.warn('Detail CSI belum dapat dimuat:', csiError);
+      }
       recordSnapshotBtn.disabled = !(state.file && state.progressRows.length && state.allRanking.length);
     } catch (e) {
       showError(e.message || 'Gagal menghitung snapshot.');
