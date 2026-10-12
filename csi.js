@@ -259,7 +259,7 @@
       '<section class="meta"><div><strong>HARI:</strong> ' + esc(dayName) + '</div><div><strong>TANGGAL:</strong> ' + esc(reportDateText(dateValue)) + '</div><div><strong>NAMA SITE:</strong> ' + esc(siteName) + '</div><div><strong>ALAMAT:</strong> ' + esc(siteAddress || '-') + '</div><div><strong>JUMLAH PERSONIL:</strong> ' + people.filter(Boolean).length + '</div><div class="people"><strong>NAMA PERSONIL</strong><br>' + people.map((p,i) => (i+1) + ') ' + esc(p || '________________') + '<br>').join('') + '</div></section>' +
       '<table><thead><tr><th>NO</th><th>AREA CLEANING</th><th>JENIS TREATMENT</th><th>TEMUAN DILAPANGAN</th><th>PENANGANAN</th></tr></thead><tbody>' + treatmentRows + '</tbody></table>' +
       '<div class="signatures"><div class="sign"><strong>DIBUAT</strong><span>TIM CSI</span><div class="space"></div><span class="name">' + esc(teamName || 'Nama Jelas') + '</span></div><div class="sign"><strong>DIKETAHUI</strong><span>PIC SITE</span><div class="space"></div><span class="name">' + esc(picName || 'Nama Jelas') + '</span></div><div class="sign"><strong>DISETUJUI</strong><span>SITE LEADER</span><div class="space"></div><span class="name">' + esc(leaderName || 'Nama Jelas') + '</span></div></div>' +
-      '<p class="footer">Dibuat dari catatan pekerjaan CSI tersimpan · Area cleaning dipecah per Nama DC, sisi Celldeck, dan jenis pekerjaan.</p></body></html>';
+      '</body></html>';
   }
   async function printDailyReport() {
     const button = $('printDailyReportBtn');
