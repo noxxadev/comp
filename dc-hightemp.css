@@ -149,3 +149,11 @@
 .dc-target-info{grid-column:2;color:var(--muted);font-size:10px;min-height:14px}
 @media(max-width:780px){.dc-target-record{grid-template-columns:1fr}.dc-target-controls{grid-template-columns:1fr}.dc-target-info{grid-column:auto}}
 @media(max-width:480px){.dc-target-record{padding:14px}.dc-target-controls{grid-template-columns:1fr}}
+
+/* CSI celldeck summary in DC HighTemp ranking */
+.dc-table th:nth-child(5),.dc-table td.dc-csi-detail{min-width:250px;text-align:left;vertical-align:top}
+.dc-csi-detail>div{margin:0 0 7px;line-height:1.45;font-size:11px}
+.dc-csi-detail>div:last-child{margin-bottom:0}
+.dc-csi-detail strong{display:inline-block;min-width:18px}
+.dc-csi-date{display:block;margin:2px 0 0 20px;color:var(--muted);font-size:10px;line-height:1.4}
+.dc-csi-error{color:var(--muted);font-size:11px}
