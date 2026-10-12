@@ -48,3 +48,16 @@
 .csi-report-actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
 .csi-report-form .csi-help{grid-column:1/-1;margin:0}
 @media(max-width:700px){.csi-report-form{grid-template-columns:1fr}.csi-report-actions{align-items:stretch;flex-direction:column}.csi-report-actions button{width:100%}}
+
+/* CSI treatment selection */
+.csi-treatment-field{grid-column:1/-1;min-width:0;margin:0;padding:14px;border:1px solid var(--border,#dfe4ec);border-radius:10px}
+.csi-treatment-field legend{padding:0 6px;font-size:12px;font-weight:800;color:var(--text,var(--text-primary,#263247))}
+.csi-treatment-field legend span{font-size:10px;font-weight:600;color:var(--muted,#778195)}
+.csi-treatment-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 14px}
+.csi-treatment-option{display:flex!important;flex-direction:row!important;align-items:flex-start;gap:9px!important;font-size:12px!important;font-weight:600!important;line-height:1.45}
+.csi-treatment-option input{width:16px!important;height:16px;flex:0 0 16px;margin:1px 0 0;accent-color:var(--csi-accent)}
+.csi-print-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-items:end}
+.csi-print-form label{display:flex;flex-direction:column;gap:7px;font-size:12px;font-weight:700;color:var(--text,var(--text-primary,#263247));min-width:0}
+.csi-print-form input,.csi-print-form textarea{width:100%;min-width:0;box-sizing:border-box;padding:11px 12px;border:1px solid var(--border,#dfe4ec);border-radius:9px;background:var(--surface-2,var(--surface,#fff));color:var(--text,var(--text-primary,#263247));font:inherit;font-size:13px}
+.csi-print-form .csi-report-actions,.csi-print-form .csi-help{grid-column:1/-1}
+@media(max-width:600px){.csi-treatment-grid,.csi-print-form{grid-template-columns:1fr}.csi-treatment-field,.csi-print-form .csi-report-actions,.csi-print-form .csi-help{grid-column:1}}
