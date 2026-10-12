@@ -495,6 +495,82 @@
     }
   };
 
+  const normalizeDcKey = value => String(value || '').trim().toUpperCase().replace(/^GBE\./, '');
+
+  const renderCurrentDcCondition = (dcName) => {
+    const title = $('currentDcConditionTitle');
+    const updated = $('currentDcConditionUpdated');
+    const machine = $('currentDcMachine');
+    const celldeck = $('currentDcCelldeck');
+    if (!title || !updated || !machine || !celldeck) return;
+
+    const key = normalizeDcKey(dcName);
+    title.textContent = 'Kondisi Terkini DC ' + dcName;
+    updated.textContent = 'Memuat sumber terbaru…';
+    machine.innerHTML = '<div class="dc-condition-loading">Memuat data mesin…</div>';
+    celldeck.innerHTML = '<div class="dc-condition-loading">Memuat detail CSI…</div>';
+
+    const render = () => {
+      const machineRow = [...state.machineCleaningByDc.entries()]
+        .find(([name]) => normalizeDcKey(name) === key)?.[1];
+
+      if (state.machineCleaningError) {
+        machine.innerHTML = '<div class="dc-condition-unavailable">' + escapeHtml(state.machineCleaningError) + '</div>';
+      } else if (!machineRow) {
+        machine.innerHTML = '<div class="dc-condition-unavailable">Data mesin tidak ditemukan untuk DC ini.</div>';
+      } else {
+        machine.innerHTML =
+          '<div class="dc-condition-machine-number">' + formatNumber(machineRow.cleanedMachines) + ' / ' + formatNumber(machineRow.totalMachines) + '</div>' +
+          '<div class="dc-condition-subtitle">' + formatRate(machineRow.cleaningRate) + ' mesin sudah cleaning</div>' +
+          '<div class="dc-condition-note">' + formatNumber(machineRow.notCleanedMachines) + ' mesin belum memiliki riwayat status Selesai.</div>';
+      }
+
+      if (state.csiSummaryError) {
+        celldeck.innerHTML = '<div class="dc-condition-unavailable">' + escapeHtml(state.csiSummaryError) + '</div>';
+      } else {
+        const sides = state.csiSummaryByDc.get(key) || {};
+        const sideMarkup = side => {
+          const item = sides[side];
+          if (!item) {
+            return '<div class="dc-condition-side"><div class="dc-condition-side-head"><strong>Sisi ' + side + '</strong><span class="dc-condition-status unknown">Belum ada data</span></div><div class="dc-condition-note">Belum ada catatan pekerjaan CSI.</div></div>';
+          }
+          const status = String(item.status || 'Belum ada data');
+          const statusClass = status === 'Normal' ? 'normal' : status === 'Perlu Cleaning' ? 'warning' : 'unknown';
+          const age = item.ageDays === null || item.ageDays === '' || item.ageDays === undefined ? '—' : escapeHtml(item.ageDays) + ' hari';
+          const lastWork = item.lastWorkDate
+            ? escapeHtml(String(item.lastJobType || 'Pekerjaan')) + ' · ' + formatCsiDate(item.lastWorkDate)
+            : 'Belum ada pekerjaan';
+          return '<div class="dc-condition-side">' +
+            '<div class="dc-condition-side-head"><strong>Sisi ' + side + '</strong><span class="dc-condition-status ' + statusClass + '">' + escapeHtml(status) + '</span></div>' +
+            '<div class="dc-condition-facts">' +
+              '<div><span>Cleaning terakhir</span><strong>' + escapeHtml(formatCsiDate(item.lastCleaningDate)) + '</strong></div>' +
+              '<div><span>Umur cleaning</span><strong>' + age + '</strong></div>' +
+              '<div><span>Replace terakhir</span><strong>' + escapeHtml(formatCsiDate(item.lastReplaceDate)) + '</strong></div>' +
+            '</div><div class="dc-condition-note">Pekerjaan terakhir: ' + lastWork + '</div></div>';
+        };
+        celldeck.innerHTML = sideMarkup('A') + sideMarkup('B');
+      }
+      updated.textContent = 'Sumber data terbaru dimuat ' + formatDateTime(new Date().toISOString()) + '. Kondisi live, bukan rekaman historis snapshot IP.';
+    };
+
+    const refresh = async () => {
+      const csiRefresh = loadCsiSummary().catch(error => {
+        state.csiSummaryByDc = new Map();
+        state.csiSummaryError = 'Detail CSI tidak tersedia';
+        renderCsiSummaryCells();
+        console.warn('Ringkasan CSI di Progress gagal dimuat:', error);
+      });
+      await Promise.all([loadMachineCleaningSummary(), csiRefresh]);
+      render();
+    };
+    refresh().catch(error => {
+      machine.innerHTML = '<div class="dc-condition-unavailable">Data mesin tidak tersedia.</div>';
+      celldeck.innerHTML = '<div class="dc-condition-unavailable">Detail CSI tidak tersedia.</div>';
+      updated.textContent = 'Gagal memperbarui kondisi terkini.';
+      console.warn('Kondisi terkini DC gagal dimuat:', error);
+    });
+  };
+
   const renderSummary = (row) => {
     const status = String(row.status || 'Tetap');
     const statusClass = status === 'Berkurang' ? 'decrease' : status === 'Bertambah' ? 'increase' : 'same';
@@ -573,6 +649,7 @@
     }
 
     renderSummary(row);
+    renderCurrentDcCondition(dcName);
 
     try {
       const x = await apiGet('getDcProgressHistory', { progressId: row.progressId });
