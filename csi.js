@@ -354,11 +354,12 @@
       const dcNames = selectedDcs();
       if (!dcNames.length) throw new Error('Pilih minimal satu Nama DC.');
       const result = await request('saveWork', {
-        dcNames, workDate: $('workDate').value,
+        dcNames, priorityRequestGroupId: window.CompCsiPriority?.selectedGroupId || '', workDate: $('workDate').value,
         frameSide: $('frameSide').value, jobType: $('jobType').value,
         notes: $('notes').value.trim(), treatments: selectedTreatments()
       });
       savedCount = Number(result.saved) || 0;
+      if (window.CompCsiPriority) window.CompCsiPriority.selectedGroupId = '';
       form.reset();
       $('dcCheckboxList').querySelectorAll('input[name="dcNames"]').forEach(input => { input.checked = false; });
       $('dcSearch').value = '';
