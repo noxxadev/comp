@@ -13,6 +13,9 @@
 const CSI_HISTORY_SHEET = 'CSI Work History';
 const CSI_SUMMARY_SHEET = 'CSI Summary';
 const CSI_DAILY_REPORTS_SHEET = 'CSI Daily Reports';
+const CSI_PRIORITY_REQUESTS_SHEET = 'CSI Priority Requests';
+const CSI_PRIORITY_REQUEST_HEADERS = ['Request ID','Request Group ID','Created At','Nama DC','Frame Side','Job Type','Reason','Priority','Treatment JSON','Status','Created By User ID','Created By Username','Accepted At','Accepted By Username','Started At','Completed At','Rejected At','Rejected By Username','Reject Reason','Rescheduled At','Rescheduled By Username','Reschedule Reason','Scheduled Date','Cancel Requested At','Cancel Requested By Role','Cancel Reason','Cancel Confirmed At','Cancel Confirmed By Role','Linked History Record IDs','Updated At'];
+
 const CSI_DAILY_REPORT_HEADERS = ['Report ID','Created At','Work Date','Site Name','Site Address','Team Name','Personnel JSON','PIC Name','Site Leader Name','Report Text','Status','Created By User ID','Created By Username','Reviewed At','Reviewed By Username','Review Note','Printed At','Print Report HTML'];
 
 const CSI_HISTORY_HEADERS = [
@@ -51,6 +54,38 @@ function doPost(e) {
     if (action === 'validateAccess') {
       const user = csiRequireUser_(payload.session, true);
       return csiJson_({ ok: true, authenticated: true, authorized: true, user: { id: user.id, username: user.username, role: user.role } });
+    }
+    if (action === 'createPriorityRequest') {
+      const user = csiRequireAdmin_(payload.session);
+      return csiJson_({ ok: true, requests: csiCreatePriorityRequest_(payload, user) });
+    }
+    if (action === 'listPriorityRequests') {
+      const user = csiRequireUser_(payload.session, true);
+      return csiJson_({ ok: true, requests: csiListPriorityRequests_(user) });
+    }
+    if (action === 'acceptPriorityRequest') {
+      const user = csiRequireUser_(payload.session);
+      return csiJson_({ ok: true, requests: csiAcceptPriorityRequest_(payload, user) });
+    }
+    if (action === 'startPriorityRequest') {
+      const user = csiRequireUser_(payload.session);
+      return csiJson_({ ok: true, requests: csiStartPriorityRequest_(payload, user) });
+    }
+    if (action === 'rejectPriorityRequest') {
+      const user = csiRequireUser_(payload.session);
+      return csiJson_({ ok: true, requests: csiRejectPriorityRequest_(payload, user) });
+    }
+    if (action === 'reschedulePriorityRequest') {
+      const user = csiRequireUser_(payload.session);
+      return csiJson_({ ok: true, requests: csiReschedulePriorityRequest_(payload, user) });
+    }
+    if (action === 'cancelPriorityRequest') {
+      const user = csiRequireUser_(payload.session, true);
+      return csiJson_({ ok: true, requests: csiCancelPriorityRequest_(payload, user) });
+    }
+    if (action === 'respondCancelPriorityRequest') {
+      const user = csiRequireUser_(payload.session, true);
+      return csiJson_({ ok: true, requests: csiRespondCancelPriorityRequest_(payload, user) });
     }
     if (action === 'createDailyReport') {
       const user = csiRequireUser_(payload.session);
@@ -105,10 +140,11 @@ function setupCsiSheets() {
   const historySheet = csiEnsureSheet_(spreadsheet, CSI_HISTORY_SHEET, CSI_HISTORY_HEADERS);
   const summarySheet = csiEnsureSheet_(spreadsheet, CSI_SUMMARY_SHEET, CSI_SUMMARY_HEADERS);
   const reportsSheet = csiEnsureSheet_(spreadsheet, CSI_DAILY_REPORTS_SHEET, CSI_DAILY_REPORT_HEADERS);
+  const priorityRequestsSheet = csiEnsureSheet_(spreadsheet, CSI_PRIORITY_REQUESTS_SHEET, CSI_PRIORITY_REQUEST_HEADERS);
   SpreadsheetApp.flush();
   const actualSheetNames = spreadsheet.getSheets().map(sheet => sheet.getName());
   if (!spreadsheet.getSheetByName(CSI_HISTORY_SHEET) || !spreadsheet.getSheetByName(CSI_SUMMARY_SHEET)) throw new Error('Setup belum lengkap. Tab yang terbaca: ' + actualSheetNames.join(', '));
-  const result = { ok: true, spreadsheetName: spreadsheet.getName(), spreadsheetUrl: spreadsheet.getUrl(), sheets: actualSheetNames, historyHeaderColumns: historySheet.getLastColumn(), summaryHeaderColumns: summarySheet.getLastColumn(), dailyReportsHeaderColumns: reportsSheet.getLastColumn() };
+  const result = { ok: true, spreadsheetName: spreadsheet.getName(), spreadsheetUrl: spreadsheet.getUrl(), sheets: actualSheetNames, historyHeaderColumns: historySheet.getLastColumn(), summaryHeaderColumns: summarySheet.getLastColumn(), dailyReportsHeaderColumns: reportsSheet.getLastColumn(), priorityRequestsHeaderColumns: priorityRequestsSheet.getLastColumn() };
   console.log('[CSI setup] Verification result: ' + JSON.stringify(result));
   return result;
 }
@@ -444,4 +480,144 @@ function csiJson_(value) {
   return ContentService
     .createTextOutput(JSON.stringify(value))
     .setMimeType(ContentService.MimeType.JSON);
+}
+
+
+function csiPrioritySheet_() {
+  return csiGetSheet_(CSI_PRIORITY_REQUESTS_SHEET, CSI_PRIORITY_REQUEST_HEADERS);
+}
+function csiPriorityRows_() {
+  const sheet = csiPrioritySheet_();
+  const last = sheet.getLastRow();
+  return last > 1 ? sheet.getRange(2, 1, last - 1, CSI_PRIORITY_REQUEST_HEADERS.length).getValues() : [];
+}
+function csiPrioritySerialize_(row) {
+  const value = (i) => row[i] instanceof Date ? row[i].toISOString() : String(row[i] == null ? '' : row[i]);
+  let treatments = [];
+  try { treatments = JSON.parse(value(8) || '[]'); } catch (_) {}
+  return {
+    requestId:value(0), groupId:value(1), createdAt:value(2), dcName:value(3), frameSide:value(4),
+    jobType:value(5), reason:value(6), priority:value(7), treatments,
+    status:value(9), createdByUsername:value(11), acceptedAt:value(12), acceptedByUsername:value(13),
+    startedAt:value(14), completedAt:value(15), rejectedAt:value(16), rejectedByUsername:value(17),
+    rejectReason:value(18), rescheduledAt:value(19), rescheduledByUsername:value(20),
+    rescheduleReason:value(21), scheduledDate:value(22), cancelRequestedAt:value(23),
+    cancelRequestedByRole:value(24), cancelReason:value(25), cancelConfirmedAt:value(26),
+    cancelConfirmedByRole:value(27), linkedHistoryRecordIds:value(28), updatedAt:value(29)
+  };
+}
+function csiFindPriorityGroup_(groupId) {
+  const id = String(groupId || '').trim();
+  if (!id || id.length > 100) throw new Error('ID request tidak valid.');
+  const sheet = csiPrioritySheet_(), last = sheet.getLastRow();
+  if (last < 2) throw new Error('Request tidak ditemukan.');
+  const values = sheet.getRange(2, 1, last - 1, CSI_PRIORITY_REQUEST_HEADERS.length).getValues();
+  const rows = [];
+  values.forEach((row, i) => { if (String(row[1]) === id) rows.push({row:i+2,values:row}); });
+  if (!rows.length) throw new Error('Request tidak ditemukan.');
+  return {sheet,rows};
+}
+function csiGroupResponse_(groupId) {
+  return csiPriorityRows_().filter(row => String(row[1]) === String(groupId)).map(csiPrioritySerialize_);
+}
+function csiCreatePriorityRequest_(payload, user) {
+  const raw = Array.isArray(payload.dcNames) ? payload.dcNames : [];
+  const dcs = [...new Set(raw.map(csiNormalizeDcName_).filter(Boolean))];
+  const side = String(payload.frameSide || '').trim();
+  const job = String(payload.jobType || '').trim();
+  const reason = String(payload.reason || '').trim().slice(0,1500);
+  const priority = String(payload.priority || '').trim();
+  const scheduled = String(payload.scheduledDate || '').trim();
+  if (!dcs.length || dcs.length !== raw.map(csiNormalizeDcName_).filter(Boolean).length) throw new Error('Pilih Nama DC unik yang valid.');
+  if (dcs.some(dc => !/^[A-F]\\d+[A-Z]?$/.test(dc))) throw new Error('Nama DC tidak valid.');
+  if (!['A','B','Both'].includes(side)) throw new Error('Sisi Celldeck harus A, B, atau A+B.');
+  if (!['Cleaning','Replace'].includes(job)) throw new Error('Jenis pekerjaan tidak valid.');
+  if (!reason) throw new Error('Alasan request wajib diisi.');
+  if (!['Tinggi','Mendesak'].includes(priority)) throw new Error('Prioritas harus Tinggi atau Mendesak.');
+  if (scheduled && !/^\\d{4}-\\d{2}-\\d{2}$/.test(scheduled)) throw new Error('Tanggal rencana tidak valid.');
+  const groupId = Utilities.getUuid(), now = new Date();
+  const sheet = csiPrioritySheet_();
+  const rows = dcs.map(dc => [Utilities.getUuid(),groupId,now,dc,side,job,reason,priority,'[]','Menunggu CSI',user.id,user.username,'','','','','','','','','','',scheduled,'','','','','','',now]);
+  const lock = LockService.getScriptLock(); lock.waitLock(15000);
+  try { sheet.getRange(sheet.getLastRow()+1,1,rows.length,CSI_PRIORITY_REQUEST_HEADERS.length).setValues(rows); SpreadsheetApp.flush(); }
+  finally { lock.releaseLock(); }
+  return csiGroupResponse_(groupId);
+}
+function csiListPriorityRequests_(user) {
+  const rows = csiPriorityRows_();
+  const role = String(user.role || '').toUpperCase();
+  return rows.filter(row => role === 'ADMIN' || !['Selesai','Dibatalkan','Ditolak'].includes(String(row[9]))).reverse().map(csiPrioritySerialize_);
+}
+function csiUpdatePriorityGroup_(groupId, updater) {
+  const found = csiFindPriorityGroup_(groupId), now = new Date();
+  const lock = LockService.getScriptLock(); lock.waitLock(15000);
+  try {
+    found.rows.forEach(item => {
+      const row = item.values;
+      updater(row, now);
+      row[29] = now;
+      found.sheet.getRange(item.row,1,1,CSI_PRIORITY_REQUEST_HEADERS.length).setValues([row]);
+    });
+    SpreadsheetApp.flush();
+  } finally { lock.releaseLock(); }
+  return csiGroupResponse_(groupId);
+}
+function csiAcceptPriorityRequest_(payload, user) {
+  const groupId = payload.groupId;
+  const treatments = Array.isArray(payload.treatments) ? [...new Set(payload.treatments.map(v => String(v||'').trim()).filter(Boolean))] : [];
+  const allowed = ['Pencopotan Frame','Pemasangan Frame','Penyemprotan Celldeck','Pembersihan Kisi-kisi','Perapihan/Penggantian Kain Flanel','Penggantian Celldeck','Perapihan pipa dan pengecekan saluran air'];
+  if (!treatments.length || treatments.some(t => !allowed.includes(t))) throw new Error('CSI wajib menentukan treatment sebelum menerima request.');
+  return csiUpdatePriorityGroup_(groupId,(row,now)=>{
+    if (row[9] !== 'Menunggu CSI' && row[9] !== 'Dijadwalkan Ulang') throw new Error('Request tidak lagi menunggu penerimaan CSI.');
+    row[8]=JSON.stringify(treatments); row[9]='Diterima'; row[12]=now; row[13]=user.username;
+    row[21]=''; row[22]='';
+  });
+}
+function csiStartPriorityRequest_(payload,user) {
+  return csiUpdatePriorityGroup_(payload.groupId,(row,now)=>{
+    if (row[9] !== 'Diterima') throw new Error('Request harus diterima sebelum pekerjaan dimulai.');
+    let ts=[]; try {ts=JSON.parse(String(row[8]||'[]'));}catch(_){}
+    if (!ts.length) throw new Error('Treatment harus ditentukan sebelum pekerjaan dimulai.');
+    row[9]='Sedang Dikerjakan'; row[14]=now;
+  });
+}
+function csiRejectPriorityRequest_(payload,user) {
+  const reason=String(payload.reason||'').trim().slice(0,1500);
+  if(!reason) throw new Error('Alasan penolakan wajib diisi.');
+  return csiUpdatePriorityGroup_(payload.groupId,(row,now)=>{
+    if(!['Menunggu CSI','Dijadwalkan Ulang'].includes(row[9])) throw new Error('Request tidak dapat ditolak pada status ini.');
+    row[9]='Ditolak'; row[16]=now; row[17]=user.username; row[18]=reason;
+  });
+}
+function csiReschedulePriorityRequest_(payload,user) {
+  const reason=String(payload.reason||'').trim().slice(0,1500), date=String(payload.scheduledDate||'').trim();
+  if(!reason) throw new Error('Alasan penjadwalan ulang wajib diisi.');
+  if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(date)) throw new Error('Pilih tanggal penjadwalan ulang.');
+  return csiUpdatePriorityGroup_(payload.groupId,(row,now)=>{
+    if(!['Menunggu CSI','Diterima'].includes(row[9])) throw new Error('Request tidak dapat dijadwalkan ulang pada status ini.');
+    row[9]='Dijadwalkan Ulang'; row[19]=now; row[20]=user.username; row[21]=reason; row[22]=date;
+  });
+}
+function csiCancelPriorityRequest_(payload,user) {
+  const reason=String(payload.reason||'').trim().slice(0,1500);
+  if(!reason) throw new Error('Alasan pembatalan wajib diisi.');
+  return csiUpdatePriorityGroup_(payload.groupId,(row,now)=>{
+    if(['Selesai','Dibatalkan','Ditolak'].includes(row[9])) throw new Error('Request sudah berakhir.');
+    if(row[9] === 'Sedang Dikerjakan') {
+      row[9]='Menunggu Konfirmasi Pembatalan'; row[23]=now; row[24]=String(user.role).toUpperCase(); row[25]=reason;
+    } else {
+      if(String(user.role).toUpperCase()!=='ADMIN') throw new Error('Hanya Admin yang dapat membatalkan sebelum pekerjaan dimulai.');
+      row[9]='Dibatalkan'; row[23]=now; row[24]='ADMIN'; row[25]=reason; row[26]=now; row[27]='ADMIN';
+    }
+  });
+}
+function csiRespondCancelPriorityRequest_(payload,user) {
+  const confirm = payload.confirm === true;
+  const role = String(user.role||'').toUpperCase();
+  return csiUpdatePriorityGroup_(payload.groupId,(row,now)=>{
+    if(row[9] !== 'Menunggu Konfirmasi Pembatalan') throw new Error('Tidak ada pembatalan yang menunggu konfirmasi.');
+    if(role === String(row[24]).toUpperCase()) throw new Error('Konfirmasi harus dilakukan oleh pihak yang berbeda.');
+    if(confirm) { row[9]='Dibatalkan'; row[26]=now; row[27]=role; }
+    else { row[9]='Sedang Dikerjakan'; row[23]=''; row[24]=''; row[25]=''; }
+  });
 }
