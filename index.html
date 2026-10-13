@@ -31,8 +31,7 @@
             <a href="bulk-compare.html"><i class="fas fa-scale-balanced"></i><span>Bulk Compare</span></a>
             <a href="ip-repeat-analyzer.html"><i class="fas fa-repeat"></i><span>IP Repeat</span></a>
             <a href="dc-hightemp.html"><i class="fas fa-temperature-high"></i><span>DC HighTemp</span></a>
-            <a href="csi.html"><i class="fas fa-broom"></i><span>CSI Cleaning</span></a>
-            <a href="csi-daily-reports.html"><i class="fas fa-file-lines"></i><span>Daily Report CSI</span></a>
+            <a href="csi.html" data-hide-for-admin><i class="fas fa-broom"></i><span>CSI Cleaning</span></a>
             <a href="csi-daily-reports.html"><i class="fas fa-file-lines"></i><span>Daily Report CSI</span></a>
             <a href="machine-list.html"><i class="fas fa-server"></i><span>Machine List</span></a>
             <a href="cleaning-history.html"><i class="fas fa-clock-rotate-left"></i><span>Cleaning History</span></a>
@@ -137,7 +136,6 @@
                     <a href="offline-analyzer.html"><i class="fas fa-database"></i><span><strong>Offline Analyzer</strong><small>Offline processing</small></span></a>
                     <a href="data-matcher.html"><i class="fas fa-link"></i><span><strong>Pool vs Dashboard</strong><small>Data matching</small></span></a>
                     <a href="bulk-compare.html"><i class="fas fa-scale-balanced"></i><span><strong>Bulk Compare</strong><small>Large comparison</small></span></a>
-                    <a href="csi-daily-reports.html"><i class="fas fa-file-lines"></i><span><strong>Daily Report CSI</strong><small>Review and print — Admin</small></span></a>
                     <a href="csi-daily-reports.html"><i class="fas fa-file-lines"></i><span><strong>Daily Report CSI</strong><small>Review and print — Admin</small></span></a>
                 </div>
             </section>
@@ -327,5 +325,13 @@
 })();
 </script>
 <script src="theme-toggle.js"></script>
+
+<script>
+(() => {
+    const user = window.CompAuth?.getUser?.();
+    const role = String(user?.role || '').trim().toUpperCase();
+    if (role === 'ADMIN') document.querySelectorAll('[data-hide-for-admin]').forEach(link => link.remove());
+})();
+</script>
 </body>
 </html>
