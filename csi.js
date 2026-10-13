@@ -339,7 +339,6 @@
       saveButton.innerHTML = '<i class="fas fa-floppy-disk"></i> Simpan Pekerjaan';
     }
   });
-  $('printDailyReportBtn').addEventListener('click', printDailyReport);
   $('refreshHistoryBtn').addEventListener('click', async () => {
     try { await loadHistory(); showNotice('Riwayat berhasil diperbarui.', 'success'); }
     catch (error) { showNotice(error.message, 'error'); }
