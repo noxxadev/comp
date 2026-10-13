@@ -14,7 +14,7 @@
   <script src="page-guard.js"></script>
   <script src="master-data.js"></script>
   <script src="csi-google-sheets-config.js?v=20261011-csi"></script>
-  <link rel="stylesheet" href="csi.css?v=20261013-csi-portrait-popup">
+  <link rel="stylesheet" href="csi.css?v=20261013-csi-form-reset-refresh">
 </head>
 <body>
 <div class="hub-shell">
@@ -58,8 +58,6 @@
       <div class="csi-card-head"><div><span class="csi-section-tag">FORMULIR CETAK</span><h2>Daily Report Cleaning Celldeck</h2></div><i class="fas fa-print csi-card-icon"></i></div>
       <div class="csi-print-form">
         <label>Tanggal laporan<input id="printReportDate" type="date" required></label>
-        <label>Nama Site<input id="printSiteName" type="text" value="CWUP Karawang" readonly></label>
-        <label>Alamat Site<input id="printSiteAddress" type="text" value="Karawang" readonly></label>
         <label>Nama Personil (maksimal 4; pisahkan dengan koma/baris baru)<textarea id="printPersonnel" rows="2" placeholder="Riko, Agus, Raka, Ace" required></textarea></label>
         <label>Nama TIM CSI<input id="printTeamName" type="text" placeholder="Nama tim CSI" required></label>
         <label>Nama PIC Site<input id="printPicName" type="text" placeholder="Nama PIC site"></label>
@@ -69,14 +67,14 @@
       </div>
     </section>
     <section class="csi-card">
-      <div class="csi-card-head"><div><span class="csi-section-tag">DATA TERSIMPAN</span><h2>Riwayat Pekerjaan CSI</h2></div><button id="refreshHistoryBtn" class="csi-secondary-btn" type="button"><i class="fas fa-rotate"></i> Muat Ulang</button></div>
+      <div class="csi-card-head"><div><span class="csi-section-tag">DATA TERSIMPAN</span><h2>Riwayat Pekerjaan CSI</h2></div></div>
       <div class="csi-filters">
         <label>Nama DC<select id="filterDc"><option value="">Semua DC</option></select></label>
         <label>Jenis<select id="filterJob"><option value="">Semua jenis</option><option value="Cleaning">Cleaning</option><option value="Replace">Replace</option></select></label>
         <label>Dari tanggal<input id="filterFrom" type="date"></label>
         <label>Sampai tanggal<input id="filterTo" type="date"></label>
         <label class="csi-old-filter"><input id="filterOld" type="checkbox"> Hanya celldeck ≥ 30 hari sejak cleaning terakhir</label>
-        <button id="clearFiltersBtn" class="csi-secondary-btn" type="button">Reset Filter</button>
+        <div class="csi-filter-actions"><button id="clearFiltersBtn" class="csi-secondary-btn" type="button">Reset Filter</button><button id="refreshHistoryBtn" class="csi-secondary-btn" type="button"><i class="fas fa-rotate"></i> Refresh</button></div>
       </div>
       <div class="csi-table-summary"><span id="historyCount">Memuat riwayat...</span><span class="csi-status-legend"><i></i> Perlu Cleaning = ≥ 30 hari</span></div>
       <div class="csi-table-wrap"><table class="csi-table"><thead><tr><th>Record At</th><th>Tanggal Kerja</th><th>Nama DC</th><th>Sisi</th><th>Jenis</th><th>Catatan</th><th>Status Cleaning</th></tr></thead><tbody id="historyBody"><tr><td colspan="7" class="csi-empty">Memuat data...</td></tr></tbody></table></div>
@@ -93,6 +91,6 @@
     <footer class="csi-footer">COMP Tools · CSI Work History</footer>
   </main>
 </div>
-<script src="csi.js?v=20261013-csi-portrait-popup"></script>
+<script src="csi.js?v=20261013-csi-form-reset-refresh"></script>
 </body>
 </html>
