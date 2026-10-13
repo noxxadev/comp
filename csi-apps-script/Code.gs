@@ -134,8 +134,8 @@ function csiSaveWork_(payload, user) {
   const treatments = [...new Set(requestedTreatments)];
   if (!dcNames.length) throw new Error('Pilih minimal satu Nama DC.');
   if (dcNames.length !== rawDcNames.map(value => csiNormalizeDcName_(value)).filter(Boolean).length) throw new Error('Nama DC duplikat atau tidak valid.');
-  if (dcNames.some(name => !/^[A-F]\\d+[A-Z]?$/.test(name))) throw new Error('Nama DC tidak valid. Pilih DC dari daftar master data.');
-  if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(workDateText)) throw new Error('Tanggal pekerjaan tidak valid.');
+  if (dcNames.some(name => !/^[A-F]\d+[A-Z]?$/.test(name))) throw new Error('Nama DC tidak valid. Pilih DC dari daftar master data.');
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(workDateText)) throw new Error('Tanggal pekerjaan tidak valid.');
   const workDate = new Date(workDateText + 'T12:00:00');
   if (isNaN(workDate.getTime()) || Utilities.formatDate(workDate, Session.getScriptTimeZone(), 'yyyy-MM-dd') !== workDateText) throw new Error('Tanggal pekerjaan tidak valid.');
   const sides = frameSide === 'Both' ? ['A', 'B'] : [frameSide];
