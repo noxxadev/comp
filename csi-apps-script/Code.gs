@@ -185,6 +185,7 @@ function csiSaveWork_(payload, user) {
   let priorityTargets = [];
   if (priorityGroupId) {
     const found = csiFindPriorityGroup_(priorityGroupId);
+    if (found.rows.length !== dcNames.length) throw new Error('Simpan seluruh DC dalam request yang sama agar statusnya tetap konsisten.');
     priorityTargets = found.rows.filter(item => dcNames.includes(csiNormalizeDcName_(item.values[3])));
     if (priorityTargets.length !== dcNames.length) throw new Error('DC yang dipilih tidak cocok dengan request prioritas.');
     const sortedTreatments = [...treatments].sort().join('|');
