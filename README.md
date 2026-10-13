@@ -1,3 +1,10 @@
+### 2026-10-14 — Machine List: SN tanpa lokasi
+- Upload Machine List mengizinkan record dengan Serial Number terisi dan Location ID kosong. Serial Number tetap wajib dan unik.
+- Beberapa Location ID kosong tidak dianggap duplikat; lokasi normal tetap unik dan pengecualian workshop `GBE_RC.A-1` / `GBE_RC.A-3` tetap berlaku.
+- Error Serial Number kosong menggunakan `sourceRow` (baris Excel) jika tersedia. Replace tetap memvalidasi seluruh record sebelum mengubah dataset lama.
+- Mesin tanpa lokasi tersimpan tetapi tidak otomatis dipetakan ke IP/lokasi atau dihitung sebagai mesin DC dalam perhitungan berbasis lokasi.
+- Deployment ulang Google Apps Script utama diperlukan; uji upload beberapa SN tanpa lokasi, SN kosong, SN duplikat, lokasi duplikat, dan pastikan dataset lama tidak berubah ketika validasi gagal.
+
 ## 2026-10-14 — Pembatasan akses halaman Admin dan CSI
 - **Status:** IMPLEMENTED IN MAIN — VALIDASI BROWSER PENDING.
 - `page-guard.js` sekarang mengarahkan role `ADMIN` dari `csi.html` ke `csi-daily-reports.html` sebelum halaman CSI Cleaning ditampilkan.
