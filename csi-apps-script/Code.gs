@@ -49,7 +49,7 @@ function doPost(e) {
     const payload = JSON.parse(e && e.postData && e.postData.contents || '{}');
     const action = String(payload.action || '').trim();
     if (action === 'validateAccess') {
-      const user = csiRequireUser_(payload.session);
+      const user = csiRequireUser_(payload.session, true);
       return csiJson_({ ok: true, authenticated: true, authorized: true, user: { id: user.id, username: user.username, role: user.role } });
     }
     if (action === 'createDailyReport') {
