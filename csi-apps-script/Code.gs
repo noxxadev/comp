@@ -713,7 +713,8 @@ function csiCancelPriorityRequest_(payload,user) {
   const reason=String(payload.reason||'').trim().slice(0,1500);
   if(!reason) throw new Error('Alasan pembatalan wajib diisi.');
   return csiUpdatePriorityGroup_(payload.groupId,(row,now)=>{
-    if(['Selesai','Dibatalkan','Ditolak'].includes(row[9])) throw new Error('Request sudah berakhir.');
+    if (row[9] === 'Selesai') return;
+    if(['Dibatalkan','Ditolak'].includes(row[9])) throw new Error('Request sudah berakhir.');
     if(row[9] === 'Menunggu Konfirmasi Pembatalan') throw new Error('Pembatalan sudah menunggu konfirmasi pihak lain.');
     if(['Sedang Dikerjakan','Pending'].includes(String(row[9]))) {
       row[9]='Menunggu Konfirmasi Pembatalan'; row[23]=now; row[24]=String(user.role).toUpperCase(); row[25]=reason;
@@ -728,6 +729,7 @@ function csiRespondCancelPriorityRequest_(payload,user) {
   const role = String(user.role||'').toUpperCase();
   if (!['ADMIN','CSI'].includes(role)) throw new Error('Akses ditolak.');
   return csiUpdatePriorityGroup_(payload.groupId,(row,now)=>{
+    if (row[9] === 'Selesai') return;
     if(row[9] !== 'Menunggu Konfirmasi Pembatalan') throw new Error('Tidak ada pembatalan yang menunggu konfirmasi.');
     if(role === String(row[24]).toUpperCase()) throw new Error('Konfirmasi harus dilakukan oleh pihak yang berbeda.');
     if(confirm) { row[9]='Dibatalkan'; row[26]=now; row[27]=role; }
