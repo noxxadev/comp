@@ -657,8 +657,11 @@ function csiListPriorityRequests_(user) {
   const rows = csiPriorityRows_();
   const role = String(user.role || '').toUpperCase();
   if (!['ADMIN','CSI'].includes(role)) throw new Error('Akses ditolak. Request hanya tersedia untuk Admin dan CSI.');
+  const terminal = ['Selesai','Dibatalkan','Ditolak'];
+  const activeGroups = new Set(rows.filter(row => !terminal.includes(String(row[9]))).map(row => String(row[1])));
+  const visibleRows = role === 'ADMIN' ? rows : rows.filter(row => activeGroups.has(String(row[1])));
   const sideMap = csiHistorySideMap_();
-  return rows.filter(row => role === 'ADMIN' || !['Selesai','Dibatalkan','Ditolak'].includes(String(row[9]))).reverse().map(row => csiPrioritySerialize_(row, sideMap));
+  return visibleRows.reverse().map(row => csiPrioritySerialize_(row, sideMap));
 }
 function csiUpdatePriorityGroup_(groupId, updater) {
   const now = new Date();
