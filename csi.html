@@ -14,7 +14,7 @@
   <script src="page-guard.js"></script>
   <script src="master-data.js"></script>
   <script src="csi-google-sheets-config.js?v=20261011-csi"></script>
-  <link rel="stylesheet" href="csi.css?v=20261013-daily-report-snapshot2">
+  <link rel="stylesheet" href="csi.css?v=20261014-multi-dc1">
 </head>
 <body>
 <div class="hub-shell">
@@ -37,7 +37,20 @@
     <section class="csi-card">
       <div class="csi-card-head"><div><span class="csi-section-tag">INPUT PEKERJAAN</span><h2>Catat Pekerjaan</h2></div><i class="fas fa-clipboard-check csi-card-icon"></i></div>
       <form id="csiWorkForm" class="csi-form">
-        <label>Nama DC<select id="dcName" name="dcName" required><option value="">Memuat daftar DC...</option></select></label>
+        <div class="csi-dc-picker-field">
+          <span class="csi-field-label">Nama DC <span>* pilih satu atau beberapa DC</span></span>
+          <div class="csi-dc-picker" id="dcPicker">
+            <button class="csi-dc-picker-trigger" id="dcPickerTrigger" type="button" aria-expanded="false" aria-controls="dcPickerPanel">
+              <span id="dcPickerSummary">Memuat daftar DC...</span><i class="fas fa-chevron-down" aria-hidden="true"></i>
+            </button>
+            <div class="csi-dc-picker-panel" id="dcPickerPanel" hidden>
+              <input id="dcSearch" class="csi-dc-search" type="search" placeholder="Cari nama DC..." aria-label="Cari nama DC">
+              <label class="csi-dc-select-all"><input id="dcSelectAll" type="checkbox"><span>Pilih semua DC</span></label>
+              <div id="dcCheckboxList" class="csi-dc-checkbox-list"><span class="csi-help">Memuat daftar DC...</span></div>
+              <div class="csi-dc-picker-footer"><span id="dcPickerCount">0 DC dipilih</span><button id="dcPickerDone" class="csi-secondary-btn" type="button">Selesai</button></div>
+            </div>
+          </div>
+        </div>
         <label>Tanggal Pekerjaan<input id="workDate" name="workDate" type="date" required></label>
         <label>Sisi Celldeck<select id="frameSide" name="frameSide" required><option value="A">Sisi A</option><option value="B">Sisi B</option><option value="Both">Kedua sisi (A + B)</option></select></label>
         <label>Jenis Pekerjaan<select id="jobType" name="jobType" required><option value="Cleaning">Cleaning</option><option value="Replace">Replace</option></select></label>
@@ -91,6 +104,6 @@
     <footer class="csi-footer">COMP Tools · CSI Work History</footer>
   </main>
 </div>
-<script src="csi.js?v=20261014-branded-report"></script>
+<script src="csi.js?v=20261014-multi-dc1"></script>
 </body>
 </html>
