@@ -1,3 +1,10 @@
+## 2026-10-14 — Menghapus teks tanda tangan duplikat dari halaman Admin CSI
+- **Status:** IMPLEMENTED IN MAIN — VALIDASI BROWSER PENDING.
+- Menghapus teks “Dibuat Tim CSI”, “Diketahui PIC Site”, dan “Disetujui Site Leader” yang tampil di bawah tombol review pada halaman `csi-daily-reports.html`.
+- Penghapusan hanya menyentuh teks dekoratif di luar template laporan; area tanda tangan pada snapshot cetak A4/PDF tetap dipertahankan.
+- File yang berubah: `csi-daily-reports.html`, `README.md`.
+- Tidak mengubah proses review, persetujuan, status cetak, autentikasi, maupun penyimpanan data.
+
 ## 2026-10-14 — Indikator proses Daily Report CSI/Admin
 - **Status:** IMPLEMENTED IN MAIN — DEPLOYMENT / LIVE VALIDATION PENDING.
 - Tombol **Buat Report WhatsApp** menonaktifkan klik berulang dan menampilkan spinner serta teks **Memproses report...** selama riwayat sedang dimuat dan isi report disusun.
