@@ -355,7 +355,9 @@
     const personnelNames = parsePersonnelNames($('printPersonnel').value);
     if (!personnelNames.length) { showNotice('Isi minimal satu nama personil sebelum membuat report.', 'error'); return; }
     if (personnelNames.length > 4) { showNotice('Maksimal empat nama personil untuk report.', 'error'); return; }
+    const originalLabel = button.innerHTML;
     button.disabled = true;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memproses report...';
     try {
       await loadHistory();
       const message = buildDailyReport(dateValue, personnelNames);
@@ -367,7 +369,10 @@
       showNotice('Report WhatsApp siap diperiksa.', 'success');
     } catch (error) {
       showNotice('Gagal membuat report: ' + (error.message || 'periksa koneksi CSI.'), 'error');
-    } finally { button.disabled = false; }
+    } finally {
+      button.disabled = false;
+      button.innerHTML = originalLabel;
+    }
   });
   $('editReportBtn').addEventListener('click', () => {
     const area = $('reportPreview');
