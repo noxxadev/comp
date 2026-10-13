@@ -1,3 +1,5 @@
+- Perapian header `csi-daily-reports.html`: jarak header dibuat lebih rapat, judul dan deskripsi tetap di kiri, tombol **Buka Request Prioritas CSI** dipindahkan ke sisi kanan header pada desktop agar ruang kosong terasa lebih seimbang; pada layar kecil tombol turun ke baris berikutnya.
+
 - Perbaikan akses Admin: selain tautan sidebar, halaman `csi-daily-reports.html` kini menampilkan tombol **Buka Request Prioritas CSI** yang terlihat di area konten, tepat di bawah header. Ini memberi jalur langsung tanpa harus mencari menu sidebar.
 
 ## 2026-10-14 — Request Prioritas Cleaning CSI
