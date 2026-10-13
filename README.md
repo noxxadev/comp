@@ -1,11 +1,11 @@
-## 2026-10-13 — PLAN: Sidebar Daily Report CSI berdasarkan role
-- **Status:** PLANNED — BELUM DIIMPLEMENTASIKAN.
-- Sidebar untuk role **Admin** harus menampilkan **Daily Report CSI** (`csi-daily-reports.html`) dan menyembunyikan **CSI Cleaning** (`csi.html`).
-- Sidebar untuk role **CSI** harus menampilkan **CSI Cleaning** dan menyembunyikan **Daily Report CSI**.
-- Hapus tautan **Daily Report CSI** yang duplikat pada `index.html` saat implementasi.
-- Pertahankan navigasi dan akses untuk role lain sesuai perilaku yang sudah ada.
-- Implementasi dibatasi pada rendering navigasi berdasarkan role dan pembersihan tautan duplikat; jangan mengubah mekanisme login, validasi sesi/backend, atau logika fitur lain.
-- **Validasi wajib:** login sebagai Admin dan CSI, periksa sidebar pada desktop/mobile serta setelah hard refresh; pastikan pembatasan akses halaman tetap ditegakkan oleh `page-guard.js` dan backend, bukan hanya dengan menyembunyikan tautan.
+## 2026-10-13 — Sidebar Daily Report CSI berdasarkan role
+- **Status:** IMPLEMENTED IN MAIN — VALIDASI BROWSER PENDING.
+- Sidebar Tools Hub (`index.html`) menyembunyikan tautan **CSI Cleaning** untuk role `ADMIN`; tautan **Daily Report CSI** dipertahankan satu kali.
+- Sidebar halaman **Daily Report CSI** (`csi-daily-reports.html`) menyembunyikan tautan **CSI Cleaning** untuk role `ADMIN`.
+- Tautan/kartu Daily Report CSI yang duplikat di `index.html` sudah dihapus; satu tautan sidebar dan satu kartu tool pendukung tetap tersedia.
+- Role selain `ADMIN` tidak terkena filter baru; navigasi CSI Cleaning tetap tersedia pada halaman CSI.
+- Perubahan hanya menyentuh navigasi dan duplikasi tautan/kartu. Tidak mengubah mekanisme login, validasi sesi, backend, atau logika fitur.
+- **Validasi browser wajib:** login sebagai Admin dan CSI, cek sidebar desktop/mobile dan setelah hard refresh. Pastikan akses halaman tetap mengikuti guard/backend yang sudah ada; penyembunyian link bukan pengganti kontrol akses.
 
 ## 2026-10-13 — CSI Daily Report: snapshot dan halaman Admin
 - **Status:** IMPLEMENTED IN MAIN — DEPLOYMENT / LIVE VALIDATION PENDING.
