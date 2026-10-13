@@ -195,7 +195,7 @@ function csiSaveWork_(payload, user) {
       try { requestTreatments = JSON.parse(String(row[8] || '[]')); } catch (_) {}
       if (row[9] !== 'Sedang Dikerjakan') throw new Error('Request harus berstatus Sedang Dikerjakan sebelum hasil disimpan.');
       if (String(row[4]) !== frameSide || String(row[5]) !== jobType) throw new Error('Sisi dan jenis pekerjaan harus sesuai request prioritas.');
-      if ([...requestTreatments].sort().join('|') !== sortedTreatments) throw new Error('Treatment harus sama dengan yang ditetapkan pada request.');
+      if (requestTreatments.length && [...requestTreatments].sort().join('|') !== sortedTreatments) throw new Error('Treatment harus sama dengan yang ditetapkan pada request.');
     });
   }
   const lock = LockService.getScriptLock();
