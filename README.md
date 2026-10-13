@@ -848,3 +848,12 @@ Validation required:
 ## 2026-10-14 — Merapikan label Nama DC pada halaman CSI
 - Menghapus keterangan `* pilih satu atau beberapa DC` dari label Nama DC di halaman `csi.html` dan `csi-priority-requests.html`.
 - Hanya teks bantuan yang dihapus; pemilihan multi-DC dan validasi form tetap berjalan seperti sebelumnya.
+
+
+## 2026-10-14 — Alur penerimaan Request Prioritas CSI dan modal bertema
+- Tombol **Terima** pada halaman CSI menerima request tanpa meminta treatment terlebih dahulu.
+- Setelah diterima, form pekerjaan otomatis memilih Nama DC dari request serta mengisi Sisi Celldeck dan Jenis Pekerjaan; checklist treatment dikosongkan agar CSI memilih treatment aktual secara manual sebelum menyimpan pekerjaan.
+- Backend tidak lagi mensyaratkan treatment pada tahap Terima atau Mulai. Validasi treatment saat menyimpan catatan pekerjaan tetap berlaku.
+- Informasi treatment dihapus dari kartu request prioritas di halaman CSI dan Admin, serta keterangan treatment dari form pembuatan request Admin dihapus.
+- Dialog penolakan, jadwal ulang, pembatalan, dan konfirmasi pembatalan menggunakan modal yang mengikuti tema Light/Dark, bukan popup bawaan browser.
+- Perubahan frontend dan backend sudah dicatat di source. **Deploy versi baru Web App CSI wajib dilakukan** karena `csi-apps-script/Code.gs` berubah. Uji browser tetap diperlukan untuk memastikan modal, auto-fill form, dan transisi status bekerja di deployment.
