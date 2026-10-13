@@ -114,7 +114,9 @@ function setupCsiSheets() {
 }
 
 function csiSaveWork_(payload, user) {
-  const dcName = csiNormalizeDcName_(payload.dcName);
+  // Accept both the new multi-DC payload and the legacy single-DC field.
+  const rawDcNames = Array.isArray(payload.dcNames) ? payload.dcNames : [payload.dcName];
+  const dcNames = [...new Set(rawDcNames.map(value => csiNormalizeDcName_(value)).filter(Boolean))];
   const workDateText = String(payload.workDate || '').trim();
   const frameSide = String(payload.frameSide || '').trim();
   const jobType = String(payload.jobType || '').trim();
@@ -130,25 +132,36 @@ function csiSaveWork_(payload, user) {
   ];
   const requestedTreatments = Array.isArray(payload.treatments) ? payload.treatments.map(value => String(value || '').trim()) : [];
   const treatments = [...new Set(requestedTreatments)];
-  if (!treatments.length) throw new Error('Pilih minimal satu jenis treatment.');
-  if (treatments.some(value => !allowedTreatments.includes(value))) throw new Error('Pilihan treatment tidak valid.');
-  const treatmentsJson = JSON.stringify(treatments);
-  if (!/^[A-F]\d+[A-Z]?$/.test(dcName)) throw new Error('Nama DC tidak valid. Pilih DC dari daftar master data.');
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(workDateText)) throw new Error('Tanggal pekerjaan tidak valid.');
+  if (!dcNames.length) throw new Error('Pilih minimal satu Nama DC.');
+  if (dcNames.length !== rawDcNames.map(value => csiNormalizeDcName_(value)).filter(Boolean).length) throw new Error('Nama DC duplikat atau tidak valid.');
+  if (dcNames.some(name => !/^[A-F]\\d+[A-Z]?$/.test(name))) throw new Error('Nama DC tidak valid. Pilih DC dari daftar master data.');
+  if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(workDateText)) throw new Error('Tanggal pekerjaan tidak valid.');
   const workDate = new Date(workDateText + 'T12:00:00');
   if (isNaN(workDate.getTime()) || Utilities.formatDate(workDate, Session.getScriptTimeZone(), 'yyyy-MM-dd') !== workDateText) throw new Error('Tanggal pekerjaan tidak valid.');
   const sides = frameSide === 'Both' ? ['A', 'B'] : [frameSide];
   if (!sides.every(side => side === 'A' || side === 'B')) throw new Error('Pilih sisi A, sisi B, atau kedua sisi.');
   if (jobType !== 'Cleaning' && jobType !== 'Replace') throw new Error('Jenis pekerjaan harus Cleaning atau Replace.');
+  if (!treatments.length) throw new Error('Pilih minimal satu jenis treatment.');
+  if (treatments.some(value => !allowedTreatments.includes(value))) throw new Error('Pilihan treatment tidak valid.');
   if (workDate.getTime() > new Date().getTime() + 86400000) throw new Error('Tanggal pekerjaan tidak boleh di masa depan.');
+  const treatmentsJson = JSON.stringify(treatments);
   const lock = LockService.getScriptLock();
   lock.waitLock(15000);
   try {
     const history = csiGetSheet_(CSI_HISTORY_SHEET, CSI_HISTORY_HEADERS);
     const now = new Date();
-    const rows = sides.map(side => [Utilities.getUuid(), now, workDate, dcName, side, jobType, user.id, user.username, notes, treatmentsJson]);
+    const rows = [];
+    dcNames.forEach(dcName => sides.forEach(side => {
+      rows.push([Utilities.getUuid(), now, workDate, dcName, side, jobType, user.id, user.username, notes, treatmentsJson]);
+    }));
+    // Write all selected DCs together so the history is saved in one batch.
     history.getRange(history.getLastRow() + 1, 1, rows.length, CSI_HISTORY_HEADERS.length).setValues(rows);
-    sides.forEach(side => csiRefreshSummary_(dcName, side));
+    const summaryPairs = new Set();
+    dcNames.forEach(dcName => sides.forEach(side => summaryPairs.add(dcName + '|' + side)));
+    summaryPairs.forEach(pair => {
+      const [dcName, side] = pair.split('|');
+      csiRefreshSummary_(dcName, side);
+    });
     SpreadsheetApp.flush();
     return rows.map(row => csiSerializeRow_(row));
   } finally { lock.releaseLock(); }
