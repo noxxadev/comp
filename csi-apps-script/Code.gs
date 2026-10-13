@@ -181,6 +181,22 @@ function csiSaveWork_(payload, user) {
   if (treatments.some(value => !allowedTreatments.includes(value))) throw new Error('Pilihan treatment tidak valid.');
   if (workDate.getTime() > new Date().getTime() + 86400000) throw new Error('Tanggal pekerjaan tidak boleh di masa depan.');
   const treatmentsJson = JSON.stringify(treatments);
+  const priorityGroupId = String(payload.priorityRequestGroupId || '').trim();
+  let priorityTargets = [];
+  if (priorityGroupId) {
+    const found = csiFindPriorityGroup_(priorityGroupId);
+    priorityTargets = found.rows.filter(item => dcNames.includes(csiNormalizeDcName_(item.values[3])));
+    if (priorityTargets.length !== dcNames.length) throw new Error('DC yang dipilih tidak cocok dengan request prioritas.');
+    const sortedTreatments = [...treatments].sort().join('|');
+    priorityTargets.forEach(item => {
+      const row = item.values;
+      let requestTreatments = [];
+      try { requestTreatments = JSON.parse(String(row[8] || '[]')); } catch (_) {}
+      if (row[9] !== 'Sedang Dikerjakan') throw new Error('Request harus berstatus Sedang Dikerjakan sebelum hasil disimpan.');
+      if (String(row[4]) !== frameSide || String(row[5]) !== jobType) throw new Error('Sisi dan jenis pekerjaan harus sesuai request prioritas.');
+      if ([...requestTreatments].sort().join('|') !== sortedTreatments) throw new Error('Treatment harus sama dengan yang ditetapkan pada request.');
+    });
+  }
   const lock = LockService.getScriptLock();
   lock.waitLock(15000);
   try {
@@ -192,6 +208,26 @@ function csiSaveWork_(payload, user) {
     }));
     // Write all selected DCs together so the history is saved in one batch.
     history.getRange(history.getLastRow() + 1, 1, rows.length, CSI_HISTORY_HEADERS.length).setValues(rows);
+    if (priorityGroupId && priorityTargets.length) {
+      const prioritySheet = csiPrioritySheet_();
+      const savedIdsByDc = new Map();
+      rows.forEach(savedRow => {
+        const dc = csiNormalizeDcName_(savedRow[3]);
+        if (!savedIdsByDc.has(dc)) savedIdsByDc.set(dc, []);
+        savedIdsByDc.get(dc).push(String(savedRow[0]));
+      });
+      priorityTargets.forEach(item => {
+        const rowIndex = item.row;
+        const dc = csiNormalizeDcName_(item.values[3]);
+        const latest = prioritySheet.getRange(rowIndex, 1, 1, CSI_PRIORITY_REQUEST_HEADERS.length).getValues()[0];
+        if (latest[9] !== 'Sedang Dikerjakan') throw new Error('Status request berubah saat penyimpanan.');
+        latest[9] = 'Selesai';
+        latest[15] = now;
+        latest[28] = (savedIdsByDc.get(dc) || []).join(',');
+        latest[29] = now;
+        prioritySheet.getRange(rowIndex, 1, 1, CSI_PRIORITY_REQUEST_HEADERS.length).setValues([latest]);
+      });
+    }
     const summaryPairs = new Set();
     dcNames.forEach(dcName => sides.forEach(side => summaryPairs.add(dcName + '|' + side)));
     summaryPairs.forEach(pair => {
