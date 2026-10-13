@@ -14,7 +14,8 @@
   <script src="page-guard.js"></script>
   <script src="master-data.js"></script>
   <script src="csi-google-sheets-config.js?v=20261011-csi"></script>
-  <link rel="stylesheet" href="csi.css?v=20261014-multi-dc1">
+  <link rel="stylesheet" href="csi.css?v=20261014-priority1">
+  <link rel="stylesheet" href="csi-priority-requests.css?v=20261014-priority1">
 </head>
 <body>
 <div class="hub-shell">
@@ -34,6 +35,11 @@
       <span class="csi-role-chip"><i class="fas fa-shield-halved"></i> CSI</span>
     </header>
     <div id="csiNotice" class="csi-notice" role="status" aria-live="polite" hidden></div>
+    <section class="csi-card priority-csi-card" id="csiPriorityRequestsCard">
+      <div class="csi-card-head"><div><span class="csi-section-tag">REQUEST PRIORITAS</span><h2>Permintaan Pekerjaan</h2></div><button id="refreshCsiPriorityBtn" class="csi-secondary-btn" type="button"><i class="fas fa-rotate"></i> Refresh</button></div>
+      <p class="csi-help">Terima request dan tentukan treatment sebelum memulai pekerjaan. Request hanya menjadi Selesai setelah hasil aktual berhasil disimpan.</p>
+      <div id="csiPriorityRequestsList" class="priority-request-list"><p class="csi-empty">Memuat request...</p></div>
+    </section>
     <section class="csi-card">
       <div class="csi-card-head"><div><span class="csi-section-tag">INPUT PEKERJAAN</span><h2>Catat Pekerjaan</h2></div><i class="fas fa-clipboard-check csi-card-icon"></i></div>
       <form id="csiWorkForm" class="csi-form">
@@ -104,6 +110,7 @@
     <footer class="csi-footer">COMP Tools · CSI Work History</footer>
   </main>
 </div>
-<script src="csi.js?v=20261014-multi-dc1"></script>
+<script src="csi.js?v=20261014-priority1"></script>
+<script src="csi-priority-requests-csi.js?v=20261014-priority1"></script>
 </body>
 </html>
