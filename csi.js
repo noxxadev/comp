@@ -321,8 +321,8 @@
         notes: $('notes').value.trim(), treatments: selectedTreatments()
       });
       savedCount = Number(result.saved) || 0;
-      $('notes').value = '';
-      form.querySelectorAll('input[name="treatments"]').forEach(input => { input.checked = false; });
+      form.reset();
+      $('workDate').value = localDateValue();
     } catch (error) {
       showNotice(error.message || 'Gagal menyimpan pekerjaan.', 'error');
       busy = false; saveButton.disabled = false;
@@ -333,7 +333,7 @@
       await loadHistory();
       showNotice('Berhasil menyimpan ' + savedCount + ' catatan pekerjaan.', 'success');
     } catch (error) {
-      showNotice('Pekerjaan tersimpan (' + savedCount + ' catatan), tetapi riwayat belum berhasil dimuat ulang. Tekan Muat Ulang; jangan simpan ulang pekerjaan yang sama.', 'error');
+      showNotice('Pekerjaan tersimpan (' + savedCount + ' catatan), tetapi riwayat belum berhasil dimuat ulang. Tekan Refresh; jangan simpan ulang pekerjaan yang sama.', 'error');
     } finally {
       busy = false; saveButton.disabled = false;
       saveButton.innerHTML = '<i class="fas fa-floppy-disk"></i> Simpan Pekerjaan';
