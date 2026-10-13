@@ -823,3 +823,10 @@ Validation required:
 - Struktur kolom Google Sheets, filter riwayat, laporan harian, validasi akses, dan integrasi DC HighTemp tidak diubah.
 - Cache-buster halaman CSI diperbarui.
 - Pemeriksaan kode sumber dilakukan; uji browser dan Google Sheets masih diperlukan. Karena backend Apps Script berubah, deploy versi baru Web App CSI setelah memperbarui `csi-apps-script/Code.gs`.
+
+
+## 2026-10-14 — Penyelarasan header Daily Report CSI
+- Komposisi header `csi-daily-reports.html` diselaraskan dengan halaman Request Prioritas CSI: judul dan deskripsi di kiri, chip ADMIN di kanan.
+- Tombol menuju Request Prioritas CSI dipindahkan ke baris judul `Daftar Laporan`, sehingga header tidak perlu menampung tombol lebar dan ruangnya lebih seimbang.
+- Pada layar kecil, header dan tombol daftar laporan tetap menyesuaikan lebar layar.
+- Perubahan hanya pada tampilan; alur memuat laporan, review, persetujuan, dan pencetakan tidak diubah. Pemeriksaan source dilakukan; validasi visual langsung di browser masih diperlukan.
