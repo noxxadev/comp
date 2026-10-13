@@ -90,6 +90,12 @@
       location.replace('csi-daily-reports.html');
       return;
     }
+
+    // Priority requests are restricted to Admin accounts; backend checks remain authoritative.
+    if (currentPage === 'csi-priority-requests.html' && role !== 'ADMIN') {
+      location.replace(role === 'CSI' ? 'csi.html' : 'index.html');
+      return;
+    }
     showPage();
     console.debug(`[COMP PERF] page-guard total: ${(performance.now() - perfStart).toFixed(0)} ms (${location.pathname})`);
     if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',addLogoutUI,{once:true});else addLogoutUI();
