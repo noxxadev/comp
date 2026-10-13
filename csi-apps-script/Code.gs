@@ -606,19 +606,14 @@ function csiUpdatePriorityGroup_(groupId, updater) {
 }
 function csiAcceptPriorityRequest_(payload, user) {
   const groupId = payload.groupId;
-  const treatments = Array.isArray(payload.treatments) ? [...new Set(payload.treatments.map(v => String(v||'').trim()).filter(Boolean))] : [];
-  const allowed = ['Pencopotan Frame','Pemasangan Frame','Penyemprotan Celldeck','Pembersihan Kisi-kisi','Perapihan/Penggantian Kain Flanel','Penggantian Celldeck','Perapihan pipa dan pengecekan saluran air'];
-  if (!treatments.length || treatments.some(t => !allowed.includes(t))) throw new Error('CSI wajib menentukan treatment sebelum menerima request.');
   return csiUpdatePriorityGroup_(groupId,(row,now)=>{
     if (row[9] !== 'Menunggu CSI' && row[9] !== 'Dijadwalkan Ulang') throw new Error('Request tidak lagi menunggu penerimaan CSI.');
-    row[8]=JSON.stringify(treatments); row[9]='Diterima'; row[12]=now; row[13]=user.username;
+    row[8]='[]'; row[9]='Diterima'; row[12]=now; row[13]=user.username;
   });
 }
 function csiStartPriorityRequest_(payload,user) {
   return csiUpdatePriorityGroup_(payload.groupId,(row,now)=>{
     if (row[9] !== 'Diterima') throw new Error('Request harus diterima sebelum pekerjaan dimulai.');
-    let ts=[]; try {ts=JSON.parse(String(row[8]||'[]'));}catch(_){}
-    if (!ts.length) throw new Error('Treatment harus ditentukan sebelum pekerjaan dimulai.');
     row[9]='Sedang Dikerjakan'; row[14]=now;
   });
 }
