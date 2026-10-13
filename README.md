@@ -1,3 +1,14 @@
+## 2026-10-14 — CSI Daily Report: WhatsApp newline dan template cetak berlogo
+- **Status:** IMPLEMENTED IN MAIN — DEPLOYMENT / LIVE VALIDATION PENDING.
+- Memperbaiki pemisah baris pesan WhatsApp agar menggunakan newline nyata, bukan karakter literal `\\n`.
+- Snapshot Daily Report kini menyimpan dua representasi: teks pesan WhatsApp yang dapat diedit dan HTML template cetak A4 portrait dengan logo CSI, tabel treatment, detail site/personil, serta area tanda tangan.
+- Halaman Admin menampilkan template berlogo yang tersimpan dan tombol cetak menggunakan dokumen snapshot tersebut; laporan tidak dibentuk ulang dari riwayat yang mungkin berubah.
+- Kolom baru `Print Report HTML` ditambahkan ke `CSI Daily Reports`. Backend mengenali header lama 17 kolom dan menambahkan kolom ke-18 tanpa menghapus/mengubah baris yang sudah ada.
+- Laporan lama tidak memiliki snapshot HTML berlogo; untuk mendapatkan format baru, laporan perlu dibuat ulang dari halaman CSI. Snapshot lama tetap dipertahankan dan masih dapat ditinjau sebagai teks.
+- File yang berubah: `csi.js`, `csi.html`, `csi-apps-script/Code.gs`, `csi-daily-reports.html`.
+- **Deployment wajib:** update/deploy ulang Apps Script CSI dari `csi-apps-script/Code.gs`. Setelah itu buka halaman CSI, hard refresh, buat laporan baru, cek pesan WhatsApp dan buka link sebagai Admin. Pastikan tab `CSI Daily Reports` mendapat header `Print Report HTML` secara otomatis ketika backend membaca sheet; jangan hapus data lama.
+- Validasi sumber kode dilakukan; uji browser/WhatsApp/print PDF live masih pending.
+
 ## 2026-10-13 — Sidebar Daily Report CSI berdasarkan role
 - **Status:** IMPLEMENTED IN MAIN — VALIDASI BROWSER PENDING.
 - Sidebar Tools Hub (`index.html`) menyembunyikan tautan **CSI Cleaning** untuk role `ADMIN`; tautan **Daily Report CSI** dipertahankan satu kali.
