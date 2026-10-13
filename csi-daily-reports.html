@@ -14,7 +14,7 @@
 <body>
 <div class="hub-shell"><div class="hub-sidebar-overlay" id="sidebarOverlay"></div>
 <aside class="hub-sidebar" id="sidebar"><div class="hub-logo"><div class="hub-mark">CP</div><div><div class="hub-brand">COMP Tools</div><div class="hub-subbrand">Data & comparison suite</div></div></div>
-<nav class="hub-nav" aria-label="Navigasi"><a href="index.html"><i class="fas fa-house"></i><span>Tools Hub</span></a><a href="csi.html"><i class="fas fa-broom"></i><span>CSI Cleaning</span></a><a class="active" href="csi-daily-reports.html"><i class="fas fa-file-lines"></i><span>Daily Report CSI</span></a></nav></aside>
+<nav class="hub-nav" aria-label="Navigasi"><a href="index.html"><i class="fas fa-house"></i><span>Tools Hub</span></a><a href="csi.html" data-hide-for-admin><i class="fas fa-broom"></i><span>CSI Cleaning</span></a><a class="active" href="csi-daily-reports.html"><i class="fas fa-file-lines"></i><span>Daily Report CSI</span></a></nav></aside>
 <main class="hub-main report-main">
 <header class="report-head"><button id="menuToggle" class="hub-menu-toggle" type="button" aria-label="Buka navigasi"><i class="fas fa-bars"></i></button><div><p class="csi-eyebrow" style="color:var(--csi-accent);font-size:10px;font-weight:800;letter-spacing:.13em;margin:0 0 7px">ADMINISTRATION</p><h1>Daily Report CSI</h1><p class="report-sub">Tinjau laporan yang dikirim Tim CSI, minta revisi, setujui, dan cetak laporan A4 portrait.</p></div></header>
 <div id="csiNotice" class="notice" role="status" aria-live="polite">Memverifikasi akses Admin...</div>
@@ -40,6 +40,14 @@ $('approveReport').addEventListener('click',()=>review('Disetujui'));$('requestR
 $('printReport').addEventListener('click',async()=>{if(!selected)return;window.print();try{const result=await request('markDailyReportPrinted',{reportId:selected.reportId});selected=result.report;notice('Status pencetakan dicatat.','success');await load();await openReport(selected.reportId)}catch(e){notice('Dialog cetak dibuka, tetapi status pencetakan gagal disimpan: '+e.message,'error')}});
 const menu=$('menuToggle'),side=$('sidebar'),overlay=$('sidebarOverlay');menu?.addEventListener('click',()=>{side.classList.toggle('active');overlay.classList.toggle('active')});overlay?.addEventListener('click',()=>{side.classList.remove('active');overlay.classList.remove('active')});
 (async()=>{try{const access=await request('validateAccess');if(String(access.user?.role||'').toUpperCase()!=='ADMIN')throw Error('Halaman ini khusus Admin.');await load();const id=new URLSearchParams(location.search).get('reportId');if(id)await openReport(id)}catch(e){notice(e.message,'error')}})();
+})();
+</script>
+
+<script>
+(() => {
+    const user = window.CompAuth?.getUser?.();
+    const role = String(user?.role || '').trim().toUpperCase();
+    if (role === 'ADMIN') document.querySelectorAll('[data-hide-for-admin]').forEach(link => link.remove());
 })();
 </script>
 </body></html>
