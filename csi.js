@@ -73,7 +73,7 @@
     const selected = checks.filter(input => input.checked);
     $('dcPickerCount').textContent = selected.length + ' DC dipilih';
     $('dcPickerSummary').textContent = selected.length
-      ? selected.length <= 3 ? selected.map(input => input.value).join(', ') : selected.length + ' DC dipilih'
+      ? selected.map(input => input.value).join(', ')
       : 'Pilih Nama DC';
     $('dcSelectAll').checked = checks.length > 0 && selected.length === checks.length;
     $('dcSelectAll').indeterminate = selected.length > 0 && selected.length < checks.length;
