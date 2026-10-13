@@ -797,3 +797,14 @@ Validation required:
 - Menghapus card WhatsApp terpisah; tombol **Buat Report WhatsApp** sekarang berada di card Daily Report.
 - Report WhatsApp ditampilkan dalam popup dengan tombol **Edit** dan **Kirim via WhatsApp**. Isi pesan dapat diedit sebelum membuka WhatsApp; pengiriman tetap dilakukan oleh pengguna di WhatsApp.
 - Validasi sumber: pemeriksaan sintaks JavaScript dan pemeriksaan struktur HTML/CSS; uji browser, print PDF portrait, serta alur popup masih perlu dilakukan.
+
+
+## 2026-10-14 — CSI Multi-DC Checklist
+- Mengganti pemilihan satu DC menjadi dropdown checklist multi-pilih pada form CSI; daftar DC tetap berasal dari `master-data.js`.
+- Dropdown menyediakan pencarian nama DC, pilih semua DC yang terlihat, ringkasan jumlah/nama DC terpilih, dan tombol Selesai agar form tetap ringkas.
+- Penyimpanan multi-DC hanya memakai satu set nilai bersama untuk tanggal, sisi Celldeck, jenis pekerjaan, treatment, dan catatan.
+- Backend CSI menerima `dcNames` untuk multi-DC serta tetap mendukung `dcName` tunggal dari frontend lama.
+- Setiap DC terpilih mendapatkan catatan tersendiri; pilihan sisi A+B menghasilkan dua baris per DC. Ringkasan CSI diperbarui untuk setiap pasangan DC/sisi.
+- Struktur kolom Google Sheets, filter riwayat, laporan harian, validasi akses, dan integrasi DC HighTemp tidak diubah.
+- Cache-buster halaman CSI diperbarui.
+- Pemeriksaan kode sumber dilakukan; uji browser dan Google Sheets masih diperlukan. Karena backend Apps Script berubah, deploy versi baru Web App CSI setelah memperbarui `csi-apps-script/Code.gs`.
