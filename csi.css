@@ -71,3 +71,9 @@
 .csi-modal-panel textarea{width:100%;box-sizing:border-box;resize:vertical;padding:12px;border:1px solid var(--border,#dfe4ec);border-radius:10px;background:var(--surface-2,var(--surface,#fff));color:var(--text,var(--text-primary,#263247));font:inherit;font-size:13px;line-height:1.55}
 .csi-modal-panel textarea:not([readonly]){border-color:var(--csi-accent);outline:2px solid color-mix(in srgb,var(--csi-accent) 20%,transparent)}
 @media(max-width:600px){.csi-modal{padding:10px}.csi-modal-panel{padding:15px}.csi-print-form .csi-report-actions{flex-direction:column;align-items:stretch}.csi-print-form .csi-report-actions button{width:100%}}
+
+/* History filter actions: Reset Filter and Refresh together */
+.csi-filter-actions{grid-column:3/-1;display:flex;align-items:center;justify-content:flex-end;gap:9px;flex-wrap:wrap}
+.csi-filters .csi-filter-actions #clearFiltersBtn{grid-column:auto;justify-self:auto}
+@media(max-width:900px){.csi-filter-actions{grid-column:1/-1}}
+@media(max-width:480px){.csi-filter-actions{justify-content:stretch}.csi-filter-actions button{flex:1}}
