@@ -1,3 +1,5 @@
+- Perbaikan akses Admin: selain tautan sidebar, halaman `csi-daily-reports.html` kini menampilkan tombol **Buka Request Prioritas CSI** yang terlihat di area konten, tepat di bawah header. Ini memberi jalur langsung tanpa harus mencari menu sidebar.
+
 ## 2026-10-14 — Request Prioritas Cleaning CSI
 - **Status:** IMPLEMENTED IN MAIN — DEPLOYMENT / LIVE VALIDATION PENDING.
 - Menambahkan halaman Admin `csi-priority-requests.html` untuk mengajukan request berisi DC (multi-DC), sisi Celldeck, jenis pekerjaan, alasan, prioritas Tinggi/Mendesak, dan tanggal harapan opsional. Treatment tidak wajib saat request dibuat.
