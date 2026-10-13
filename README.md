@@ -843,3 +843,8 @@ Validation required:
 - Memperbaiki regex tanggal rencana di fungsi yang sama agar format `YYYY-MM-DD` divalidasi dengan benar.
 - Perubahan terbatas pada validasi request prioritas; penyimpanan, status request, dan alur pekerjaan tidak diubah.
 - Setelah perubahan backend, deploy versi baru Web App CSI agar perbaikan aktif. Source GitHub diverifikasi; pengiriman request aktual tetap perlu diuji setelah deploy.
+
+
+## 2026-10-14 — Merapikan label Nama DC pada halaman CSI
+- Menghapus keterangan `* pilih satu atau beberapa DC` dari label Nama DC di halaman `csi.html` dan `csi-priority-requests.html`.
+- Hanya teks bantuan yang dihapus; pemilihan multi-DC dan validasi form tetap berjalan seperti sebelumnya.
