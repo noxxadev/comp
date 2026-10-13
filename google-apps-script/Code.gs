@@ -1151,18 +1151,18 @@ function replaceMachineList(records, sourceFileName) {
     const locationId = normalizeMachineText(record.locationId).toUpperCase();
     const installedDate = normalizeMachineText(record.installedDate);
     const uninstalledDate = normalizeMachineText(record.uninstalledDate);
-    if (!serialNumber || !locationId) return jsonResponse({ ok: false, error: `Record Machine List ke-${i + 1} tidak memiliki serial_number dan location_id. Dataset lama tidak diubah.` });
+    if (!serialNumber) return jsonResponse({ ok: false, error: `Baris Excel ${Number(record.sourceRow) || i + 1}: Serial Number kosong. Dataset lama tidak diubah.` });
     if (serialNumber.length > 200 || locationId.length > 200) return jsonResponse({ ok: false, error: `Record Machine List ke-${i + 1} memiliki nilai terlalu panjang. Dataset lama tidak diubah.` });
     if (installedDate.length > 100 || uninstalledDate.length > 100) return jsonResponse({ ok: false, error: `Tanggal pada record Machine List ke-${i + 1} terlalu panjang. Dataset lama tidak diubah.` });
     const serialKey = serialNumber.toUpperCase();
     const locationKey = locationId.toUpperCase();
     if (seenSerialNumbers.has(serialKey)) return jsonResponse({ ok: false, error: `Serial Number duplikat pada record ke-${i + 1}: ${serialNumber}. Dataset lama tidak diubah.` });
     // Workshop boleh menampung banyak SN. Lokasi normal tetap wajib unik.
-    if (!WORKSHOP_LOCATIONS.has(locationKey) && seenLocations.has(locationKey)) {
+    if (locationKey && !WORKSHOP_LOCATIONS.has(locationKey) && seenLocations.has(locationKey)) {
       return jsonResponse({ ok: false, error: `Location ID duplikat pada record ke-${i + 1}: ${locationId}. Dataset lama tidak diubah.` });
     }
     seenSerialNumbers.add(serialKey);
-    seenLocations.add(locationKey);
+    if (locationKey) seenLocations.add(locationKey);
     normalizedRows.push([serialNumber, locationId, installedDate, uninstalledDate]);
   }
 
