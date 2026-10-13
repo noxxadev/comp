@@ -64,6 +64,7 @@
     $('dcCheckboxList').innerHTML = list.map(dc => '<label class="csi-dc-option" data-dc-search="' + escapeHtml(dc.toLocaleLowerCase('id-ID')) + '"><input type="checkbox" name="dcNames" value="' + escapeHtml(dc) + '"><span>' + escapeHtml(dc) + '</span></label>').join('');
     $('filterDc').innerHTML = '<option value="">Semua DC</option>' + list.map(dc => '<option value="' + escapeHtml(dc) + '">' + escapeHtml(dc) + '</option>').join('');
     updateDcPicker();
+    window.dispatchEvent(new Event('comp:csi-dc-picker-ready'));
   }
   function selectedDcs() {
     return [...$('dcCheckboxList').querySelectorAll('input[name="dcNames"]:checked')].map(input => input.value);
@@ -367,6 +368,7 @@
       updateDcPicker();
       setDcPickerOpen(false);
       $('workDate').value = localDateValue();
+      window.dispatchEvent(new Event('comp:csi-priority-refresh'));
     } catch (error) {
       showNotice(error.message || 'Gagal menyimpan pekerjaan.', 'error');
       busy = false; saveButton.disabled = false;
