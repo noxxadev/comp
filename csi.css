@@ -77,3 +77,6 @@
 .csi-filters .csi-filter-actions #clearFiltersBtn{grid-column:auto;justify-self:auto}
 @media(max-width:900px){.csi-filter-actions{grid-column:1/-1}}
 @media(max-width:480px){.csi-filter-actions{justify-content:stretch}.csi-filter-actions button{flex:1}}
+
+/* Keep personnel textbox aligned with adjacent single-line report fields; multiline entry remains supported. */
+.csi-print-form #printPersonnel{height:42px;min-height:42px;resize:vertical;line-height:18px}
