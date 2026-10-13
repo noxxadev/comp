@@ -643,8 +643,14 @@ function csiCreatePriorityRequest_(payload, user) {
   const sheet = csiPrioritySheet_();
   const rows = dcs.map(dc => [Utilities.getUuid(),groupId,now,dc,side,job,reason,priority,'[]','Menunggu CSI',user.id,user.username,'','','','','','','','','','',scheduled,'','','','','','',now,'']);
   const lock = LockService.getScriptLock(); lock.waitLock(15000);
-  try { sheet.getRange(sheet.getLastRow()+1,1,rows.length,CSI_PRIORITY_REQUEST_HEADERS.length).setValues(rows); SpreadsheetApp.flush(); }
-  finally { lock.releaseLock(); }
+  try {
+    const activeStatuses = new Set(['Menunggu CSI','Dijadwalkan Ulang','Diterima','Sedang Dikerjakan','Pending','Menunggu Konfirmasi Pembatalan']);
+    const existing = csiPriorityRows_();
+    const conflict = existing.find(row => dcs.includes(csiNormalizeDcName_(row[3])) && activeStatuses.has(String(row[9])));
+    if (conflict) throw new Error('DC ' + csiNormalizeDcName_(conflict[3]) + ' masih memiliki request prioritas aktif.');
+    sheet.getRange(sheet.getLastRow()+1,1,rows.length,CSI_PRIORITY_REQUEST_HEADERS.length).setValues(rows);
+    SpreadsheetApp.flush();
+  } finally { lock.releaseLock(); }
   return csiGroupResponse_(groupId);
 }
 function csiListPriorityRequests_(user) {
@@ -675,8 +681,10 @@ function csiAcceptPriorityRequest_(payload, user) {
 }
 function csiStartPriorityRequest_(payload,user) {
   return csiUpdatePriorityGroup_(payload.groupId,(row,now)=>{
-    if (row[9] !== 'Diterima') throw new Error('Request harus diterima sebelum pekerjaan dimulai.');
-    row[9]='Sedang Dikerjakan'; row[14]=now;
+    if (row[9] === 'Diterima') { row[9]='Sedang Dikerjakan'; row[14]=now; }
+    else if (!['Sedang Dikerjakan','Pending','Selesai'].includes(String(row[9]))) {
+      throw new Error('Request harus diterima sebelum pekerjaan dimulai.');
+    }
   });
 }
 function csiRejectPriorityRequest_(payload,user) {
@@ -704,7 +712,7 @@ function csiCancelPriorityRequest_(payload,user) {
   return csiUpdatePriorityGroup_(payload.groupId,(row,now)=>{
     if(['Selesai','Dibatalkan','Ditolak'].includes(row[9])) throw new Error('Request sudah berakhir.');
     if(row[9] === 'Menunggu Konfirmasi Pembatalan') throw new Error('Pembatalan sudah menunggu konfirmasi pihak lain.');
-    if(row[9] === 'Sedang Dikerjakan') {
+    if(['Sedang Dikerjakan','Pending'].includes(String(row[9]))) {
       row[9]='Menunggu Konfirmasi Pembatalan'; row[23]=now; row[24]=String(user.role).toUpperCase(); row[25]=reason;
     } else {
       if(String(user.role).toUpperCase()!=='ADMIN') throw new Error('Hanya Admin yang dapat membatalkan sebelum pekerjaan dimulai.');
@@ -720,6 +728,10 @@ function csiRespondCancelPriorityRequest_(payload,user) {
     if(row[9] !== 'Menunggu Konfirmasi Pembatalan') throw new Error('Tidak ada pembatalan yang menunggu konfirmasi.');
     if(role === String(row[24]).toUpperCase()) throw new Error('Konfirmasi harus dilakukan oleh pihak yang berbeda.');
     if(confirm) { row[9]='Dibatalkan'; row[26]=now; row[27]=role; }
-    else { row[9]='Sedang Dikerjakan'; row[23]=''; row[24]=''; row[25]=''; }
+    else {
+      const hasSavedHistory = String(row[28] || '').trim() !== '';
+      row[9] = hasSavedHistory ? 'Pending' : 'Sedang Dikerjakan';
+      row[23]=''; row[24]=''; row[25]='';
+    }
   });
 }
