@@ -166,8 +166,8 @@ function csiSaveWork_(payload, user) {
   const treatments = [...new Set(requestedTreatments)];
   if (!dcNames.length) throw new Error('Pilih minimal satu Nama DC.');
   if (dcNames.length !== rawDcNames.map(value => csiNormalizeDcName_(value)).filter(Boolean).length) throw new Error('Nama DC duplikat atau tidak valid.');
-  if (dcNames.some(name => !/^[A-F]\\d+[A-Z]?$/.test(name))) throw new Error('Nama DC tidak valid. Pilih DC dari daftar master data.');
-  if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(workDateText)) throw new Error('Tanggal pekerjaan tidak valid.');
+  if (dcNames.some(name => !/^[A-F]\d+[A-Z]?$/.test(name))) throw new Error('Nama DC tidak valid. Pilih DC dari daftar master data.');
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(workDateText)) throw new Error('Tanggal pekerjaan tidak valid.');
   const workDate = new Date(workDateText + 'T12:00:00');
   if (isNaN(workDate.getTime()) || Utilities.formatDate(workDate, Session.getScriptTimeZone(), 'yyyy-MM-dd') !== workDateText) throw new Error('Tanggal pekerjaan tidak valid.');
   const sides = frameSide === 'Both' ? ['A', 'B'] : [frameSide];
@@ -701,7 +701,7 @@ function csiRejectPriorityRequest_(payload,user) {
 function csiReschedulePriorityRequest_(payload,user) {
   const reason=String(payload.reason||'').trim().slice(0,1500), date=String(payload.scheduledDate||'').trim();
   if(!reason) throw new Error('Alasan penjadwalan ulang wajib diisi.');
-  if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(date)) throw new Error('Pilih tanggal penjadwalan ulang.');
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new Error('Pilih tanggal penjadwalan ulang.');
   return csiUpdatePriorityGroup_(payload.groupId,(row,now)=>{
     if(!['Menunggu CSI','Diterima'].includes(row[9])) throw new Error('Request tidak dapat dijadwalkan ulang pada status ini.');
     row[9]='Dijadwalkan Ulang'; row[19]=now; row[20]=user.username; row[21]=reason; row[22]=date;
