@@ -593,9 +593,10 @@ function csiListPriorityRequests_(user) {
   return rows.filter(row => role === 'ADMIN' || !['Selesai','Dibatalkan','Ditolak'].includes(String(row[9]))).reverse().map(csiPrioritySerialize_);
 }
 function csiUpdatePriorityGroup_(groupId, updater) {
-  const found = csiFindPriorityGroup_(groupId), now = new Date();
+  const now = new Date();
   const lock = LockService.getScriptLock(); lock.waitLock(15000);
   try {
+    const found = csiFindPriorityGroup_(groupId);
     // Validate and mutate all rows in memory first; do not leave a partially updated multi-DC group.
     found.rows.forEach(item => { updater(item.values, now); item.values[29] = now; });
     found.rows.forEach(item => found.sheet.getRange(item.row,1,1,CSI_PRIORITY_REQUEST_HEADERS.length).setValues([item.values]));
@@ -611,7 +612,6 @@ function csiAcceptPriorityRequest_(payload, user) {
   return csiUpdatePriorityGroup_(groupId,(row,now)=>{
     if (row[9] !== 'Menunggu CSI' && row[9] !== 'Dijadwalkan Ulang') throw new Error('Request tidak lagi menunggu penerimaan CSI.');
     row[8]=JSON.stringify(treatments); row[9]='Diterima'; row[12]=now; row[13]=user.username;
-    row[21]=''; row[22]='';
   });
 }
 function csiStartPriorityRequest_(payload,user) {
