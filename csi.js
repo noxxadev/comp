@@ -376,9 +376,33 @@
     $('editReportBtn').innerHTML = area.readOnly ? '<i class="fas fa-pen"></i> Edit' : '<i class="fas fa-check"></i> Selesai Edit';
     if (!area.readOnly) area.focus();
   });
-  $('sendReportBtn').addEventListener('click', () => {
-    const message = $('reportPreview').value.trim();
-    if (message) window.open('https://wa.me/?text=' + encodeURIComponent(message), '_blank', 'noopener,noreferrer');
+  $('sendReportBtn').addEventListener('click', async () => {
+    const button = $('sendReportBtn');
+    const reportText = $('reportPreview').value.trim();
+    const dateValue = $('printReportDate').value;
+    const personnel = parsePersonnelNames($('printPersonnel').value);
+    const teamName = $('printTeamName').value.trim();
+    if (!reportText) { showNotice('Isi report masih kosong.', 'error'); return; }
+    if (!teamName) { showNotice('Isi Nama TIM CSI sebelum mengirim report.', 'error'); $('printTeamName').focus(); return; }
+    if (!personnel.length || personnel.length > 4) { showNotice('Isi 1–4 nama personil sebelum mengirim report.', 'error'); $('printPersonnel').focus(); return; }
+    button.disabled = true;
+    const original = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan laporan...';
+    try {
+      const saved = await request('createDailyReport', {
+        workDate: dateValue, siteName: 'CWUP Karawang', siteAddress: 'Karawang',
+        teamName, picName: $('printPicName').value.trim(),
+        leaderName: $('printLeaderName').value.trim(), personnel, reportText
+      });
+      const reportUrl = new URL('csi-daily-reports.html', window.location.href);
+      reportUrl.searchParams.set('reportId', saved.report.reportId);
+      const message = reportText + '\\n\\nDaily Report tersimpan di sistem. Admin dapat membuka dan meninjau laporan melalui tautan berikut:\\n' + reportUrl.href;
+      window.open('https://wa.me/?text=' + encodeURIComponent(message), '_blank', 'noopener,noreferrer');
+      showNotice('Laporan tersimpan dengan ID ' + saved.report.reportId + '. WhatsApp dibuka untuk memilih penerima dan mengirim tautan ke Admin.', 'success');
+      closeWhatsappModal();
+    } catch (error) {
+      showNotice('Laporan belum tersimpan, WhatsApp tidak dibuka. ' + (error.message || ''), 'error');
+    } finally { button.disabled = false; button.innerHTML = original; }
   });
   $('closeWhatsappModalBtn').addEventListener('click', closeWhatsappModal);
   $('whatsappReportModal').addEventListener('click', event => {
