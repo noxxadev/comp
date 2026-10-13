@@ -1,3 +1,13 @@
+## 2026-10-14 — Request Prioritas Cleaning CSI
+- **Status:** IMPLEMENTED IN MAIN — DEPLOYMENT / LIVE VALIDATION PENDING.
+- Menambahkan halaman Admin `csi-priority-requests.html` untuk mengajukan request berisi DC (multi-DC), sisi Celldeck, jenis pekerjaan, alasan, prioritas Tinggi/Mendesak, dan tanggal harapan opsional. Treatment tidak wajib saat request dibuat.
+- Menambahkan card Request Prioritas di bagian atas `csi.html`. CSI harus menerima request dan menentukan treatment terlebih dahulu; request baru dapat dimulai setelah treatment disimpan. Semua DC dalam satu request menggunakan sisi, jenis pekerjaan, dan treatment yang sama.
+- Request disimpan terpisah pada tab `CSI Priority Requests`. Status request tidak menulis riwayat cleaning atau memengaruhi DC HighTemp. Setelah CSI menyimpan hasil aktual melalui formulir yang sudah ada, backend mengaitkan Record ID riwayat ke request dan menandai request sebagai `Selesai`.
+- Mendukung penolakan dan penjadwalan ulang oleh CSI dengan alasan, pembatalan oleh Admin sebelum pekerjaan dimulai, serta proses konfirmasi dua pihak jika pembatalan diminta setelah pekerjaan dimulai.
+- Endpoint backend memvalidasi sesi dan peran; halaman request ditautkan dari Tools Hub untuk Admin. File utama yang berubah: `csi-priority-requests.html`, `csi-priority-requests.js`, `csi-priority-requests.css`, `csi-priority-requests-csi.js`, `csi.html`, `csi.js`, `csi-apps-script/Code.gs`, `index.html`, dan `README.md`.
+- **Langkah deployment wajib:** salin versi terbaru `csi-apps-script/Code.gs` ke proyek Apps Script CSI, simpan dan deploy versi Web App terbaru. Jalankan `setupCsiSheets()` satu kali dari editor Apps Script untuk memastikan tab `CSI Priority Requests` tersedia. Tidak ada spreadsheet ID atau URL privat yang ditambahkan ke GitHub.
+- **Validasi live masih wajib:** uji login Admin/CSI, pembuatan multi-DC, treatment kosong saat request dibuat, penerimaan dan penentuan treatment, mulai dan simpan hasil aktual, request yang ditolak/dijadwalkan ulang, pembatalan sebelum dan setelah mulai, serta pastikan hanya hasil aktual yang mengubah riwayat dan ringkasan HighTemp.
+
 ### 2026-10-14 — IP Repeat Analyzer: default status Selesai
 - Dropdown Status pada Work Tracking memilih `Selesai` secara default saat halaman dibuka.
 - Status lain tetap tersedia dan pengguna dapat menggantinya; alur penyimpanan dan Google Apps Script tidak diubah.
