@@ -857,3 +857,22 @@ Validation required:
 - Informasi treatment dihapus dari kartu request prioritas di halaman CSI dan Admin, serta keterangan treatment dari form pembuatan request Admin dihapus.
 - Dialog penolakan, jadwal ulang, pembatalan, dan konfirmasi pembatalan menggunakan modal yang mengikuti tema Light/Dark, bukan popup bawaan browser.
 - Perubahan frontend dan backend sudah dicatat di source. **Deploy versi baru Web App CSI wajib dilakukan** karena `csi-apps-script/Code.gs` berubah. Uji browser tetap diperlukan untuk memastikan modal, auto-fill form, dan transisi status bekerja di deployment.
+
+
+## 2026-10-14 — CSI Priority Request: progres bertahap per DC dan sisi
+- Request prioritas sekarang dapat dicatat bertahap per sisi. Untuk request A+B, CSI dapat menyimpan sisi A terlebih dahulu; catatan aktual sisi A tetap masuk ke **CSI Work History**, sedangkan target sisi B tetap belum selesai.
+- Status target DC berubah menjadi **Pending** jika masih ada sisi yang belum dikerjakan. Kolom **Pending Reason** ditambahkan pada sheet **CSI Priority Requests** melalui migrasi header yang mempertahankan baris lama.
+- Detail request menampilkan progres tiap DC dan tiap sisi beserta alasan pending pada halaman CSI dan Admin. Request hanya menjadi **Selesai** setelah semua sisi yang diminta untuk DC terkait tercatat selesai.
+- Penyimpanan request tidak lagi mengharuskan semua DC dalam satu grup diselesaikan bersamaan; CSI dapat melanjutkan DC/sisi yang belum selesai. Riwayat record ID tetap ditautkan ke baris request.
+- Backend menolak penyimpanan manual untuk DC yang memiliki request aktif, menolak menyimpan sisi yang sama dua kali pada request, dan menolak pembuatan request aktif duplikat untuk DC yang sama. DC yang request-nya sudah selesai tidak terkunci.
+- Form CSI menonaktifkan pemilihan DC yang sedang terikat ke request aktif, kecuali DC pada request yang sedang diproses. Tombol **Lanjutkan** menyiapkan DC dan sisi yang masih belum selesai.
+- Aksi pembatalan grup tetap mempertahankan baris DC yang sudah selesai; pembatalan request yang sudah mulai bekerja memerlukan konfirmasi pihak lain seperti alur sebelumnya.
+- Migrasi schema dan source code sudah diterapkan di GitHub `main`. **Deploy versi baru Web App CSI wajib dilakukan** karena Apps Script backend berubah. Browser dan Google Sheets live test belum dilakukan; ikuti checklist validasi di bawah.
+
+Validasi setelah deploy:
+- Buat request B10 sisi A+B; terima dan mulai request.
+- Simpan sisi A saja; pastikan satu riwayat sisi A tersimpan, status DC menjadi Pending, dan alasan menyebut sisi B belum dikerjakan.
+- Klik **Lanjutkan B10**, pastikan form otomatis memilih sisi B; simpan sisi B dan pastikan status berubah menjadi Selesai tanpa menghapus riwayat sisi A.
+- Coba simpan B10 dari formulir manual saat request masih aktif; backend harus menolak dan memberi tahu bahwa pekerjaan wajib dicatat lewat request.
+- Buat request multi-DC dan selesaikan sebagian DC; pastikan progres per DC benar dan Admin melihat alasan pending untuk target yang belum lengkap.
+- Pastikan request lama dan tab Google Sheets lama tetap terbaca setelah header `Pending Reason` ditambahkan.
