@@ -1,3 +1,6 @@
+## 2026-10-13 — CSI personnel field sizing
+- Set Nama Personil textbox to the same initial height as adjacent print-form inputs (42px, one visible row); multiline/comma-separated parsing and optional vertical resize remain unchanged. Updated CSI asset cache-busters. Frontend-only; browser validation pending.
+
 ## 2026-10-13 — CSI: reset formulir dan penyederhanaan tampilan
 - **Status:** IMPLEMENTED — LIVE VALIDATION PENDING.
 - Setelah saveWork berhasil dikonfirmasi backend, formulir pekerjaan kembali ke default: Nama DC kosong, tanggal pekerjaan hari ini, sisi A, jenis Cleaning, semua Treatment tidak dicentang, dan Catatan kosong. Jika penyimpanan gagal, input tetap dipertahankan untuk koreksi. Form reset tetap dilakukan meskipun pemuatan ulang riwayat berikutnya gagal, karena penyimpanan sudah dikonfirmasi.
