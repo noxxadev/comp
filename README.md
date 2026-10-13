@@ -1,3 +1,12 @@
+## 2026-10-13 — CSI Daily Report: snapshot dan halaman Admin
+- **Status:** IMPLEMENTED IN MAIN — DEPLOYMENT / LIVE VALIDATION PENDING.
+- Menambahkan API backend Daily Report dan sheet baru `CSI Daily Reports`; sheet dibuat oleh fungsi `setupCsiSheets()` tanpa mengubah struktur `CSI Work History` atau `CSI Summary`.
+- CSI menyimpan snapshot laporan sebelum WhatsApp dibuka. Pesan WhatsApp menyertakan ID dan tautan ke halaman Admin untuk membuka laporan yang tersimpan.
+- Menambahkan halaman `csi-daily-reports.html` untuk Admin: daftar laporan, detail snapshot, minta revisi, setujui, dan cetak A4 portrait. API daftar/detail/review/cetak memvalidasi role ADMIN di backend.
+- Status awal `Menunggu Review`; status review `Perlu Revisi` atau `Disetujui`; status `Sudah Dicetak` dicatat setelah aksi cetak. Snapshot laporan tidak bergantung pada perubahan riwayat berikutnya.
+- **Langkah wajib sebelum pengujian:** perbarui deployment Web App proyek Apps Script CSI dari `csi-apps-script/Code.gs`; jalankan `setupCsiSheets()` sekali dari editor Apps Script untuk membuat tab baru; pastikan akun Admin memakai role persis `ADMIN`; hard refresh halaman.
+- **Validasi belum dilakukan di browser / Apps Script live.** Pastikan alur simpan snapshot, tautan WhatsApp, akses role, review, revisi, dan cetak bekerja sebelum dipakai operasional.
+
 ## 2026-10-13 — CSI personnel field sizing
 - Set Nama Personil textbox to the same initial height as adjacent print-form inputs (42px, one visible row); multiline/comma-separated parsing and optional vertical resize remain unchanged. Updated CSI asset cache-busters. Frontend-only; browser validation pending.
 
