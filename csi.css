@@ -80,3 +80,23 @@
 
 /* Keep personnel textbox aligned with adjacent single-line report fields; multiline entry remains supported. */
 .csi-print-form #printPersonnel{height:42px;min-height:42px;resize:vertical;line-height:18px}
+
+
+/* Compact multi-DC checklist dropdown */
+.csi-dc-picker-field{display:flex;flex-direction:column;gap:7px;min-width:0}
+.csi-field-label{display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:700;color:var(--text,var(--text-primary,#263247))}
+.csi-field-label span{font-size:10px;font-weight:600;color:var(--muted,#778195)}
+.csi-dc-picker{position:relative;min-width:0}
+.csi-dc-picker-trigger{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:42px;padding:11px 12px;border:1px solid var(--border,#dfe4ec);border-radius:9px;background:var(--surface-2,var(--surface,#fff));color:var(--text,var(--text-primary,#263247));font:inherit;font-size:13px;text-align:left;cursor:pointer}
+.csi-dc-picker-trigger span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.csi-dc-picker-trigger:focus,.csi-dc-picker-trigger[aria-expanded=true]{outline:none;border-color:var(--csi-accent);box-shadow:0 0 0 3px rgba(22,160,133,.12)}
+.csi-dc-picker-panel{position:absolute;top:calc(100% + 6px);left:0;right:0;z-index:30;display:flex;flex-direction:column;gap:10px;max-height:min(390px,65vh);padding:12px;border:1px solid var(--border,#dfe4ec);border-radius:12px;background:var(--surface,#fff);box-shadow:0 12px 32px rgba(20,35,55,.18)}
+.csi-dc-picker-panel[hidden]{display:none}
+.csi-dc-search{width:100%;box-sizing:border-box;padding:10px 11px;border:1px solid var(--border,#dfe4ec);border-radius:8px;background:var(--surface-2,var(--surface,#fff));color:var(--text,var(--text-primary,#263247));font:inherit;font-size:13px}
+.csi-dc-select-all,.csi-dc-option{display:flex;flex-direction:row!important;align-items:center;gap:9px!important;font-size:12px!important;font-weight:600!important;cursor:pointer}
+.csi-dc-select-all{padding:2px 0 9px;border-bottom:1px solid var(--border,#e8ebf0)}
+.csi-dc-select-all input,.csi-dc-option input{width:16px;height:16px;flex:0 0 16px;margin:0;accent-color:var(--csi-accent)}
+.csi-dc-checkbox-list{display:flex;flex-direction:column;gap:10px;overflow:auto;min-height:35px;padding:2px 2px 4px}
+.csi-dc-option[hidden]{display:none!important}
+.csi-dc-picker-footer{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-top:8px;border-top:1px solid var(--border,#e8ebf0);color:var(--muted,#778195);font-size:11px}
+.csi-dc-picker-footer button{padding:7px 11px}
