@@ -14,7 +14,7 @@ const CSI_HISTORY_SHEET = 'CSI Work History';
 const CSI_SUMMARY_SHEET = 'CSI Summary';
 const CSI_DAILY_REPORTS_SHEET = 'CSI Daily Reports';
 const CSI_PRIORITY_REQUESTS_SHEET = 'CSI Priority Requests';
-const CSI_PRIORITY_REQUEST_HEADERS = ['Request ID','Request Group ID','Created At','Nama DC','Frame Side','Job Type','Reason','Priority','Treatment JSON','Status','Created By User ID','Created By Username','Accepted At','Accepted By Username','Started At','Completed At','Rejected At','Rejected By Username','Reject Reason','Rescheduled At','Rescheduled By Username','Reschedule Reason','Scheduled Date','Cancel Requested At','Cancel Requested By Role','Cancel Reason','Cancel Confirmed At','Cancel Confirmed By Role','Linked History Record IDs','Updated At'];
+const CSI_PRIORITY_REQUEST_HEADERS = ['Request ID','Request Group ID','Created At','Nama DC','Frame Side','Job Type','Reason','Priority','Treatment JSON','Status','Created By User ID','Created By Username','Accepted At','Accepted By Username','Started At','Completed At','Rejected At','Rejected By Username','Reject Reason','Rescheduled At','Rescheduled By Username','Reschedule Reason','Scheduled Date','Cancel Requested At','Cancel Requested By Role','Cancel Reason','Cancel Confirmed At','Cancel Confirmed By Role','Linked History Record IDs','Updated At','Pending Reason'];
 
 const CSI_DAILY_REPORT_HEADERS = ['Report ID','Created At','Work Date','Site Name','Site Address','Team Name','Personnel JSON','PIC Name','Site Leader Name','Report Text','Status','Created By User ID','Created By Username','Reviewed At','Reviewed By Username','Review Note','Printed At','Print Report HTML'];
 
@@ -150,7 +150,7 @@ function setupCsiSheets() {
 }
 
 function csiSaveWork_(payload, user) {
-  // Accept both the new multi-DC payload and the legacy single-DC field.
+  // Accept both the multi-DC payload and the legacy single-DC field.
   const rawDcNames = Array.isArray(payload.dcNames) ? payload.dcNames : [payload.dcName];
   const dcNames = [...new Set(rawDcNames.map(value => csiNormalizeDcName_(value)).filter(Boolean))];
   const workDateText = String(payload.workDate || '').trim();
@@ -158,20 +158,16 @@ function csiSaveWork_(payload, user) {
   const jobType = String(payload.jobType || '').trim();
   const notes = String(payload.notes || '').trim().slice(0, 500);
   const allowedTreatments = [
-    'Pencopotan Frame',
-    'Pemasangan Frame',
-    'Penyemprotan Celldeck',
-    'Pembersihan Kisi-kisi',
-    'Perapihan/Penggantian Kain Flanel',
-    'Penggantian Celldeck',
-    'Perapihan pipa dan pengecekan saluran air'
+    'Pencopotan Frame', 'Pemasangan Frame', 'Penyemprotan Celldeck',
+    'Pembersihan Kisi-kisi', 'Perapihan/Penggantian Kain Flanel',
+    'Penggantian Celldeck', 'Perapihan pipa dan pengecekan saluran air'
   ];
   const requestedTreatments = Array.isArray(payload.treatments) ? payload.treatments.map(value => String(value || '').trim()) : [];
   const treatments = [...new Set(requestedTreatments)];
   if (!dcNames.length) throw new Error('Pilih minimal satu Nama DC.');
   if (dcNames.length !== rawDcNames.map(value => csiNormalizeDcName_(value)).filter(Boolean).length) throw new Error('Nama DC duplikat atau tidak valid.');
-  if (dcNames.some(name => !/^[A-F]\d+[A-Z]?$/.test(name))) throw new Error('Nama DC tidak valid. Pilih DC dari daftar master data.');
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(workDateText)) throw new Error('Tanggal pekerjaan tidak valid.');
+  if (dcNames.some(name => !/^[A-F]\\d+[A-Z]?$/.test(name))) throw new Error('Nama DC tidak valid. Pilih DC dari daftar master data.');
+  if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(workDateText)) throw new Error('Tanggal pekerjaan tidak valid.');
   const workDate = new Date(workDateText + 'T12:00:00');
   if (isNaN(workDate.getTime()) || Utilities.formatDate(workDate, Session.getScriptTimeZone(), 'yyyy-MM-dd') !== workDateText) throw new Error('Tanggal pekerjaan tidak valid.');
   const sides = frameSide === 'Both' ? ['A', 'B'] : [frameSide];
@@ -180,44 +176,69 @@ function csiSaveWork_(payload, user) {
   if (!treatments.length) throw new Error('Pilih minimal satu jenis treatment.');
   if (treatments.some(value => !allowedTreatments.includes(value))) throw new Error('Pilihan treatment tidak valid.');
   if (workDate.getTime() > new Date().getTime() + 86400000) throw new Error('Tanggal pekerjaan tidak boleh di masa depan.');
-  const treatmentsJson = JSON.stringify(treatments);
+
   const priorityGroupId = String(payload.priorityRequestGroupId || '').trim();
-  let priorityTargets = [];
-  if (priorityGroupId) {
-    const found = csiFindPriorityGroup_(priorityGroupId);
-    if (found.rows.length !== dcNames.length) throw new Error('Simpan seluruh DC dalam request yang sama agar statusnya tetap konsisten.');
-    priorityTargets = found.rows.filter(item => dcNames.includes(csiNormalizeDcName_(item.values[3])));
-    if (priorityTargets.length !== dcNames.length) throw new Error('DC yang dipilih tidak cocok dengan request prioritas.');
-    const sortedTreatments = [...treatments].sort().join('|');
-    priorityTargets.forEach(item => {
-      const row = item.values;
-      let requestTreatments = [];
-      try { requestTreatments = JSON.parse(String(row[8] || '[]')); } catch (_) {}
-      if (row[9] !== 'Sedang Dikerjakan') throw new Error('Request harus berstatus Sedang Dikerjakan sebelum hasil disimpan.');
-      if (String(row[4]) !== frameSide || String(row[5]) !== jobType) throw new Error('Sisi dan jenis pekerjaan harus sesuai request prioritas.');
-      if (requestTreatments.length && [...requestTreatments].sort().join('|') !== sortedTreatments) throw new Error('Treatment harus sama dengan yang ditetapkan pada request.');
-    });
-  }
   const lock = LockService.getScriptLock();
   lock.waitLock(15000);
   try {
-    const history = csiGetSheet_(CSI_HISTORY_SHEET, CSI_HISTORY_HEADERS);
-    const now = new Date();
-    if (priorityGroupId && priorityTargets.length) {
-      const prioritySheet = csiPrioritySheet_();
+    const prioritySheet = csiPrioritySheet_();
+    const priorityLast = prioritySheet.getLastRow();
+    const priorityRows = priorityLast > 1
+      ? prioritySheet.getRange(2, 1, priorityLast - 1, CSI_PRIORITY_REQUEST_HEADERS.length).getValues()
+      : [];
+    const terminalStatuses = ['Selesai', 'Dibatalkan', 'Ditolak'];
+    const activeRowsForDcs = priorityRows.map((row, index) => ({row, rowIndex:index + 2}))
+      .filter(item => dcNames.includes(csiNormalizeDcName_(item.row[3])) && !terminalStatuses.includes(String(item.row[9])));
+
+    if (!priorityGroupId && activeRowsForDcs.length) {
+      const dc = csiNormalizeDcName_(activeRowsForDcs[0].row[3]);
+      throw new Error('DC ' + dc + ' memiliki request prioritas aktif. Pekerjaan harus dicatat melalui request tersebut, bukan formulir manual.');
+    }
+
+    let priorityTargets = [];
+    const completedSidesByDc = new Map();
+    if (priorityGroupId) {
+      const groupRows = priorityRows.map((row, index) => ({row, rowIndex:index + 2}))
+        .filter(item => String(item.row[1]) === priorityGroupId);
+      if (!groupRows.length) throw new Error('Request tidak ditemukan.');
+      priorityTargets = groupRows.filter(item => dcNames.includes(csiNormalizeDcName_(item.row[3])));
+      if (priorityTargets.length !== dcNames.length) throw new Error('DC yang dipilih tidak cocok dengan request prioritas.');
+      if (priorityTargets.length !== dcNames.length) throw new Error('Pilih DC yang memang tercantum pada request prioritas.');
+      const otherActive = activeRowsForDcs.filter(item => String(item.row[1]) !== priorityGroupId);
+      if (otherActive.length) throw new Error('Salah satu DC memiliki request prioritas aktif lain. Selesaikan request yang sudah ada terlebih dahulu.');
+
+      const historySheet = csiGetSheet_(CSI_HISTORY_SHEET, CSI_HISTORY_HEADERS);
+      const historyLast = historySheet.getLastRow();
+      const historyRows = historyLast > 1 ? historySheet.getRange(2, 1, historyLast - 1, CSI_HISTORY_HEADERS.length).getValues() : [];
+      const historyById = new Map(historyRows.map(row => [String(row[0]), row]));
+      const sortedTreatments = [...treatments].sort().join('|');
       priorityTargets.forEach(item => {
-        const latest = prioritySheet.getRange(item.row, 1, 1, CSI_PRIORITY_REQUEST_HEADERS.length).getValues()[0];
-        if (latest[9] !== 'Sedang Dikerjakan') throw new Error('Request harus berstatus Sedang Dikerjakan sebelum hasil disimpan.');
+        const row = item.row;
+        let requestTreatments = [];
+        try { requestTreatments = JSON.parse(String(row[8] || '[]')); } catch (_) {}
+        if (!['Sedang Dikerjakan', 'Pending'].includes(String(row[9]))) throw new Error('Mulai request terlebih dahulu sebelum menyimpan hasil pekerjaan.');
+        if (String(row[5]) !== jobType) throw new Error('Jenis pekerjaan harus sesuai request prioritas.');
+        const requestedSides = String(row[4]) === 'Both' ? ['A', 'B'] : [String(row[4])];
+        if (!sides.every(side => requestedSides.includes(side))) throw new Error('Sisi yang dipilih tidak sesuai dengan sisi request.');
+        if (requestTreatments.length && [...requestTreatments].sort().join('|') !== sortedTreatments) throw new Error('Treatment harus sama dengan yang ditetapkan pada request.');
+        const linkedIds = String(row[28] || '').split(',').map(id => id.trim()).filter(Boolean);
+        const completed = new Set();
+        linkedIds.forEach(id => { const hist = historyById.get(id); if (hist && csiNormalizeDcName_(hist[3]) === csiNormalizeDcName_(row[3])) completed.add(String(hist[4])); });
+        if (String(row[9]) === 'Selesai') requestedSides.forEach(side => completed.add(side));
+        if (sides.some(side => completed.has(side))) throw new Error('Sisi yang dipilih sudah tercatat selesai untuk DC ' + csiNormalizeDcName_(row[3]) + '. Pilih sisi yang belum dikerjakan.');
+        completedSidesByDc.set(csiNormalizeDcName_(row[3]), completed);
       });
     }
+
+    const history = csiGetSheet_(CSI_HISTORY_SHEET, CSI_HISTORY_HEADERS);
+    const now = new Date();
     const rows = [];
     dcNames.forEach(dcName => sides.forEach(side => {
-      rows.push([Utilities.getUuid(), now, workDate, dcName, side, jobType, user.id, user.username, notes, treatmentsJson]);
+      rows.push([Utilities.getUuid(), now, workDate, dcName, side, jobType, user.id, user.username, notes, JSON.stringify(treatments)]);
     }));
-    // Write all selected DCs together so the history is saved in one batch.
     history.getRange(history.getLastRow() + 1, 1, rows.length, CSI_HISTORY_HEADERS.length).setValues(rows);
+
     if (priorityGroupId && priorityTargets.length) {
-      const prioritySheet = csiPrioritySheet_();
       const savedIdsByDc = new Map();
       rows.forEach(savedRow => {
         const dc = csiNormalizeDcName_(savedRow[3]);
@@ -225,16 +246,26 @@ function csiSaveWork_(payload, user) {
         savedIdsByDc.get(dc).push(String(savedRow[0]));
       });
       priorityTargets.forEach(item => {
-        const rowIndex = item.row;
-        const dc = csiNormalizeDcName_(item.values[3]);
-        const latest = prioritySheet.getRange(rowIndex, 1, 1, CSI_PRIORITY_REQUEST_HEADERS.length).getValues()[0];
-        latest[9] = 'Selesai';
-        latest[15] = now;
-        latest[28] = (savedIdsByDc.get(dc) || []).join(',');
-        latest[29] = now;
-        prioritySheet.getRange(rowIndex, 1, 1, CSI_PRIORITY_REQUEST_HEADERS.length).setValues([latest]);
+        const rowIndex = item.rowIndex;
+        const current = prioritySheet.getRange(rowIndex, 1, 1, CSI_PRIORITY_REQUEST_HEADERS.length).getValues()[0];
+        const dc = csiNormalizeDcName_(current[3]);
+        const requestedSides = String(current[4]) === 'Both' ? ['A', 'B'] : [String(current[4])];
+        const completed = new Set(completedSidesByDc.get(dc) || []);
+        sides.forEach(side => completed.add(side));
+        const allDone = requestedSides.every(side => completed.has(side));
+        const oldIds = String(current[28] || '').split(',').map(id => id.trim()).filter(Boolean);
+        const newIds = savedIdsByDc.get(dc) || [];
+        current[28] = [...new Set(oldIds.concat(newIds))].join(',');
+        current[9] = allDone ? 'Selesai' : 'Pending';
+        current[15] = allDone ? now : '';
+        current[30] = allDone ? '' : 'Sisi ' + requestedSides.filter(side => completed.has(side)).join(' dan Sisi ') +
+          ' selesai; sisi ' + requestedSides.filter(side => !completed.has(side)).join(' dan Sisi ') + ' belum dikerjakan.';
+        current[29] = now;
+        prioritySheet.getRange(rowIndex, 1, 1, CSI_PRIORITY_REQUEST_HEADERS.length).setValues([current]);
       });
+      SpreadsheetApp.flush();
     }
+
     const summaryPairs = new Set();
     dcNames.forEach(dcName => sides.forEach(side => summaryPairs.add(dcName + '|' + side)));
     summaryPairs.forEach(pair => {
@@ -507,6 +538,19 @@ function csiEnsureSheet_(spreadsheet, sheetName, headers) {
     return sheet;
   }
 
+  // CSI Priority Requests v1 -> v2: append a readable reason for partial completion.
+  const legacyPriorityHeaders = ['Request ID','Request Group ID','Created At','Nama DC','Frame Side','Job Type','Reason','Priority','Treatment JSON','Status','Created By User ID','Created By Username','Accepted At','Accepted By Username','Started At','Completed At','Rejected At','Rejected By Username','Reject Reason','Rescheduled At','Rescheduled By Username','Reschedule Reason','Scheduled Date','Cancel Requested At','Cancel Requested By Role','Cancel Reason','Cancel Confirmed At','Cancel Confirmed By Role','Linked History Record IDs','Updated At'];
+  const isLegacyPriority = sheetName === CSI_PRIORITY_REQUESTS_SHEET &&
+    firstRow.length === legacyPriorityHeaders.length &&
+    legacyPriorityHeaders.every((header, index) => firstRow[index] === header) &&
+    headers.length === legacyPriorityHeaders.length + 1 &&
+    headers[headers.length - 1] === 'Pending Reason';
+  if (isLegacyPriority) {
+    sheet.getRange(1, headers.length).setValue('Pending Reason');
+    sheet.setFrozenRows(1);
+    return sheet;
+  }
+
   const matches = firstRow.length === headers.length &&
     headers.every((header, index) => firstRow[index] === header);
   if (!matches) {
@@ -534,10 +578,19 @@ function csiPriorityRows_() {
   const last = sheet.getLastRow();
   return last > 1 ? sheet.getRange(2, 1, last - 1, CSI_PRIORITY_REQUEST_HEADERS.length).getValues() : [];
 }
-function csiPrioritySerialize_(row) {
+function csiPrioritySerialize_(row, historySideMap) {
   const value = (i) => row[i] instanceof Date ? row[i].toISOString() : String(row[i] == null ? '' : row[i]);
   let treatments = [];
   try { treatments = JSON.parse(value(8) || '[]'); } catch (_) {}
+  const requestedSides = value(4) === 'Both' ? ['A','B'] : [value(4)];
+  const completedSides = new Set();
+  String(value(28) || '').split(',').map(id => id.trim()).filter(Boolean).forEach(id => {
+    const entry = historySideMap && historySideMap.get(id);
+    if (entry && csiNormalizeDcName_(entry.dcName) === csiNormalizeDcName_(value(3))) completedSides.add(entry.side);
+  });
+  if (value(9) === 'Selesai') requestedSides.forEach(side => completedSides.add(side));
+  const done = requestedSides.filter(side => completedSides.has(side));
+  const remaining = requestedSides.filter(side => !completedSides.has(side));
   return {
     requestId:value(0), groupId:value(1), createdAt:value(2), dcName:value(3), frameSide:value(4),
     jobType:value(5), reason:value(6), priority:value(7), treatments,
@@ -546,8 +599,15 @@ function csiPrioritySerialize_(row) {
     rejectReason:value(18), rescheduledAt:value(19), rescheduledByUsername:value(20),
     rescheduleReason:value(21), scheduledDate:value(22), cancelRequestedAt:value(23),
     cancelRequestedByRole:value(24), cancelReason:value(25), cancelConfirmedAt:value(26),
-    cancelConfirmedByRole:value(27), linkedHistoryRecordIds:value(28), updatedAt:value(29)
+    cancelConfirmedByRole:value(27), linkedHistoryRecordIds:value(28), updatedAt:value(29),
+    pendingReason:value(30), completedSides:done, remainingSides:remaining
   };
+}
+function csiHistorySideMap_() {
+  const sheet = csiGetSheet_(CSI_HISTORY_SHEET, CSI_HISTORY_HEADERS);
+  const last = sheet.getLastRow();
+  const rows = last > 1 ? sheet.getRange(2,1,last-1,CSI_HISTORY_HEADERS.length).getValues() : [];
+  return new Map(rows.map(row => [String(row[0]), {dcName:String(row[3] || ''), side:String(row[4] || '')}]));
 }
 function csiFindPriorityGroup_(groupId) {
   const id = String(groupId || '').trim();
@@ -561,7 +621,8 @@ function csiFindPriorityGroup_(groupId) {
   return {sheet,rows};
 }
 function csiGroupResponse_(groupId) {
-  return csiPriorityRows_().filter(row => String(row[1]) === String(groupId)).map(csiPrioritySerialize_);
+  const sideMap = csiHistorySideMap_();
+  return csiPriorityRows_().filter(row => String(row[1]) === String(groupId)).map(row => csiPrioritySerialize_(row, sideMap));
 }
 function csiCreatePriorityRequest_(payload, user) {
   const raw = Array.isArray(payload.dcNames) ? payload.dcNames : [];
@@ -580,7 +641,7 @@ function csiCreatePriorityRequest_(payload, user) {
   if (scheduled && !/^\d{4}-\d{2}-\d{2}$/.test(scheduled)) throw new Error('Tanggal rencana tidak valid.');
   const groupId = Utilities.getUuid(), now = new Date();
   const sheet = csiPrioritySheet_();
-  const rows = dcs.map(dc => [Utilities.getUuid(),groupId,now,dc,side,job,reason,priority,'[]','Menunggu CSI',user.id,user.username,'','','','','','','','','','',scheduled,'','','','','','',now]);
+  const rows = dcs.map(dc => [Utilities.getUuid(),groupId,now,dc,side,job,reason,priority,'[]','Menunggu CSI',user.id,user.username,'','','','','','','','','','',scheduled,'','','','','','',now,'']);
   const lock = LockService.getScriptLock(); lock.waitLock(15000);
   try { sheet.getRange(sheet.getLastRow()+1,1,rows.length,CSI_PRIORITY_REQUEST_HEADERS.length).setValues(rows); SpreadsheetApp.flush(); }
   finally { lock.releaseLock(); }
@@ -590,7 +651,8 @@ function csiListPriorityRequests_(user) {
   const rows = csiPriorityRows_();
   const role = String(user.role || '').toUpperCase();
   if (!['ADMIN','CSI'].includes(role)) throw new Error('Akses ditolak. Request hanya tersedia untuk Admin dan CSI.');
-  return rows.filter(row => role === 'ADMIN' || !['Selesai','Dibatalkan','Ditolak'].includes(String(row[9]))).reverse().map(csiPrioritySerialize_);
+  const sideMap = csiHistorySideMap_();
+  return rows.filter(row => role === 'ADMIN' || !['Selesai','Dibatalkan','Ditolak'].includes(String(row[9]))).reverse().map(row => csiPrioritySerialize_(row, sideMap));
 }
 function csiUpdatePriorityGroup_(groupId, updater) {
   const now = new Date();
