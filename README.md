@@ -836,3 +836,10 @@ Validation required:
 - Layout grid halaman `csi-daily-reports.html` diberi `align-content: start` agar baris grid tidak meregang untuk mengisi tinggi viewport dan menciptakan ruang kosong besar di sekitar notifikasi serta daftar laporan.
 - Perubahan hanya menyentuh tata letak; alur pemuatan, pembukaan, review, persetujuan, dan pencetakan laporan tidak diubah.
 - Source diverifikasi setelah commit; pemeriksaan tampilan langsung di browser masih perlu dilakukan.
+
+
+## 2026-10-14 — Perbaikan validasi Nama DC Request Prioritas CSI
+- Memperbaiki regex validasi Nama DC pada backend `csi-apps-script/Code.gs` agar digit setelah huruf zona A–F dibaca sebagai digit, bukan karakter `\\d` literal.
+- Memperbaiki regex tanggal rencana di fungsi yang sama agar format `YYYY-MM-DD` divalidasi dengan benar.
+- Perubahan terbatas pada validasi request prioritas; penyimpanan, status request, dan alur pekerjaan tidak diubah.
+- Setelah perubahan backend, deploy versi baru Web App CSI agar perbaikan aktif. Source GitHub diverifikasi; pengiriman request aktual tetap perlu diuji setelah deploy.
