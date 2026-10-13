@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="id" data-auth-page="protected">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Request Prioritas Cleaning CSI</title>
+<link rel="icon" href="/favicon.ico" type="image/x-icon">
+<link rel="stylesheet" href="index-hub.css"><link rel="stylesheet" href="theme-toggle.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<script src="theme-toggle.js"></script><script src="google-sheets-config.js"></script><script src="auth.js"></script><script src="page-guard.js"></script><script src="master-data.js"></script><script src="csi-google-sheets-config.js?v=20261014-priority1"></script>
+<link rel="stylesheet" href="csi.css?v=20261014-priority1"><link rel="stylesheet" href="csi-priority-requests.css?v=20261014-priority1">
+</head>
+<body><div class="hub-shell">
+<div class="hub-sidebar-overlay" id="sidebarOverlay" aria-hidden="true"></div>
+<aside class="hub-sidebar" id="sidebar"><div class="hub-logo"><div class="hub-mark">CP</div><div><div class="hub-brand">COMP Tools</div><div class="hub-subbrand">Data & comparison suite</div></div></div>
+<nav class="hub-nav" aria-label="Navigasi"><a href="index.html"><i class="fas fa-house"></i><span>Tools Hub</span></a><a href="csi-daily-reports.html"><i class="fas fa-file-lines"></i><span>Daily Report CSI</span></a><a class="active" href="csi-priority-requests.html"><i class="fas fa-bell"></i><span>Request Prioritas CSI</span></a></nav></aside>
+<main class="hub-main csi-main"><header class="csi-page-head"><button id="menuToggle" class="hub-menu-toggle" type="button" aria-label="Buka navigasi" aria-controls="sidebar" aria-expanded="false"><i class="fas fa-bars"></i></button><div><p class="csi-eyebrow">CELDECK SERVICE & IMPROVEMENT</p><h1>Request Prioritas Cleaning</h1><p class="csi-subtitle">Ajukan dan pantau permintaan pekerjaan prioritas untuk tim CSI.</p></div><span class="csi-role-chip"><i class="fas fa-shield-halved"></i> ADMIN</span></header>
+<div id="priorityNotice" class="csi-notice" role="status" aria-live="polite" hidden></div>
+<section class="csi-card"><div class="csi-card-head"><div><span class="csi-section-tag">REQUEST BARU</span><h2>Buat Request Prioritas</h2></div><i class="fas fa-bell csi-card-icon"></i></div>
+<form id="priorityRequestForm" class="csi-form priority-form">
+<div class="csi-dc-picker-field"><span class="csi-field-label">Nama DC <span>* pilih satu atau beberapa DC</span></span><div class="csi-dc-picker"><button class="csi-dc-picker-trigger" id="requestDcTrigger" type="button" aria-expanded="false"><span id="requestDcSummary">Memuat daftar DC...</span><i class="fas fa-chevron-down"></i></button><div id="requestDcPanel" class="csi-dc-picker-panel" hidden><input id="requestDcSearch" class="csi-dc-search" type="search" placeholder="Cari nama DC..." aria-label="Cari Nama DC"><label class="csi-dc-select-all"><input id="requestDcAll" type="checkbox"><span>Pilih semua DC yang terlihat</span></label><div id="requestDcList" class="csi-dc-checkbox-list"></div><div class="csi-dc-picker-footer"><span id="requestDcCount">0 DC dipilih</span><button id="requestDcDone" class="csi-secondary-btn" type="button">Selesai</button></div></div></div></div>
+<label>Sisi Celldeck<select id="requestSide" required><option value="A">Sisi A</option><option value="B">Sisi B</option><option value="Both">Kedua sisi (A + B)</option></select></label>
+<label>Jenis Pekerjaan<select id="requestJob" required><option value="Cleaning">Cleaning</option><option value="Replace">Replace</option></select></label>
+<label>Prioritas<select id="requestPriority" required><option value="Tinggi">Tinggi</option><option value="Mendesak">Mendesak</option></select></label>
+<label>Tanggal yang diharapkan (opsional)<input id="requestDate" type="date"></label>
+<label class="priority-reason">Alasan Request<textarea id="requestReason" maxlength="1500" rows="3" placeholder="Jelaskan kondisi dan alasan pekerjaan perlu diprioritaskan..." required></textarea></label>
+<p class="csi-help priority-note">Treatment belum perlu ditentukan di sini. CSI akan memilih treatment saat meninjau dan menerima request. Semua DC dalam satu request harus menggunakan treatment yang sama.</p>
+<div class="csi-form-actions"><button id="createPriorityBtn" class="csi-primary-btn" type="submit"><i class="fas fa-paper-plane"></i> Kirim Request</button></div>
+</form></section>
+<section class="csi-card"><div class="csi-card-head"><div><span class="csi-section-tag">MONITORING</span><h2>Daftar Request</h2></div><button id="refreshPriorityBtn" class="csi-secondary-btn" type="button"><i class="fas fa-rotate"></i> Refresh</button></div><div id="priorityRequestList" class="priority-request-list"><p class="csi-empty">Memuat request...</p></div></section>
+<footer class="csi-footer">COMP Tools · CSI Priority Requests</footer></main></div>
+<script src="csi-priority-requests.js?v=20261014-priority1"></script></body></html>
