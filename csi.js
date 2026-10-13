@@ -61,10 +61,46 @@
   function populateDcOptions() {
     const list = dcList();
     if (!list.length) throw new Error('Nama DC tidak ditemukan dari master-data.js.');
-    const options = list.map(dc => '<option value="' + escapeHtml(dc) + '">' + escapeHtml(dc) + '</option>').join('');
-    $('dcName').innerHTML = '<option value="">Pilih Nama DC</option>' + options;
-    $('filterDc').innerHTML = '<option value="">Semua DC</option>' + options;
+    $('dcCheckboxList').innerHTML = list.map(dc => '<label class="csi-dc-option" data-dc-search="' + escapeHtml(dc.toLocaleLowerCase('id-ID')) + '"><input type="checkbox" name="dcNames" value="' + escapeHtml(dc) + '"><span>' + escapeHtml(dc) + '</span></label>').join('');
+    $('filterDc').innerHTML = '<option value="">Semua DC</option>' + list.map(dc => '<option value="' + escapeHtml(dc) + '">' + escapeHtml(dc) + '</option>').join('');
+    updateDcPicker();
   }
+  function selectedDcs() {
+    return [...$('dcCheckboxList').querySelectorAll('input[name="dcNames"]:checked')].map(input => input.value);
+  }
+  function updateDcPicker() {
+    const checks = [...$('dcCheckboxList').querySelectorAll('input[name="dcNames"]')];
+    const selected = checks.filter(input => input.checked);
+    $('dcPickerCount').textContent = selected.length + ' DC dipilih';
+    $('dcPickerSummary').textContent = selected.length
+      ? selected.length <= 3 ? selected.map(input => input.value).join(', ') : selected.length + ' DC dipilih'
+      : 'Pilih Nama DC';
+    $('dcSelectAll').checked = checks.length > 0 && selected.length === checks.length;
+    $('dcSelectAll').indeterminate = selected.length > 0 && selected.length < checks.length;
+    $('dcPickerTrigger').setAttribute('aria-expanded', String(!$('dcPickerPanel').hidden));
+  }
+  function setDcPickerOpen(open) {
+    $('dcPickerPanel').hidden = !open;
+    $('dcPickerTrigger').setAttribute('aria-expanded', String(open));
+    if (open) $('dcSearch').focus();
+  }
+  $('dcPickerTrigger').addEventListener('click', () => setDcPickerOpen($('dcPickerPanel').hidden));
+  $('dcPickerDone').addEventListener('click', () => setDcPickerOpen(false));
+  $('dcCheckboxList').addEventListener('change', updateDcPicker);
+  $('dcSelectAll').addEventListener('change', () => {
+    $('dcCheckboxList').querySelectorAll('input[name="dcNames"]').forEach(input => {
+      const option = input.closest('.csi-dc-option');
+      if (!option.hidden) input.checked = $('dcSelectAll').checked;
+    });
+    updateDcPicker();
+  });
+  $('dcSearch').addEventListener('input', () => {
+    const query = $('dcSearch').value.trim().toLocaleLowerCase('id-ID');
+    $('dcCheckboxList').querySelectorAll('.csi-dc-option').forEach(option => {
+      option.hidden = !option.dataset.dcSearch.includes(query);
+    });
+  });
+
   function asDate(value) {
     if (!value) return null;
     const date = new Date(value);
@@ -315,13 +351,20 @@
     showNotice('', '');
     let savedCount = 0;
     try {
+      const dcNames = selectedDcs();
+      if (!dcNames.length) throw new Error('Pilih minimal satu Nama DC.');
       const result = await request('saveWork', {
-        dcName: $('dcName').value, workDate: $('workDate').value,
+        dcNames, workDate: $('workDate').value,
         frameSide: $('frameSide').value, jobType: $('jobType').value,
         notes: $('notes').value.trim(), treatments: selectedTreatments()
       });
       savedCount = Number(result.saved) || 0;
       form.reset();
+      $('dcCheckboxList').querySelectorAll('input[name="dcNames"]').forEach(input => { input.checked = false; });
+      $('dcSearch').value = '';
+      $('dcCheckboxList').querySelectorAll('.csi-dc-option').forEach(option => { option.hidden = false; });
+      updateDcPicker();
+      setDcPickerOpen(false);
       $('workDate').value = localDateValue();
     } catch (error) {
       showNotice(error.message || 'Gagal menyimpan pekerjaan.', 'error');
