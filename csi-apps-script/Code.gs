@@ -13,7 +13,7 @@
 const CSI_HISTORY_SHEET = 'CSI Work History';
 const CSI_SUMMARY_SHEET = 'CSI Summary';
 const CSI_DAILY_REPORTS_SHEET = 'CSI Daily Reports';
-const CSI_DAILY_REPORT_HEADERS = ['Report ID','Created At','Work Date','Site Name','Site Address','Team Name','Personnel JSON','PIC Name','Site Leader Name','Report Text','Status','Created By User ID','Created By Username','Reviewed At','Reviewed By Username','Review Note','Printed At'];
+const CSI_DAILY_REPORT_HEADERS = ['Report ID','Created At','Work Date','Site Name','Site Address','Team Name','Personnel JSON','PIC Name','Site Leader Name','Report Text','Status','Created By User ID','Created By Username','Reviewed At','Reviewed By Username','Review Note','Printed At','Print Report HTML'];
 
 const CSI_HISTORY_HEADERS = [
   'Record ID',
@@ -251,14 +251,16 @@ function csiCreateDailyReport_(payload, user) {
   const siteName = String(payload.siteName || 'CWUP Karawang').trim().slice(0, 120);
   const siteAddress = String(payload.siteAddress || 'Karawang').trim().slice(0, 200);
   const reportText = String(payload.reportText || '').trim().slice(0, 20000);
+  const printReportHtml = String(payload.printReportHtml || '').trim().slice(0, 60000);
   const personnel = Array.isArray(payload.personnel) ? payload.personnel.map(v => String(v || '').trim()).filter(Boolean).slice(0, 4) : [];
   if (!/^\d{4}-\d{2}-\d{2}$/.test(workDate)) throw new Error('Tanggal laporan tidak valid.');
   if (!teamName) throw new Error('Nama TIM CSI wajib diisi.');
   if (!personnel.length) throw new Error('Nama personil wajib diisi.');
   if (!reportText) throw new Error('Isi laporan kosong.');
+  if (!printReportHtml || !/^<!doctype html>/i.test(printReportHtml)) throw new Error('Snapshot template cetak berlogo tidak tersedia. Buat ulang report dari halaman CSI.');
   const id = Utilities.getUuid();
   const sheet = csiGetSheet_(CSI_DAILY_REPORTS_SHEET, CSI_DAILY_REPORT_HEADERS);
-  sheet.appendRow([id, new Date(), workDate, siteName, siteAddress, teamName, JSON.stringify(personnel), picName, leaderName, reportText, 'Menunggu Review', user.id, user.username, '', '', '', '']);
+  sheet.appendRow([id, new Date(), workDate, siteName, siteAddress, teamName, JSON.stringify(personnel), picName, leaderName, reportText, 'Menunggu Review', user.id, user.username, '', '', '', '', printReportHtml]);
   SpreadsheetApp.flush();
   return csiSerializeDailyReport_(sheet.getRange(sheet.getLastRow(), 1, 1, CSI_DAILY_REPORT_HEADERS.length).getValues()[0]);
 }
@@ -319,7 +321,8 @@ function csiSerializeDailyReport_(row) {
     status: String(row[10] || ''), createdByUserId: String(row[11] || ''), createdByUsername: String(row[12] || ''),
     reviewedAt: row[13] instanceof Date ? row[13].toISOString() : String(row[13] || ''),
     reviewedByUsername: String(row[14] || ''), reviewNote: String(row[15] || ''),
-    printedAt: row[16] instanceof Date ? row[16].toISOString() : String(row[16] || '')
+    printedAt: row[16] instanceof Date ? row[16].toISOString() : String(row[16] || ''),
+    printReportHtml: String(row[17] || '')
   };
 }
 
@@ -395,6 +398,19 @@ function csiEnsureSheet_(spreadsheet, sheetName, headers) {
     headers[headers.length - 1] === 'Treatments';
   if (isLegacyHistory) {
     sheet.getRange(1, headers.length).setValue('Treatments');
+    sheet.setFrozenRows(1);
+    return sheet;
+  }
+
+  // CSI Daily Reports v1 -> v2: append the branded print snapshot without changing existing rows.
+  const legacyDailyReportHeaders = ['Report ID','Created At','Work Date','Site Name','Site Address','Team Name','Personnel JSON','PIC Name','Site Leader Name','Report Text','Status','Created By User ID','Created By Username','Reviewed At','Reviewed By Username','Review Note','Printed At'];
+  const isLegacyDailyReports = sheetName === CSI_DAILY_REPORTS_SHEET &&
+    firstRow.length === legacyDailyReportHeaders.length &&
+    legacyDailyReportHeaders.every((header, index) => firstRow[index] === header) &&
+    headers.length === legacyDailyReportHeaders.length + 1 &&
+    headers[headers.length - 1] === 'Print Report HTML';
+  if (isLegacyDailyReports) {
+    sheet.getRange(1, headers.length).setValue('Print Report HTML');
     sheet.setFrozenRows(1);
     return sheet;
   }
