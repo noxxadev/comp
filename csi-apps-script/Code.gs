@@ -572,12 +572,12 @@ function csiCreatePriorityRequest_(payload, user) {
   const priority = String(payload.priority || '').trim();
   const scheduled = String(payload.scheduledDate || '').trim();
   if (!dcs.length || dcs.length !== raw.map(csiNormalizeDcName_).filter(Boolean).length) throw new Error('Pilih Nama DC unik yang valid.');
-  if (dcs.some(dc => !/^[A-F]\\d+[A-Z]?$/.test(dc))) throw new Error('Nama DC tidak valid.');
+  if (dcs.some(dc => !/^[A-F]\d+[A-Z]?$/.test(dc))) throw new Error('Nama DC tidak valid.');
   if (!['A','B','Both'].includes(side)) throw new Error('Sisi Celldeck harus A, B, atau A+B.');
   if (!['Cleaning','Replace'].includes(job)) throw new Error('Jenis pekerjaan tidak valid.');
   if (!reason) throw new Error('Alasan request wajib diisi.');
   if (!['Tinggi','Mendesak'].includes(priority)) throw new Error('Prioritas harus Tinggi atau Mendesak.');
-  if (scheduled && !/^\\d{4}-\\d{2}-\\d{2}$/.test(scheduled)) throw new Error('Tanggal rencana tidak valid.');
+  if (scheduled && !/^\d{4}-\d{2}-\d{2}$/.test(scheduled)) throw new Error('Tanggal rencana tidak valid.');
   const groupId = Utilities.getUuid(), now = new Date();
   const sheet = csiPrioritySheet_();
   const rows = dcs.map(dc => [Utilities.getUuid(),groupId,now,dc,side,job,reason,priority,'[]','Menunggu CSI',user.id,user.username,'','','','','','','','','','',scheduled,'','','','','','',now]);
