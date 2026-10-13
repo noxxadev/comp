@@ -830,3 +830,9 @@ Validation required:
 - Tombol menuju Request Prioritas CSI dipindahkan ke baris judul `Daftar Laporan`, sehingga header tidak perlu menampung tombol lebar dan ruangnya lebih seimbang.
 - Pada layar kecil, header dan tombol daftar laporan tetap menyesuaikan lebar layar.
 - Perubahan hanya pada tampilan; alur memuat laporan, review, persetujuan, dan pencetakan tidak diubah. Pemeriksaan source dilakukan; validasi visual langsung di browser masih diperlukan.
+
+
+## 2026-10-14 — Perbaikan ruang kosong Daily Report CSI
+- Layout grid halaman `csi-daily-reports.html` diberi `align-content: start` agar baris grid tidak meregang untuk mengisi tinggi viewport dan menciptakan ruang kosong besar di sekitar notifikasi serta daftar laporan.
+- Perubahan hanya menyentuh tata letak; alur pemuatan, pembukaan, review, persetujuan, dan pencetakan laporan tidak diubah.
+- Source diverifikasi setelah commit; pemeriksaan tampilan langsung di browser masih perlu dilakukan.
