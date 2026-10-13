@@ -388,14 +388,19 @@
     const original = button.innerHTML;
     button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan laporan...';
     try {
+      const siteName = 'CWUP Karawang';
+      const siteAddress = 'Karawang';
+      const picName = $('printPicName').value.trim();
+      const leaderName = $('printLeaderName').value.trim();
+      const printReportHtml = buildPrintableReport(dateValue, siteName, siteAddress, personnel, teamName, picName, leaderName);
+      if (!printReportHtml) throw new Error('Template laporan berlogo tidak dapat dibuat karena tidak ada pekerjaan pada tanggal tersebut.');
       const saved = await request('createDailyReport', {
-        workDate: dateValue, siteName: 'CWUP Karawang', siteAddress: 'Karawang',
-        teamName, picName: $('printPicName').value.trim(),
-        leaderName: $('printLeaderName').value.trim(), personnel, reportText
+        workDate: dateValue, siteName, siteAddress,
+        teamName, picName, leaderName, personnel, reportText, printReportHtml
       });
       const reportUrl = new URL('csi-daily-reports.html', window.location.href);
       reportUrl.searchParams.set('reportId', saved.report.reportId);
-      const message = reportText + '\\n\\nDaily Report tersimpan di sistem. Admin dapat membuka dan meninjau laporan melalui tautan berikut:\\n' + reportUrl.href;
+      const message = reportText + '\n\nDaily Report tersimpan di sistem. Admin dapat membuka dan meninjau laporan melalui tautan berikut:\n' + reportUrl.href;
       window.open('https://wa.me/?text=' + encodeURIComponent(message), '_blank', 'noopener,noreferrer');
       showNotice('Laporan tersimpan dengan ID ' + saved.report.reportId + '. WhatsApp dibuka untuk memilih penerima dan mengirim tautan ke Admin.', 'success');
       closeWhatsappModal();
