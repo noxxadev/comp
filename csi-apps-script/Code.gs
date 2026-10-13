@@ -202,6 +202,13 @@ function csiSaveWork_(payload, user) {
   try {
     const history = csiGetSheet_(CSI_HISTORY_SHEET, CSI_HISTORY_HEADERS);
     const now = new Date();
+    if (priorityGroupId && priorityTargets.length) {
+      const prioritySheet = csiPrioritySheet_();
+      priorityTargets.forEach(item => {
+        const latest = prioritySheet.getRange(item.row, 1, 1, CSI_PRIORITY_REQUEST_HEADERS.length).getValues()[0];
+        if (latest[9] !== 'Sedang Dikerjakan') throw new Error('Request harus berstatus Sedang Dikerjakan sebelum hasil disimpan.');
+      });
+    }
     const rows = [];
     dcNames.forEach(dcName => sides.forEach(side => {
       rows.push([Utilities.getUuid(), now, workDate, dcName, side, jobType, user.id, user.username, notes, treatmentsJson]);
@@ -220,7 +227,6 @@ function csiSaveWork_(payload, user) {
         const rowIndex = item.row;
         const dc = csiNormalizeDcName_(item.values[3]);
         const latest = prioritySheet.getRange(rowIndex, 1, 1, CSI_PRIORITY_REQUEST_HEADERS.length).getValues()[0];
-        if (latest[9] !== 'Sedang Dikerjakan') throw new Error('Status request berubah saat penyimpanan.');
         latest[9] = 'Selesai';
         latest[15] = now;
         latest[28] = (savedIdsByDc.get(dc) || []).join(',');
@@ -582,18 +588,16 @@ function csiCreatePriorityRequest_(payload, user) {
 function csiListPriorityRequests_(user) {
   const rows = csiPriorityRows_();
   const role = String(user.role || '').toUpperCase();
+  if (!['ADMIN','CSI'].includes(role)) throw new Error('Akses ditolak. Request hanya tersedia untuk Admin dan CSI.');
   return rows.filter(row => role === 'ADMIN' || !['Selesai','Dibatalkan','Ditolak'].includes(String(row[9]))).reverse().map(csiPrioritySerialize_);
 }
 function csiUpdatePriorityGroup_(groupId, updater) {
   const found = csiFindPriorityGroup_(groupId), now = new Date();
   const lock = LockService.getScriptLock(); lock.waitLock(15000);
   try {
-    found.rows.forEach(item => {
-      const row = item.values;
-      updater(row, now);
-      row[29] = now;
-      found.sheet.getRange(item.row,1,1,CSI_PRIORITY_REQUEST_HEADERS.length).setValues([row]);
-    });
+    // Validate and mutate all rows in memory first; do not leave a partially updated multi-DC group.
+    found.rows.forEach(item => { updater(item.values, now); item.values[29] = now; });
+    found.rows.forEach(item => found.sheet.getRange(item.row,1,1,CSI_PRIORITY_REQUEST_HEADERS.length).setValues([item.values]));
     SpreadsheetApp.flush();
   } finally { lock.releaseLock(); }
   return csiGroupResponse_(groupId);
@@ -635,6 +639,8 @@ function csiReschedulePriorityRequest_(payload,user) {
   });
 }
 function csiCancelPriorityRequest_(payload,user) {
+  const role = String(user.role || '').toUpperCase();
+  if (!['ADMIN','CSI'].includes(role)) throw new Error('Akses ditolak.');
   const reason=String(payload.reason||'').trim().slice(0,1500);
   if(!reason) throw new Error('Alasan pembatalan wajib diisi.');
   return csiUpdatePriorityGroup_(payload.groupId,(row,now)=>{
@@ -650,6 +656,7 @@ function csiCancelPriorityRequest_(payload,user) {
 function csiRespondCancelPriorityRequest_(payload,user) {
   const confirm = payload.confirm === true;
   const role = String(user.role||'').toUpperCase();
+  if (!['ADMIN','CSI'].includes(role)) throw new Error('Akses ditolak.');
   return csiUpdatePriorityGroup_(payload.groupId,(row,now)=>{
     if(row[9] !== 'Menunggu Konfirmasi Pembatalan') throw new Error('Tidak ada pembatalan yang menunggu konfirmasi.');
     if(role === String(row[24]).toUpperCase()) throw new Error('Konfirmasi harus dilakukan oleh pihak yang berbeda.');
