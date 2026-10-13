@@ -1,3 +1,13 @@
+## 2026-10-14 — Indikator proses Daily Report CSI/Admin
+- **Status:** IMPLEMENTED IN MAIN — DEPLOYMENT / LIVE VALIDATION PENDING.
+- Tombol **Buat Report WhatsApp** menonaktifkan klik berulang dan menampilkan spinner serta teks **Memproses report...** selama riwayat sedang dimuat dan isi report disusun.
+- Tombol **Setujui Laporan** menampilkan spinner dan teks **Memproses persetujuan...** selama permintaan review berjalan; tombol review terkait dinonaktifkan sementara agar tidak terjadi permintaan ganda. Tombol kembali ke keadaan sesuai status laporan setelah proses selesai atau gagal.
+- Tombol **Cetak A4 / PDF** berubah hijau hanya ketika status yang dikonfirmasi backend adalah **Disetujui** atau **Sudah Dicetak**; sebelum disetujui tombol tetap nonaktif dan tidak hijau.
+- Indikator proses pada tombol **Kirim via WhatsApp** tetap dipertahankan.
+- File yang berubah: `csi.js`, `csi-daily-reports.html`, `README.md`.
+- Tidak mengubah endpoint backend, isi laporan, aturan review, autentikasi/role, atau penyimpanan data.
+- Pemeriksaan sumber selesai; validasi browser live untuk proses simpan/review/cetak masih diperlukan.
+
 ## 2026-10-14 — CSI Daily Report: WhatsApp newline dan template cetak berlogo
 - **Status:** IMPLEMENTED IN MAIN — DEPLOYMENT / LIVE VALIDATION PENDING.
 - Memperbaiki pemisah baris pesan WhatsApp agar menggunakan newline nyata, bukan karakter literal `\\n`.
