@@ -1,3 +1,10 @@
+## 2026-10-14 — Pembatasan akses halaman Admin dan CSI
+- **Status:** IMPLEMENTED IN MAIN — VALIDASI BROWSER PENDING.
+- `page-guard.js` sekarang mengarahkan role `ADMIN` dari `csi.html` ke `csi-daily-reports.html` sebelum halaman CSI Cleaning ditampilkan.
+- Pembatasan role `CSI` tetap sama: jika membuka halaman selain `csi.html`, pengguna diarahkan ke halaman CSI Cleaning.
+- Perubahan ini melengkapi sidebar yang menyembunyikan tautan CSI Cleaning untuk Admin; tidak mengubah login, endpoint backend, data, atau alur pekerjaan.
+- Validasi browser yang diperlukan: login sebagai Admin dan buka `csi.html` secara langsung (harus diarahkan ke Daily Report CSI); login sebagai CSI dan buka halaman lain (harus diarahkan ke CSI Cleaning); periksa sidebar setelah hard refresh.
+
 ## 2026-10-14 — Menghapus teks tanda tangan duplikat dari halaman Admin CSI
 - **Status:** IMPLEMENTED IN MAIN — VALIDASI BROWSER PENDING.
 - Menghapus teks “Dibuat Tim CSI”, “Diketahui PIC Site”, dan “Disetujui Site Leader” yang tampil di bawah tombol review pada halaman `csi-daily-reports.html`.
