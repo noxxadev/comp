@@ -12,6 +12,8 @@
 
 const CSI_HISTORY_SHEET = 'CSI Work History';
 const CSI_SUMMARY_SHEET = 'CSI Summary';
+const CSI_DAILY_REPORTS_SHEET = 'CSI Daily Reports';
+const CSI_DAILY_REPORT_HEADERS = ['Report ID','Created At','Work Date','Site Name','Site Address','Team Name','Personnel JSON','PIC Name','Site Leader Name','Report Text','Status','Created By User ID','Created By Username','Reviewed At','Reviewed By Username','Review Note','Printed At'];
 
 const CSI_HISTORY_HEADERS = [
   'Record ID',
@@ -50,6 +52,26 @@ function doPost(e) {
       const user = csiRequireUser_(payload.session);
       return csiJson_({ ok: true, authenticated: true, authorized: true, user: { id: user.id, username: user.username, role: user.role } });
     }
+    if (action === 'createDailyReport') {
+      const user = csiRequireUser_(payload.session);
+      return csiJson_({ ok: true, report: csiCreateDailyReport_(payload, user) });
+    }
+    if (action === 'listDailyReports') {
+      csiRequireAdmin_(payload.session);
+      return csiJson_({ ok: true, rows: csiListDailyReports_() });
+    }
+    if (action === 'getDailyReport') {
+      csiRequireAdmin_(payload.session);
+      return csiJson_({ ok: true, report: csiGetDailyReport_(payload.reportId) });
+    }
+    if (action === 'reviewDailyReport') {
+      const user = csiRequireAdmin_(payload.session);
+      return csiJson_({ ok: true, report: csiReviewDailyReport_(payload, user) });
+    }
+    if (action === 'markDailyReportPrinted') {
+      const user = csiRequireAdmin_(payload.session);
+      return csiJson_({ ok: true, report: csiMarkDailyReportPrinted_(payload.reportId, user) });
+    }
     if (action === 'getHighTempSummary') {
       csiRequireUser_(payload.session, true);
       return csiJson_({ ok: true, rows: csiBuildHighTempSummary_() });
@@ -82,10 +104,11 @@ function setupCsiSheets() {
   console.log('[CSI setup] Destination URL: ' + spreadsheet.getUrl());
   const historySheet = csiEnsureSheet_(spreadsheet, CSI_HISTORY_SHEET, CSI_HISTORY_HEADERS);
   const summarySheet = csiEnsureSheet_(spreadsheet, CSI_SUMMARY_SHEET, CSI_SUMMARY_HEADERS);
+  const reportsSheet = csiEnsureSheet_(spreadsheet, CSI_DAILY_REPORTS_SHEET, CSI_DAILY_REPORT_HEADERS);
   SpreadsheetApp.flush();
   const actualSheetNames = spreadsheet.getSheets().map(sheet => sheet.getName());
   if (!spreadsheet.getSheetByName(CSI_HISTORY_SHEET) || !spreadsheet.getSheetByName(CSI_SUMMARY_SHEET)) throw new Error('Setup belum lengkap. Tab yang terbaca: ' + actualSheetNames.join(', '));
-  const result = { ok: true, spreadsheetName: spreadsheet.getName(), spreadsheetUrl: spreadsheet.getUrl(), sheets: actualSheetNames, historyHeaderColumns: historySheet.getLastColumn(), summaryHeaderColumns: summarySheet.getLastColumn() };
+  const result = { ok: true, spreadsheetName: spreadsheet.getName(), spreadsheetUrl: spreadsheet.getUrl(), sheets: actualSheetNames, historyHeaderColumns: historySheet.getLastColumn(), summaryHeaderColumns: summarySheet.getLastColumn(), dailyReportsHeaderColumns: reportsSheet.getLastColumn() };
   console.log('[CSI setup] Verification result: ' + JSON.stringify(result));
   return result;
 }
@@ -212,6 +235,93 @@ function csiRequireUser_(sessionToken, allowAnyActiveRole) {
   };
 }
 
+
+
+function csiRequireAdmin_(sessionToken) {
+  const user = csiRequireUser_(sessionToken, true);
+  if (String(user.role || '').trim().toUpperCase() !== 'ADMIN') throw new Error('Akses ditolak. Fitur Daily Report hanya untuk Admin.');
+  return user;
+}
+
+function csiCreateDailyReport_(payload, user) {
+  const workDate = String(payload.workDate || '').trim();
+  const teamName = String(payload.teamName || '').trim().slice(0, 120);
+  const picName = String(payload.picName || '').trim().slice(0, 120);
+  const leaderName = String(payload.leaderName || '').trim().slice(0, 120);
+  const siteName = String(payload.siteName || 'CWUP Karawang').trim().slice(0, 120);
+  const siteAddress = String(payload.siteAddress || 'Karawang').trim().slice(0, 200);
+  const reportText = String(payload.reportText || '').trim().slice(0, 20000);
+  const personnel = Array.isArray(payload.personnel) ? payload.personnel.map(v => String(v || '').trim()).filter(Boolean).slice(0, 4) : [];
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(workDate)) throw new Error('Tanggal laporan tidak valid.');
+  if (!teamName) throw new Error('Nama TIM CSI wajib diisi.');
+  if (!personnel.length) throw new Error('Nama personil wajib diisi.');
+  if (!reportText) throw new Error('Isi laporan kosong.');
+  const id = Utilities.getUuid();
+  const sheet = csiGetSheet_(CSI_DAILY_REPORTS_SHEET, CSI_DAILY_REPORT_HEADERS);
+  sheet.appendRow([id, new Date(), workDate, siteName, siteAddress, teamName, JSON.stringify(personnel), picName, leaderName, reportText, 'Menunggu Review', user.id, user.username, '', '', '', '']);
+  SpreadsheetApp.flush();
+  return csiSerializeDailyReport_(sheet.getRange(sheet.getLastRow(), 1, 1, CSI_DAILY_REPORT_HEADERS.length).getValues()[0]);
+}
+
+function csiListDailyReports_() {
+  const sheet = csiGetSheet_(CSI_DAILY_REPORTS_SHEET, CSI_DAILY_REPORT_HEADERS);
+  const last = sheet.getLastRow();
+  if (last < 2) return [];
+  return sheet.getRange(2, 1, last - 1, CSI_DAILY_REPORT_HEADERS.length).getValues().reverse().map(csiSerializeDailyReport_);
+}
+
+function csiFindDailyReportRow_(reportId) {
+  const id = String(reportId || '').trim();
+  if (!id || id.length > 100) throw new Error('ID laporan tidak valid.');
+  const sheet = csiGetSheet_(CSI_DAILY_REPORTS_SHEET, CSI_DAILY_REPORT_HEADERS);
+  const last = sheet.getLastRow();
+  if (last < 2) throw new Error('Laporan tidak ditemukan.');
+  const ids = sheet.getRange(2, 1, last - 1, 1).getDisplayValues().flat();
+  const index = ids.findIndex(value => value === id);
+  if (index < 0) throw new Error('Laporan tidak ditemukan.');
+  return { sheet, row: index + 2, values: sheet.getRange(index + 2, 1, 1, CSI_DAILY_REPORT_HEADERS.length).getValues()[0] };
+}
+
+function csiGetDailyReport_(reportId) {
+  return csiSerializeDailyReport_(csiFindDailyReportRow_(reportId).values);
+}
+
+function csiReviewDailyReport_(payload, user) {
+  const status = String(payload.status || '').trim();
+  const note = String(payload.reviewNote || '').trim().slice(0, 2000);
+  if (!['Perlu Revisi', 'Disetujui'].includes(status)) throw new Error('Status review tidak valid.');
+  if (status === 'Perlu Revisi' && !note) throw new Error('Catatan revisi wajib diisi.');
+  const found = csiFindDailyReportRow_(payload.reportId);
+  if (found.values[10] === 'Sudah Dicetak') throw new Error('Laporan yang sudah dicetak tidak dapat diubah statusnya.');
+  found.sheet.getRange(found.row, 11).setValue(status);
+  found.sheet.getRange(found.row, 14, 1, 3).setValues([[new Date(), user.username, note]]);
+  SpreadsheetApp.flush();
+  return csiSerializeDailyReport_(found.sheet.getRange(found.row, 1, 1, CSI_DAILY_REPORT_HEADERS.length).getValues()[0]);
+}
+
+function csiMarkDailyReportPrinted_(reportId, user) {
+  const found = csiFindDailyReportRow_(reportId);
+  if (!['Disetujui', 'Sudah Dicetak'].includes(String(found.values[10]))) throw new Error('Laporan harus disetujui sebelum dicetak.');
+  found.sheet.getRange(found.row, 11).setValue('Sudah Dicetak');
+  found.sheet.getRange(found.row, 17).setValue(new Date());
+  SpreadsheetApp.flush();
+  return csiSerializeDailyReport_(found.sheet.getRange(found.row, 1, 1, CSI_DAILY_REPORT_HEADERS.length).getValues()[0]);
+}
+
+function csiSerializeDailyReport_(row) {
+  let personnel = [];
+  try { personnel = JSON.parse(String(row[6] || '[]')); } catch (_) {}
+  return {
+    reportId: String(row[0] || ''), createdAt: row[1] instanceof Date ? row[1].toISOString() : String(row[1] || ''),
+    workDate: row[2] instanceof Date ? Utilities.formatDate(row[2], Session.getScriptTimeZone(), 'yyyy-MM-dd') : String(row[2] || ''),
+    siteName: String(row[3] || ''), siteAddress: String(row[4] || ''), teamName: String(row[5] || ''),
+    personnel, picName: String(row[7] || ''), leaderName: String(row[8] || ''), reportText: String(row[9] || ''),
+    status: String(row[10] || ''), createdByUserId: String(row[11] || ''), createdByUsername: String(row[12] || ''),
+    reviewedAt: row[13] instanceof Date ? row[13].toISOString() : String(row[13] || ''),
+    reviewedByUsername: String(row[14] || ''), reviewNote: String(row[15] || ''),
+    printedAt: row[16] instanceof Date ? row[16].toISOString() : String(row[16] || '')
+  };
+}
 
 function csiBuildHighTempSummary_() {
   const sheet = csiGetSheet_(CSI_HISTORY_SHEET, CSI_HISTORY_HEADERS);
