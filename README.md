@@ -1,3 +1,7 @@
+### 2026-10-14 — IP Repeat Analyzer: default status Selesai
+- Dropdown Status pada Work Tracking memilih `Selesai` secara default saat halaman dibuka.
+- Status lain tetap tersedia dan pengguna dapat menggantinya; alur penyimpanan dan Google Apps Script tidak diubah.
+
 ### 2026-10-14 — Machine List: SN tanpa lokasi
 - Upload Machine List mengizinkan record dengan Serial Number terisi dan Location ID kosong. Serial Number tetap wajib dan unik.
 - Beberapa Location ID kosong tidak dianggap duplikat; lokasi normal tetap unik dan pengecualian workshop `GBE_RC.A-1` / `GBE_RC.A-3` tetap berlaku.
