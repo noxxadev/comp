@@ -646,6 +646,7 @@ function csiCancelPriorityRequest_(payload,user) {
   if(!reason) throw new Error('Alasan pembatalan wajib diisi.');
   return csiUpdatePriorityGroup_(payload.groupId,(row,now)=>{
     if(['Selesai','Dibatalkan','Ditolak'].includes(row[9])) throw new Error('Request sudah berakhir.');
+    if(row[9] === 'Menunggu Konfirmasi Pembatalan') throw new Error('Pembatalan sudah menunggu konfirmasi pihak lain.');
     if(row[9] === 'Sedang Dikerjakan') {
       row[9]='Menunggu Konfirmasi Pembatalan'; row[23]=now; row[24]=String(user.role).toUpperCase(); row[25]=reason;
     } else {
