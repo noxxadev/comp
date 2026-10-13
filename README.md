@@ -1,3 +1,11 @@
+## 2026-10-13 — CSI: reset formulir dan penyederhanaan tampilan
+- **Status:** IMPLEMENTED — LIVE VALIDATION PENDING.
+- Setelah saveWork berhasil dikonfirmasi backend, formulir pekerjaan kembali ke default: Nama DC kosong, tanggal pekerjaan hari ini, sisi A, jenis Cleaning, semua Treatment tidak dicentang, dan Catatan kosong. Jika penyimpanan gagal, input tetap dipertahankan untuk koreksi. Form reset tetap dilakukan meskipun pemuatan ulang riwayat berikutnya gagal, karena penyimpanan sudah dikonfirmasi.
+- Field tetap Nama Site (CWUP Karawang) dan Alamat Site (Karawang) dihilangkan dari kartu Formulir Cetak; nilai tetap digunakan secara konstan di output cetak. Field manual lainnya tidak diubah.
+- Tombol Muat Ulang pada header Riwayat Pekerjaan CSI diganti label Refresh dan dipindah berdampingan dengan Reset Filter. Aksi pemuatan ulang dan filter tidak diubah.
+- Cache-buster CSI HTML diperbarui. Tidak ada perubahan backend, autentikasi, format laporan, atau struktur Google Sheets.
+- **Uji browser:** simpan sukses, gagal simpan, kedua sisi, refresh history, reset filter, cetak dengan site/alamat tetap, dan tampilan mobile.
+
 ## 2026-10-13 — DC HighTemp: panel Kondisi Terkini pada Progress
 - **Status:** IMPLEMENTED — LIVE VALIDATION PENDING.
 - Menambahkan panel **Kondisi Terkini DC** di bawah ringkasan Progress dan sebelum grafik IP.
