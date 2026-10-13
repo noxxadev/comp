@@ -75,12 +75,19 @@
     const result=await window.CompAuth.validateSession();
     if(!result?.authenticated){clearAuth();goLogin();return;}
 
-    // Enforce the role's allowed page area before revealing protected content.
-    // CSI accounts are restricted to csi.html; other roles cannot open CSI directly.
+    // Enforce role-specific page access before revealing protected content.
     const currentPage = location.pathname.split('/').pop() || 'index.html';
     const role = String(result.user?.role || '').trim().toUpperCase();
+
+    // CSI accounts are restricted to the CSI Cleaning page.
     if (role === 'CSI' && currentPage !== 'csi.html') {
       location.replace('csi.html');
+      return;
+    }
+
+    // Admin accounts use the Daily Report review page, not the CSI work-entry page.
+    if (role === 'ADMIN' && currentPage === 'csi.html') {
+      location.replace('csi-daily-reports.html');
       return;
     }
     showPage();
