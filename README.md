@@ -1,3 +1,12 @@
+## 2026-10-13 — PLAN: Sidebar Daily Report CSI berdasarkan role
+- **Status:** PLANNED — BELUM DIIMPLEMENTASIKAN.
+- Sidebar untuk role **Admin** harus menampilkan **Daily Report CSI** (`csi-daily-reports.html`) dan menyembunyikan **CSI Cleaning** (`csi.html`).
+- Sidebar untuk role **CSI** harus menampilkan **CSI Cleaning** dan menyembunyikan **Daily Report CSI**.
+- Hapus tautan **Daily Report CSI** yang duplikat pada `index.html` saat implementasi.
+- Pertahankan navigasi dan akses untuk role lain sesuai perilaku yang sudah ada.
+- Implementasi dibatasi pada rendering navigasi berdasarkan role dan pembersihan tautan duplikat; jangan mengubah mekanisme login, validasi sesi/backend, atau logika fitur lain.
+- **Validasi wajib:** login sebagai Admin dan CSI, periksa sidebar pada desktop/mobile serta setelah hard refresh; pastikan pembatasan akses halaman tetap ditegakkan oleh `page-guard.js` dan backend, bukan hanya dengan menyembunyikan tautan.
+
 ## 2026-10-13 — CSI Daily Report: snapshot dan halaman Admin
 - **Status:** IMPLEMENTED IN MAIN — DEPLOYMENT / LIVE VALIDATION PENDING.
 - Menambahkan API backend Daily Report dan sheet baru `CSI Daily Reports`; sheet dibuat oleh fungsi `setupCsiSheets()` tanpa mengubah struktur `CSI Work History` atau `CSI Summary`.
