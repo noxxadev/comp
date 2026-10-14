@@ -87,3 +87,24 @@
 #csiPriorityRequestsCard .csi-request-more>div{position:absolute;z-index:3;right:0;top:calc(100% + 5px);min-width:180px;display:grid;gap:5px;padding:7px;border:1px solid var(--border,#dfe4ec);border-radius:9px;background:var(--surface,#fff);box-shadow:0 8px 24px rgba(0,0,0,.12)}
 #csiPriorityRequestsCard .csi-request-more:not([open])>div{display:none}
 @media(max-width:520px){#csiPriorityRequestsCard .csi-request-row{padding:11px}#csiPriorityRequestsCard .csi-request-title{gap:7px}#csiPriorityRequestsCard .csi-request-dc{align-items:flex-start}}
+
+/* CSI request card revision: single DC title, aligned badges and readable progress. */
+#csiPriorityRequestsCard .csi-request-row{padding:12px 14px;gap:0}
+#csiPriorityRequestsCard .csi-request-title{display:flex;align-items:center;justify-content:space-between;gap:10px}
+#csiPriorityRequestsCard .csi-request-title h3{margin:0;font-size:14px;font-weight:750;line-height:1.4}
+#csiPriorityRequestsCard .csi-request-badges{display:flex;align-items:center;justify-content:flex-end;gap:5px;flex-shrink:0}
+#csiPriorityRequestsCard .csi-request-badges .priority-tag,#csiPriorityRequestsCard .csi-request-badges .priority-status{font-size:10px;padding:4px 7px}
+#csiPriorityRequestsCard .csi-request-job{margin:4px 0 0;font-size:12px;line-height:1.45;color:var(--muted,#667085)}
+#csiPriorityRequestsCard .csi-request-reason{font-size:11px;line-height:1.45;margin-top:5px;overflow-wrap:anywhere;color:var(--text,var(--text-primary,#263247))}
+#csiPriorityRequestsCard .csi-request-progress{margin-top:6px;display:grid;gap:4px}
+#csiPriorityRequestsCard .csi-request-dc{display:flex;align-items:center;justify-content:space-between;gap:9px;padding:5px 0;border-radius:0;background:transparent}
+#csiPriorityRequestsCard .csi-request-dc+.csi-request-dc{border-top:1px solid var(--border,#e2e8f0)}
+#csiPriorityRequestsCard .csi-request-dc-name{font-size:12px;min-width:55px}
+#csiPriorityRequestsCard .csi-request-dc-main{min-width:0;flex:1;font-size:11px;line-height:1.5;color:var(--text,var(--text-primary,#263247))}
+#csiPriorityRequestsCard .csi-request-dc-main span{display:block}
+#csiPriorityRequestsCard .csi-request-dc button{padding:5px 8px}
+#csiPriorityRequestsCard .csi-request-footer{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-top:7px}
+#csiPriorityRequestsCard .csi-request-footer .csi-request-actions{margin-top:0}
+#csiPriorityRequestsCard .csi-request-details summary{font-size:11px}
+#csiPriorityRequestsCard .csi-request-more summary{font-size:11px}
+@media(max-width:520px){#csiPriorityRequestsCard .csi-request-row{padding:10px 11px}#csiPriorityRequestsCard .csi-request-title{align-items:flex-start;gap:6px}#csiPriorityRequestsCard .csi-request-badges{gap:4px}#csiPriorityRequestsCard .csi-request-badges .priority-tag,#csiPriorityRequestsCard .csi-request-badges .priority-status{font-size:9px;padding:4px 5px}#csiPriorityRequestsCard .csi-request-footer{align-items:flex-start}}
