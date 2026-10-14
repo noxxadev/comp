@@ -16,6 +16,8 @@ const CSI_DAILY_REPORTS_SHEET = 'CSI Daily Reports';
 const CSI_PRIORITY_REQUESTS_SHEET = 'CSI Priority Requests';
 const CSI_PRIORITY_REQUEST_HEADERS = ['Request ID','Request Group ID','Created At','Nama DC','Frame Side','Job Type','Reason','Priority','Treatment JSON','Status','Created By User ID','Created By Username','Accepted At','Accepted By Username','Started At','Completed At','Rejected At','Rejected By Username','Reject Reason','Rescheduled At','Rescheduled By Username','Reschedule Reason','Scheduled Date','Cancel Requested At','Cancel Requested By Role','Cancel Reason','Cancel Confirmed At','Cancel Confirmed By Role','Linked History Record IDs','Updated At','Pending Reason'];
 
+const CSI_PRIORITY_AUDIT_SHEET = 'CSI Priority Audit';
+const CSI_PRIORITY_AUDIT_HEADERS = ['Event ID','Group ID','Event At','Action','Actor','Previous Data JSON','New Data JSON'];
 const CSI_DAILY_REPORT_HEADERS = ['Report ID','Created At','Work Date','Site Name','Site Address','Team Name','Personnel JSON','PIC Name','Site Leader Name','Report Text','Status','Created By User ID','Created By Username','Reviewed At','Reviewed By Username','Review Note','Printed At','Print Report HTML'];
 
 const CSI_HISTORY_HEADERS = [
@@ -58,6 +60,10 @@ function doPost(e) {
     if (action === 'createPriorityRequest') {
       const user = csiRequireAdmin_(payload.session);
       return csiJson_({ ok: true, requests: csiCreatePriorityRequest_(payload, user) });
+    }
+    if (action === 'retryPriorityRequest') {
+      const user = csiRequireAdmin_(payload.session);
+      return csiJson_({ ok: true, requests: csiRetryPriorityRequest_(payload, user) });
     }
     if (action === 'listPriorityRequests') {
       const user = csiRequireUser_(payload.session, true);
@@ -141,6 +147,7 @@ function setupCsiSheets() {
   const summarySheet = csiEnsureSheet_(spreadsheet, CSI_SUMMARY_SHEET, CSI_SUMMARY_HEADERS);
   const reportsSheet = csiEnsureSheet_(spreadsheet, CSI_DAILY_REPORTS_SHEET, CSI_DAILY_REPORT_HEADERS);
   const priorityRequestsSheet = csiEnsureSheet_(spreadsheet, CSI_PRIORITY_REQUESTS_SHEET, CSI_PRIORITY_REQUEST_HEADERS);
+  csiEnsureSheet_(spreadsheet, CSI_PRIORITY_AUDIT_SHEET, CSI_PRIORITY_AUDIT_HEADERS);
   SpreadsheetApp.flush();
   const actualSheetNames = spreadsheet.getSheets().map(sheet => sheet.getName());
   if (!spreadsheet.getSheetByName(CSI_HISTORY_SHEET) || !spreadsheet.getSheetByName(CSI_SUMMARY_SHEET)) throw new Error('Setup belum lengkap. Tab yang terbaca: ' + actualSheetNames.join(', '));
@@ -204,7 +211,7 @@ function csiSaveWork_(payload, user) {
       priorityTargets = groupRows.filter(item => dcNames.includes(csiNormalizeDcName_(item.row[3])));
       if (priorityTargets.length !== dcNames.length) throw new Error('DC yang dipilih tidak cocok dengan request prioritas.');
       if (priorityTargets.length !== dcNames.length) throw new Error('Pilih DC yang memang tercantum pada request prioritas.');
-      const otherActive = activeRowsForDcs.filter(item => String(item.row[1]) !== priorityGroupId);
+      const otherActive = activeRowsForDcs.filter(item => String(item.row[1]) !== priorityGroupId && sides.some(side => (String(item.row[4]) === 'Both' ? ['A','B'] : [String(item.row[4])]).includes(side)));
       if (otherActive.length) throw new Error('Salah satu DC memiliki request prioritas aktif lain. Selesaikan request yang sudah ada terlebih dahulu.');
 
       const historySheet = csiGetSheet_(CSI_HISTORY_SHEET, CSI_HISTORY_HEADERS);
@@ -646,9 +653,44 @@ function csiCreatePriorityRequest_(payload, user) {
   try {
     const activeStatuses = new Set(['Menunggu CSI','Dijadwalkan Ulang','Diterima','Sedang Dikerjakan','Pending','Menunggu Konfirmasi Pembatalan']);
     const existing = csiPriorityRows_();
-    const conflict = existing.find(row => dcs.includes(csiNormalizeDcName_(row[3])) && activeStatuses.has(String(row[9])));
-    if (conflict) throw new Error('DC ' + csiNormalizeDcName_(conflict[3]) + ' masih memiliki request prioritas aktif.');
+    const conflict = existing.find(row => dcs.includes(csiNormalizeDcName_(row[3])) && activeStatuses.has(String(row[9])) && csiPrioritySidesOverlap_(side, row[4]));
+    if (conflict) throw new Error('DC ' + csiNormalizeDcName_(conflict[3]) + ' memiliki request aktif dengan sisi celldeck yang bertumpang tindih.');
     sheet.getRange(sheet.getLastRow()+1,1,rows.length,CSI_PRIORITY_REQUEST_HEADERS.length).setValues(rows);
+    SpreadsheetApp.flush();
+  } finally { lock.releaseLock(); }
+  return csiGroupResponse_(groupId);
+}
+function csiPrioritySidesOverlap_(a,b) {
+  const sides = value => String(value) === 'Both' ? ['A','B'] : [String(value)];
+  return sides(a).some(side => sides(b).includes(side));
+}
+function csiRetryPriorityRequest_(payload,user) {
+  const groupId = String(payload.groupId || '').trim();
+  const raw = Array.isArray(payload.dcNames) ? payload.dcNames : [];
+  const dcs = raw.map(csiNormalizeDcName_);
+  const side = String(payload.frameSide || '').trim(), job = String(payload.jobType || '').trim();
+  const priority = String(payload.priority || '').trim(), reason = String(payload.reason || '').trim().slice(0,1500);
+  const scheduled = String(payload.scheduledDate || '').trim();
+  if (!dcs.length || new Set(dcs).size !== dcs.length || dcs.some(dc => !/^[A-F]\\d+[A-Z]?$/.test(dc))) throw new Error('Pilih DC unik yang valid.');
+  if (!['A','B','Both'].includes(side) || !['Cleaning','Replace'].includes(job) || !['Tinggi','Mendesak'].includes(priority) || !reason || (scheduled && !/^\\d{4}-\\d{2}-\\d{2}$/.test(scheduled))) throw new Error('Data pengajuan ulang tidak valid.');
+  const lock = LockService.getScriptLock(); lock.waitLock(15000);
+  try {
+    const found = csiFindPriorityGroup_(groupId);
+    if (found.rows.some(item => String(item.values[9]) !== 'Ditolak')) throw new Error('Hanya grup yang seluruh request-nya ditolak yang dapat diajukan ulang.');
+    if (found.rows.length !== dcs.length) throw new Error('Jumlah DC harus tetap sama saat pengajuan ulang. Untuk menambah atau mengurangi DC, buat request baru.');
+    const active = new Set(['Menunggu CSI','Dijadwalkan Ulang','Diterima','Sedang Dikerjakan','Pending','Menunggu Konfirmasi Pembatalan']);
+    const conflict = csiPriorityRows_().find(row => String(row[1]) !== groupId && active.has(String(row[9])) && dcs.includes(csiNormalizeDcName_(row[3])) && csiPrioritySidesOverlap_(side,row[4]));
+    if (conflict) throw new Error('DC ' + csiNormalizeDcName_(conflict[3]) + ' memiliki request aktif pada sisi yang bertumpang tindih.');
+    const now = new Date();
+    const audit = csiGetSheet_(CSI_PRIORITY_AUDIT_SHEET, CSI_PRIORITY_AUDIT_HEADERS);
+    const changes = found.rows.map((item,i) => {
+      const before = csiSerializeRow_(item.values);
+      const row = item.values.slice();
+      row[3]=dcs[i]; row[4]=side; row[5]=job; row[6]=reason; row[7]=priority; row[8]='[]'; row[9]='Menunggu CSI'; row[12]=''; row[13]=''; row[14]=''; row[15]=''; row[19]=''; row[20]=''; row[21]=''; row[22]=scheduled; row[23]=''; row[24]=''; row[25]=''; row[26]=''; row[27]=''; row[28]=''; row[29]=now; row[30]='';
+      return {item,row,before};
+    });
+    audit.getRange(audit.getLastRow()+1,1,changes.length,CSI_PRIORITY_AUDIT_HEADERS.length).setValues(changes.map(c=>[Utilities.getUuid(),groupId,now,'AJUKAN ULANG',user.username,JSON.stringify(c.before),JSON.stringify(csiSerializeRow_(c.row))]));
+    changes.forEach(c=>found.sheet.getRange(c.item.row,1,1,CSI_PRIORITY_REQUEST_HEADERS.length).setValues([c.row]));
     SpreadsheetApp.flush();
   } finally { lock.releaseLock(); }
   return csiGroupResponse_(groupId);
