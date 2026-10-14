@@ -184,6 +184,17 @@
     const parts = String(value || '').split('-');
     return parts.length === 3 ? parts[2] + '/' + parts[1] + '/' + parts[0] : String(value || '');
   }
+  function updateGenerateReportButton() {
+    const button = $('generateReportBtn');
+    if (!button) return;
+    const dateReady = Boolean($('printReportDate').value);
+    const personnel = parsePersonnelNames($('printPersonnel').value);
+    const teamReady = Boolean($('printTeamName').value.trim());
+    const ready = dateReady && personnel.length >= 1 && personnel.length <= 4 && teamReady;
+    button.disabled = !ready;
+    button.setAttribute('aria-disabled', String(!ready));
+    button.title = ready ? '' : 'Lengkapi tanggal laporan, 1–4 nama personil, dan Nama TIM CSI.';
+  }
   function parsePersonnelNames(value) {
     const seen = new Set();
     return String(value || '').split(/[,;\n]+/)
@@ -394,6 +405,8 @@
     $('reportPreview').readOnly = true;
     $('editReportBtn').innerHTML = '<i class="fas fa-pen"></i> Edit';
   }
+  ['printReportDate','printPersonnel','printTeamName'].forEach(id => { $(id).addEventListener('input', updateGenerateReportButton); $(id).addEventListener('change', updateGenerateReportButton); });
+  updateGenerateReportButton();
   $('generateReportBtn').addEventListener('click', async () => {
     const button = $('generateReportBtn');
     const dateValue = $('printReportDate').value;
@@ -416,8 +429,8 @@
     } catch (error) {
       showNotice('Gagal membuat report: ' + (error.message || 'periksa koneksi CSI.'), 'error');
     } finally {
-      button.disabled = false;
       button.innerHTML = originalLabel;
+      updateGenerateReportButton();
     }
   });
   $('editReportBtn').addEventListener('click', () => {
