@@ -190,10 +190,12 @@
     const dateReady = Boolean($('printReportDate').value);
     const personnel = parsePersonnelNames($('printPersonnel').value);
     const teamReady = Boolean($('printTeamName').value.trim());
-    const ready = dateReady && personnel.length >= 1 && personnel.length <= 4 && teamReady;
+    const picReady = Boolean($('printPicName').value.trim());
+    const leaderReady = Boolean($('printLeaderName').value.trim());
+    const ready = dateReady && personnel.length >= 1 && personnel.length <= 4 && teamReady && picReady && leaderReady;
     button.disabled = !ready;
     button.setAttribute('aria-disabled', String(!ready));
-    button.title = ready ? '' : 'Lengkapi tanggal laporan, 1–4 nama personil, dan Nama TIM CSI.';
+    button.title = ready ? '' : 'Lengkapi tanggal laporan, 1–4 nama personil, Nama TIM CSI, Nama PIC Site, dan Nama Site Leader.';
   }
   function parsePersonnelNames(value) {
     const seen = new Set();
@@ -316,8 +318,8 @@
     const siteAddress = 'Karawang';
     const teamName = $('printTeamName').value.trim();
     const personnel = parsePersonnelNames($('printPersonnel').value);
-    if (!dateValue || !teamName || !personnel.length) {
-      showNotice('Lengkapi tanggal, Nama TIM CSI, dan minimal satu nama personil.', 'error');
+    if (!dateValue || !teamName || !personnel.length || !$('printPicName').value.trim() || !$('printLeaderName').value.trim()) {
+      showNotice('Lengkapi semua field formulir cetak: tanggal, personil, Nama TIM CSI, Nama PIC Site, dan Nama Site Leader.', 'error');
       return;
     }
     if (personnel.length > 4) {
@@ -405,15 +407,18 @@
     $('reportPreview').readOnly = true;
     $('editReportBtn').innerHTML = '<i class="fas fa-pen"></i> Edit';
   }
-  ['printReportDate','printPersonnel','printTeamName'].forEach(id => { $(id).addEventListener('input', updateGenerateReportButton); $(id).addEventListener('change', updateGenerateReportButton); });
+  ['printReportDate','printPersonnel','printTeamName','printPicName','printLeaderName'].forEach(id => { $(id).addEventListener('input', updateGenerateReportButton); $(id).addEventListener('change', updateGenerateReportButton); });
   updateGenerateReportButton();
   $('generateReportBtn').addEventListener('click', async () => {
     const button = $('generateReportBtn');
     const dateValue = $('printReportDate').value;
-    if (!dateValue) { showNotice('Pilih tanggal laporan terlebih dahulu.', 'error'); return; }
+    if (!dateValue) { showNotice('Pilih tanggal laporan terlebih dahulu.', 'error'); $('printReportDate').focus(); return; }
     const personnelNames = parsePersonnelNames($('printPersonnel').value);
-    if (!personnelNames.length) { showNotice('Isi minimal satu nama personil sebelum membuat report.', 'error'); return; }
-    if (personnelNames.length > 4) { showNotice('Maksimal empat nama personil untuk report.', 'error'); return; }
+    if (!personnelNames.length) { showNotice('Isi minimal satu nama personil sebelum membuat report.', 'error'); $('printPersonnel').focus(); return; }
+    if (personnelNames.length > 4) { showNotice('Maksimal empat nama personil untuk report.', 'error'); $('printPersonnel').focus(); return; }
+    if (!$('printTeamName').value.trim()) { showNotice('Isi Nama TIM CSI terlebih dahulu.', 'error'); $('printTeamName').focus(); return; }
+    if (!$('printPicName').value.trim()) { showNotice('Isi Nama PIC Site terlebih dahulu.', 'error'); $('printPicName').focus(); return; }
+    if (!$('printLeaderName').value.trim()) { showNotice('Isi Nama Site Leader terlebih dahulu.', 'error'); $('printLeaderName').focus(); return; }
     const originalLabel = button.innerHTML;
     button.disabled = true;
     button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memproses report...';
