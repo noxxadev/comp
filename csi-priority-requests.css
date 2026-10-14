@@ -122,14 +122,11 @@
 .dc-reference-row summary::-webkit-details-marker{display:none}
 .dc-reference-name{font-size:12px;font-weight:700;overflow-wrap:anywhere}
 .dc-reference-value{font-size:11px;text-align:right;white-space:nowrap;color:var(--text,var(--text-primary,#263247))}
-.dc-reference-value:before{content:"C ";font-size:9px;color:var(--muted,#667085)}
-.dc-reference-replace:before{content:"R "}
 .dc-reference-value.overdue{color:#b42332;font-weight:800}
 .dc-reference-detail{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 0 9px}
 .dc-reference-side{display:grid;gap:4px;background:var(--surface-2,rgba(127,127,127,.06));border-radius:8px;padding:9px;font-size:11px}
 .dc-reference-side b{font-size:11px}
 .dc-reference-side span{color:var(--muted,#667085)}
-.dc-reference-show-all{margin-top:10px;width:100%}
 @media(max-width:480px){.dc-reference-row summary{grid-template-columns:minmax(0,1fr) 74px 74px;gap:5px}.dc-reference-name{font-size:11px}.dc-reference-value{font-size:10px}.dc-reference-tools{gap:7px}.dc-reference-count{font-size:10px}}
 
 .dc-reference-labels{display:grid;grid-template-columns:minmax(0,1fr) 92px 92px;gap:8px;padding:0 2px 5px;color:var(--muted,#667085);font-size:10px;font-weight:750}
