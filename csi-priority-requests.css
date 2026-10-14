@@ -37,3 +37,13 @@
 .priority-table-details div{margin-top:6px;max-width:300px;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.5}
 .priority-monitor-table .priority-request-actions{gap:5px;min-width:90px}
 .priority-monitor-table .priority-request-actions button{font:inherit;font-size:11px;padding:6px 8px;border:1px solid var(--border,#dfe4ec);border-radius:7px;background:var(--surface-2,#f4f6f9);color:inherit;cursor:pointer}
+
+/* CSI: distinguish each DC progress card with a soft color accent. */
+#csiPriorityRequestsCard .priority-progress-row{border-left:4px solid transparent}
+#csiPriorityRequestsCard .priority-progress-row:nth-child(6n+1){background:rgba(22,160,133,.10);border-left-color:#16a085}
+#csiPriorityRequestsCard .priority-progress-row:nth-child(6n+2){background:rgba(59,130,246,.10);border-left-color:#3b82f6}
+#csiPriorityRequestsCard .priority-progress-row:nth-child(6n+3){background:rgba(139,92,246,.10);border-left-color:#8b5cf6}
+#csiPriorityRequestsCard .priority-progress-row:nth-child(6n+4){background:rgba(234,158,45,.13);border-left-color:#d99518}
+#csiPriorityRequestsCard .priority-progress-row:nth-child(6n+5){background:rgba(225,75,100,.10);border-left-color:#e14b64}
+#csiPriorityRequestsCard .priority-progress-row:nth-child(6n){background:rgba(14,165,233,.10);border-left-color:#0ea5e9}
+
