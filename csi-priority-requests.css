@@ -25,3 +25,15 @@
 #csiPriorityRequestsCard .priority-request-actions button,#csiPriorityRequestsCard .priority-progress-actions button{font-size:11px;padding:6px 9px}
 #csiPriorityRequestsCard .priority-pending-reason{font-size:11px}
 @media(max-width:640px){#csiPriorityRequestsCard .priority-request-head{flex-direction:row;align-items:flex-start}#csiPriorityRequestsCard .priority-progress-row{align-items:stretch}}
+
+/* Admin monitoring: compact per-DC table, with horizontal scrolling on small screens. */
+.priority-table-scroll{width:100%;overflow-x:auto;border:1px solid var(--border,#dfe4ec);border-radius:10px}
+.priority-monitor-table{width:100%;border-collapse:collapse;text-align:left;font-size:12px;min-width:860px;color:var(--text,var(--text-primary,#263247))}
+.priority-monitor-table th,.priority-monitor-table td{padding:10px 11px;border-bottom:1px solid var(--border,#dfe4ec);vertical-align:top}
+.priority-monitor-table th{font-size:11px;white-space:nowrap;background:var(--surface-2,#f4f6f9)}
+.priority-monitor-table tr:last-child td{border-bottom:0}
+.priority-monitor-table td small{display:block;color:var(--muted,#667085);margin-top:3px}
+.priority-table-details summary{cursor:pointer;font-weight:650;white-space:nowrap}
+.priority-table-details div{margin-top:6px;max-width:300px;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.5}
+.priority-monitor-table .priority-request-actions{gap:5px;min-width:90px}
+.priority-monitor-table .priority-request-actions button{font:inherit;font-size:11px;padding:6px 8px;border:1px solid var(--border,#dfe4ec);border-radius:7px;background:var(--surface-2,#f4f6f9);color:inherit;cursor:pointer}
