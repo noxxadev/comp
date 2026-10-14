@@ -876,3 +876,8 @@ Validasi setelah deploy:
 - Coba simpan B10 dari formulir manual saat request masih aktif; backend harus menolak dan memberi tahu bahwa pekerjaan wajib dicatat lewat request.
 - Buat request multi-DC dan selesaikan sebagian DC; pastikan progres per DC benar dan Admin melihat alasan pending untuk target yang belum lengkap.
 - Pastikan request lama dan tab Google Sheets lama tetap terbaca setelah header `Pending Reason` ditambahkan.
+
+### 2026-10-14 — Monitoring CSI Priority: sembunyikan pekerjaan selesai
+- Monitoring Admin dan CSI hanya menampilkan baris request yang statusnya belum `Selesai`.
+- Dalam request multi-DC, DC yang sudah `Selesai` disembunyikan dari card monitoring, sementara DC yang masih perlu tindak lanjut tetap terlihat.
+- Filter hanya di frontend; riwayat dan data Google Sheet tidak dihapus, serta alur penyimpanan dan penguncian pekerjaan manual tidak diubah.
