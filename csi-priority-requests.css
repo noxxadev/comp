@@ -10,3 +10,18 @@
 .priority-progress-actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end}
 .priority-status.pending{background:rgba(217,119,6,.12);color:#b45309;border-color:rgba(217,119,6,.3)}
 @media(max-width:640px){.priority-progress-row{flex-direction:column}.priority-progress-actions{justify-content:flex-start}}
+
+/* Compact priority request cards on CSI work page only. */
+#csiPriorityRequestsCard .priority-request-list{gap:8px}
+#csiPriorityRequestsCard .priority-request{padding:11px 13px;gap:7px;border-radius:10px}
+#csiPriorityRequestsCard .priority-request-head{align-items:center}
+#csiPriorityRequestsCard .priority-request h3{font-size:13px;line-height:1.4}
+#csiPriorityRequestsCard .priority-request-meta{gap:5px}
+#csiPriorityRequestsCard .priority-tag{padding:3px 6px}
+#csiPriorityRequestsCard .priority-progress-list{gap:5px;margin:3px 0 0}
+#csiPriorityRequestsCard .priority-progress-row{padding:8px 10px;gap:8px;border-radius:8px;align-items:center}
+#csiPriorityRequestsCard .priority-progress-row p{margin:2px 0 0;font-size:11px}
+#csiPriorityRequestsCard .priority-request-actions{gap:6px}
+#csiPriorityRequestsCard .priority-request-actions button,#csiPriorityRequestsCard .priority-progress-actions button{font-size:11px;padding:6px 9px}
+#csiPriorityRequestsCard .priority-pending-reason{font-size:11px}
+@media(max-width:640px){#csiPriorityRequestsCard .priority-request-head{flex-direction:row;align-items:flex-start}#csiPriorityRequestsCard .priority-progress-row{align-items:stretch}}
