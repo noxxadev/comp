@@ -2,7 +2,7 @@
 'use strict';
 const $=id=>document.getElementById(id);
 const TREATMENTS=["Pencopotan Frame","Pemasangan Frame","Penyemprotan Celldeck","Pembersihan Kisi-kisi","Perapihan/Penggantian Kain Flanel","Penggantian Celldeck","Perapihan pipa dan pengecekan saluran air"];
-let requests=[],busy=false,loading=false,actionBusy=false,retryGroupId='',dcReferenceRows=[],dcReferenceShowAll=false,dcReferenceLoading=false;
+let requests=[],busy=false,loading=false,actionBusy=false,retryGroupId='',dcReferenceRows=[],dcReferenceLoading=false;
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function notice(message,kind='info'){$('priorityNotice').textContent=message;$('priorityNotice').dataset.kind=kind;$('priorityNotice').hidden=!message}
 
@@ -71,11 +71,9 @@ function buildDcReferenceRows(rows){
 function renderDcReference(){
   const list=$('dcReferenceList'),query=String($('dcReferenceSearch')?.value||'').trim().toLowerCase();
   const matches=dcReferenceRows.filter(row=>row.dc.toLowerCase().includes(query));
-  const shown=query||dcReferenceShowAll?matches:matches.slice(0,20);
+  const shown=query?matches:matches.slice(0,5);
   $('dcReferenceCount').textContent=query?matches.length+' DC ditemukan':dcReferenceRows.length+' DC';
-  $('dcReferenceShowAll').hidden=Boolean(query)||matches.length<=20;
-  $('dcReferenceShowAll').textContent=dcReferenceShowAll?'Tampilkan 20 teratas':'Lihat semua DC ('+matches.length+')';
-  if(!shown.length){list.innerHTML='<p class="csi-empty">DC tidak ditemukan.</p>';return}
+    if(!shown.length){list.innerHTML='<p class="csi-empty">DC tidak ditemukan.</p>';return}
   list.innerHTML=shown.map(row=>{
     const detail=['A','B'].map(side=>{
       const s=row.sides[side],clean=dateAge(s.cleanDate),replace=dateAge(s.replaceDate);
@@ -106,7 +104,6 @@ function fillRetry(id){const rows=requests.filter(r=>r.groupId===id);if(!rows.le
 $('priorityRequestForm').addEventListener('submit',async e=>{e.preventDefault();if(busy)return;const dcs=selected();if(!dcs.length){notice('Pilih minimal satu DC.','error');return}busy=true;$('createPriorityBtn').disabled=true;try{const frameSide=$('requestSide').value,jobType=$('requestJob').value;const history=await api('getHighTempSummary');const warnings=recentCleaningWarnings(history.rows,dcs,frameSide,jobType);if(warnings.length){const lines=warnings.map(item=>'• '+item.dc+' sisi '+item.side+' — cleaning terakhir '+formatWarningDate(item.date));const confirmation=await actionModal({title:'Konfirmasi Request Ulang Cleaning',description:'Ditemukan celldeck yang sudah di-cleaning dalam 7 hari terakhir:\n\n'+lines.join('\n')+'\n\nApakah Anda yakin ingin tetap mengirim request ini?',confirmText:'Tetap Request'});if(!confirmation)return}const payload={dcNames:dcs,frameSide,jobType,priority:$('requestPriority').value,reason:$('requestReason').value.trim(),scheduledDate:$('requestDate').value};if(retryGroupId){payload.groupId=retryGroupId;await api('retryPriorityRequest',payload)}else{const old=requests.filter(r=>r.status==='Ditolak'&&dcs.includes(String(r.dcName).replace(/^GBE\./,''))&&r.frameSide===frameSide&&r.jobType===jobType);if(old.length){const choice=await actionModal({title:'Riwayat request ditolak',description:'DC dan sisi yang sama pernah ditolak. Pilih Batal untuk menggunakan tombol Ajukan Ulang pada daftar lama, atau lanjutkan membuat request baru.',confirmText:'Buat Request Baru'});if(!choice)return}await api('createPriorityRequest',payload)}notice(retryGroupId?'Request lama berhasil diajukan ulang.':'Request berhasil dibuat untuk '+dcs.length+' DC.','success');retryGroupId='';$('createPriorityBtn').textContent='Kirim Request';e.target.reset();$('requestDcList').querySelectorAll('input').forEach(b=>b.checked=false);updatePicker();await load()}catch(err){notice(err.message||'Gagal membuat request.','error')}finally{busy=false;$('createPriorityBtn').disabled=false}});
 $('priorityRequestList').addEventListener('click',async e=>{const retry=e.target.closest('[data-retry]');if(retry){try{fillRetry(retry.dataset.retry)}catch(err){notice(err.message,'error')}return}const cancel=e.target.closest('[data-cancel]'),confirmButton=e.target.closest('[data-confirm-cancel]'),declineButton=e.target.closest('[data-decline-cancel]');if(!cancel&&!confirmButton&&!declineButton)return;if(actionBusy)return;actionBusy=true;try{if(cancel){const d=await actionModal({title:'Batalkan Request',description:'Masukkan alasan pembatalan request prioritas ini.',fields:[{name:'reason',label:'Alasan pembatalan',type:'textarea',required:true,placeholder:'Tuliskan alasan...'}],confirmText:'Batalkan Request',danger:true});if(!d)return;await api('cancelPriorityRequest',{groupId:cancel.dataset.cancel,reason:d.reason});notice('Permintaan pembatalan diproses.','success')}else if(confirmButton){const d=await actionModal({title:'Konfirmasi Pembatalan',description:'Konfirmasi pembatalan request ini?',confirmText:'Ya, Batalkan',danger:true});if(!d)return;await api('respondCancelPriorityRequest',{groupId:confirmButton.dataset.confirmCancel,confirm:true});notice('Pembatalan dikonfirmasi.','success')}else if(declineButton){const d=await actionModal({title:'Lanjutkan Pekerjaan',description:'Tolak pembatalan dan lanjutkan pekerjaan?',confirmText:'Lanjutkan Pekerjaan'});if(!d)return;await api('respondCancelPriorityRequest',{groupId:declineButton.dataset.declineCancel,confirm:false});notice('Pembatalan ditolak; pekerjaan dilanjutkan.','success')}else return;await load()}catch(err){notice(err.message||'Aksi request gagal.','error')}finally{actionBusy=false}});
 $('dcReferenceSearch').addEventListener('input',renderDcReference);
-$('dcReferenceShowAll').addEventListener('click',()=>{dcReferenceShowAll=!dcReferenceShowAll;renderDcReference()});
 $('refreshDcReferenceBtn').addEventListener('click',()=>loadDcReference());
 $('refreshPriorityBtn').addEventListener('click',()=>load().catch(e=>notice(e.message,'error')));
 // Perbarui status secara berkala tanpa menghilangkan tombol Refresh manual.
