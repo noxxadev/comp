@@ -12,6 +12,32 @@ function url(){const value=String(window.CompCsiConfig?.webAppUrl||'').trim();if
 async function api(action,payload={}){const res=await fetch(url(),{method:'POST',headers:{'Content-Type':'text/plain;charset=UTF-8'},body:JSON.stringify({action,session:session(),...payload}),cache:'no-store',credentials:'omit'});let data;try{data=JSON.parse(await res.text())}catch(_){throw new Error('Respons CSI tidak valid.')}if(!res.ok||!data?.ok)throw new Error(data?.error||'Permintaan gagal.');return data}
 function dcNames(){const names=new Set();Object.values(window.masterData||{}).forEach(v=>{const m=String(v||'').trim().toUpperCase().match(/^(GBE\.[A-F]\d+[A-Z]?)(?:\.|$)/);if(m)names.add(m[1].replace(/^GBE\./,''))});return [...names].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}))}
 function selected(){return [...$('requestDcList').querySelectorAll('input:checked')].map(el=>el.value)}
+function localDateKey(date=new Date()){return date.getFullYear()+'-'+String(date.getMonth()+1).padStart(2,'0')+'-'+String(date.getDate()).padStart(2,'0')}
+function recentCleaningWarnings(rows,dcs,frameSide,jobType){
+  if(jobType!=='Cleaning')return [];
+  const today=localDateKey();
+  const todayUtc=Date.parse(today+'T00:00:00Z');
+  const sides=frameSide==='Both'?['A','B']:[frameSide];
+  const latest=new Map();
+  (Array.isArray(rows)?rows:[]).forEach(row=>{
+    const dc=String(row?.[3]||'').trim().toUpperCase().replace(/^GBE\\./,'');
+    const side=String(row?.[4]||'').trim().toUpperCase();
+    const type=String(row?.[5]||'').trim();
+    const date=String(row?.[2]||'').slice(0,10);
+    if(!dc||!['A','B'].includes(side)||type!=='Cleaning'||!/^\\d{4}-\\d{2}-\\d{2}$/.test(date))return;
+    const age=Math.floor((todayUtc-Date.parse(date+'T00:00:00Z'))/86400000);
+    if(age<0||age>=7)return;
+    const key=dc+'|'+side;
+    if(!latest.has(key)||date>latest.get(key))latest.set(key,date);
+  });
+  const warnings=[];
+  dcs.forEach(dc=>sides.forEach(side=>{
+    const date=latest.get(String(dc).trim().toUpperCase().replace(/^GBE\\./,'')+'|'+side);
+    if(date)warnings.push({dc,side,date});
+  }));
+  return warnings;
+}
+function formatWarningDate(value){const parts=String(value).split('-').map(Number);return parts.length===3?new Intl.DateTimeFormat('id-ID',{day:'2-digit',month:'long',year:'numeric',timeZone:'UTC'}).format(new Date(Date.UTC(parts[0],parts[1]-1,parts[2]))):value}
 function updatePicker(){const boxes=[...$('requestDcList').querySelectorAll('input')],picked=boxes.filter(b=>b.checked);$('requestDcCount').textContent=picked.length+' DC dipilih';$('requestDcSummary').textContent=picked.length?picked.map(b=>b.value).join(', '):'Pilih Nama DC';$('requestDcAll').checked=boxes.length>0&&picked.length===boxes.length;$('requestDcAll').indeterminate=picked.length>0&&picked.length<boxes.length}
 function initPicker(){const names=dcNames();if(!names.length)throw new Error('Nama DC tidak ditemukan dari master-data.js.');$('requestDcList').innerHTML=names.map(dc=>'<label class="csi-dc-option" data-search="'+esc(dc.toLowerCase())+'"><input type="checkbox" value="'+esc(dc)+'"><span>'+esc(dc)+'</span></label>').join('');updatePicker()}
 function groupStatus(items){const st=items.map(x=>String(x.status||''));if(st.includes('Menunggu Konfirmasi Pembatalan'))return 'Menunggu Konfirmasi Pembatalan';if(st.includes('Pending'))return 'Pending';if(st.includes('Sedang Dikerjakan'))return 'Sedang Dikerjakan';if(st.includes('Diterima'))return 'Diterima';if(st.includes('Dijadwalkan Ulang'))return 'Dijadwalkan Ulang';if(st.every(x=>x==='Selesai'))return 'Selesai';if(st.includes('Dibatalkan'))return st.includes('Selesai')?'Dibatalkan sebagian':'Dibatalkan';if(st.includes('Ditolak'))return st.includes('Selesai')?'Sebagian ditolak':'Ditolak';return st[0]||''}
@@ -22,7 +48,7 @@ $('requestDcDone').addEventListener('click',()=>{$('requestDcPanel').hidden=true
 $('requestDcList').addEventListener('change',updatePicker);
 $('requestDcAll').addEventListener('change',()=>{$('requestDcList').querySelectorAll('input').forEach(el=>{if(!el.closest('label').hidden)el.checked=$('requestDcAll').checked});updatePicker()});
 $('requestDcSearch').addEventListener('input',()=>{const q=$('requestDcSearch').value.trim().toLowerCase();$('requestDcList').querySelectorAll('label').forEach(el=>el.hidden=!el.dataset.search.includes(q))});
-$('priorityRequestForm').addEventListener('submit',async e=>{e.preventDefault();if(busy)return;const dcs=selected();if(!dcs.length){notice('Pilih minimal satu DC.','error');return}busy=true;$('createPriorityBtn').disabled=true;try{const result=await api('createPriorityRequest',{dcNames:dcs,frameSide:$('requestSide').value,jobType:$('requestJob').value,priority:$('requestPriority').value,reason:$('requestReason').value.trim(),scheduledDate:$('requestDate').value});notice('Request berhasil dibuat untuk '+dcs.length+' DC.','success');e.target.reset();$('requestDcList').querySelectorAll('input').forEach(b=>b.checked=false);updatePicker();await load()}catch(err){notice(err.message||'Gagal membuat request.','error')}finally{busy=false;$('createPriorityBtn').disabled=false}});
+$('priorityRequestForm').addEventListener('submit',async e=>{e.preventDefault();if(busy)return;const dcs=selected();if(!dcs.length){notice('Pilih minimal satu DC.','error');return}busy=true;$('createPriorityBtn').disabled=true;try{const frameSide=$('requestSide').value,jobType=$('requestJob').value;const history=await api('getHistory');const warnings=recentCleaningWarnings(history.rows,dcs,frameSide,jobType);if(warnings.length){const lines=warnings.map(item=>'• '+item.dc+' sisi '+item.side+' — cleaning terakhir '+formatWarningDate(item.date));const confirmation=await actionModal({title:'Konfirmasi Request Ulang Cleaning',description:'Ditemukan celldeck yang sudah di-cleaning dalam 7 hari terakhir:\\n\\n'+lines.join('\\n')+'\\n\\nApakah Anda yakin ingin tetap mengirim request ini?',confirmText:'Tetap Request'});if(!confirmation)return}await api('createPriorityRequest',{dcNames:dcs,frameSide,jobType,priority:$('requestPriority').value,reason:$('requestReason').value.trim(),scheduledDate:$('requestDate').value});notice('Request berhasil dibuat untuk '+dcs.length+' DC.','success');e.target.reset();$('requestDcList').querySelectorAll('input').forEach(b=>b.checked=false);updatePicker();await load()}catch(err){notice(err.message||'Gagal membuat request.','error')}finally{busy=false;$('createPriorityBtn').disabled=false}});
 $('priorityRequestList').addEventListener('click',async e=>{const cancel=e.target.closest('[data-cancel]'),confirmButton=e.target.closest('[data-confirm-cancel]'),declineButton=e.target.closest('[data-decline-cancel]');if(!cancel&&!confirmButton&&!declineButton)return;if(actionBusy)return;actionBusy=true;try{if(cancel){const d=await actionModal({title:'Batalkan Request',description:'Masukkan alasan pembatalan request prioritas ini.',fields:[{name:'reason',label:'Alasan pembatalan',type:'textarea',required:true,placeholder:'Tuliskan alasan...'}],confirmText:'Batalkan Request',danger:true});if(!d)return;await api('cancelPriorityRequest',{groupId:cancel.dataset.cancel,reason:d.reason});notice('Permintaan pembatalan diproses.','success')}else if(confirmButton){const d=await actionModal({title:'Konfirmasi Pembatalan',description:'Konfirmasi pembatalan request ini?',confirmText:'Ya, Batalkan',danger:true});if(!d)return;await api('respondCancelPriorityRequest',{groupId:confirmButton.dataset.confirmCancel,confirm:true});notice('Pembatalan dikonfirmasi.','success')}else if(declineButton){const d=await actionModal({title:'Lanjutkan Pekerjaan',description:'Tolak pembatalan dan lanjutkan pekerjaan?',confirmText:'Lanjutkan Pekerjaan'});if(!d)return;await api('respondCancelPriorityRequest',{groupId:declineButton.dataset.declineCancel,confirm:false});notice('Pembatalan ditolak; pekerjaan dilanjutkan.','success')}else return;await load()}catch(err){notice(err.message||'Aksi request gagal.','error')}finally{actionBusy=false}});
 $('refreshPriorityBtn').addEventListener('click',()=>load().catch(e=>notice(e.message,'error')));
 // Perbarui status secara berkala tanpa menghilangkan tombol Refresh manual.
