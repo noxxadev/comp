@@ -139,3 +139,16 @@
 @media(max-width:1500px){.dc-reference-grid{grid-template-columns:repeat(5,minmax(0,1fr))}}
 @media(max-width:900px){.dc-reference-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:520px){.dc-reference-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.dc-reference-card{min-height:95px;padding:9px}.dc-reference-metrics{gap:5px}.dc-reference-tools{gap:7px}.dc-reference-count{font-size:10px}.dc-reference-detail-metrics,.dc-reference-sides{grid-template-columns:1fr}}
+
+/* Fine-tune DC reference cards and align refresh with the request-list button. */
+#dcCleaningReferenceCard .csi-card-head{align-items:center}
+#refreshDcReferenceBtn{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-width:38px;min-height:36px;padding:8px 10px;border:1px solid var(--border,#dfe4ec);border-radius:8px;background:var(--surface-2,var(--surface,#fff));color:var(--text,var(--text-primary,#263247));font:inherit;font-size:11px;font-weight:650;cursor:pointer}
+#refreshDcReferenceBtn:hover{background:var(--surface,var(--card-bg,#fff));border-color:var(--csi-accent,#2463eb)}
+#refreshDcReferenceBtn:disabled{opacity:.55;cursor:wait}
+.dc-reference-card{min-height:0;justify-content:flex-start;gap:7px;padding:9px 8px}
+.dc-reference-card.selected{padding:8px 7px}
+.dc-reference-metrics{gap:5px}
+.dc-reference-metric{justify-content:flex-start;gap:6px}
+.dc-reference-metric b{font-size:10px}
+.dc-reference-metric small{font-size:9px}
+@media(max-width:1500px){.dc-reference-card{gap:6px}}
