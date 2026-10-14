@@ -72,7 +72,7 @@ function renderDcReference(){
   const list=$('dcReferenceList'),query=String($('dcReferenceSearch')?.value||'').trim().toLowerCase();
   const matches=dcReferenceRows.filter(row=>row.dc.toLowerCase().includes(query));
   const shown=query?matches:matches.slice(0,10);
-  $('dcReferenceCount').textContent=query?matches.length+' DC ditemukan':'';
+  $('dcReferenceCount').textContent='';
   if(!shown.length){list.innerHTML='<p class="csi-empty">DC tidak ditemukan.</p>';$('dcReferenceDetail').hidden=true;return}
   if(!shown.some(row=>row.dc===selectedReferenceDc))selectedReferenceDc='';
   list.innerHTML='<div class="dc-reference-grid">'+shown.map(row=>{
