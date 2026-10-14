@@ -881,3 +881,5 @@ Validasi setelah deploy:
 - Monitoring Admin dan CSI hanya menampilkan baris request yang statusnya belum `Selesai`.
 - Dalam request multi-DC, DC yang sudah `Selesai` disembunyikan dari card monitoring, sementara DC yang masih perlu tindak lanjut tetap terlihat.
 - Filter hanya di frontend; riwayat dan data Google Sheet tidak dihapus, serta alur penyimpanan dan penguncian pekerjaan manual tidak diubah.
+
+- Monitoring CSI Priority juga menyembunyikan baris berstatus `Dibatalkan` (selain `Selesai`), tanpa menghapus data atau menyembunyikan DC lain yang masih aktif dalam grup multi-DC.
