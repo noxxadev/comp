@@ -109,3 +109,25 @@
 #csiPriorityRequestsCard .csi-request-more summary{font-size:11px}
 @media(max-width:520px){#csiPriorityRequestsCard .csi-request-row{padding:10px 11px}#csiPriorityRequestsCard .csi-request-title{align-items:flex-start;gap:6px}#csiPriorityRequestsCard .csi-request-badges{gap:4px}#csiPriorityRequestsCard .csi-request-badges .priority-tag,#csiPriorityRequestsCard .csi-request-badges .priority-status{font-size:9px;padding:4px 5px}#csiPriorityRequestsCard .csi-request-footer{align-items:flex-start}}
 .csi-processing-spinner{display:inline-block;width:12px;height:12px;margin-left:7px;vertical-align:-1px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:csiProcessingSpin .7s linear infinite;opacity:.8;flex:0 0 auto}@keyframes csiProcessingSpin{to{transform:rotate(360deg)}}@media(prefers-reduced-motion:reduce){.csi-processing-spinner{animation-duration:1.8s}}
+
+
+/* Admin reference: compact DC list sorted by oldest cleaning date. */
+#dcCleaningReferenceCard .csi-subtitle{margin:5px 0 0;font-size:12px}
+.dc-reference-tools{display:flex;align-items:center;gap:10px;margin:12px 0 8px}
+.dc-reference-tools input{flex:1;min-width:0;border:1px solid var(--border,#dfe4ec);border-radius:9px;padding:10px 12px;background:var(--surface-2,var(--surface,#fff));color:var(--text,var(--text-primary,#263247));font:inherit;font-size:12px}
+.dc-reference-count{font-size:11px;color:var(--muted,#667085);white-space:nowrap}
+.dc-reference-list{display:grid;gap:4px}
+.dc-reference-row{border-bottom:1px solid var(--border,#e4e8ef);padding:0 2px}
+.dc-reference-row summary{display:grid;grid-template-columns:minmax(0,1fr) 92px 92px;align-items:center;gap:8px;min-height:40px;cursor:pointer;list-style:none}
+.dc-reference-row summary::-webkit-details-marker{display:none}
+.dc-reference-name{font-size:12px;font-weight:700;overflow-wrap:anywhere}
+.dc-reference-value{font-size:11px;text-align:right;white-space:nowrap;color:var(--text,var(--text-primary,#263247))}
+.dc-reference-value:before{content:"C ";font-size:9px;color:var(--muted,#667085)}
+.dc-reference-replace:before{content:"R "}
+.dc-reference-value.overdue{color:#b42332;font-weight:800}
+.dc-reference-detail{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 0 9px}
+.dc-reference-side{display:grid;gap:4px;background:var(--surface-2,rgba(127,127,127,.06));border-radius:8px;padding:9px;font-size:11px}
+.dc-reference-side b{font-size:11px}
+.dc-reference-side span{color:var(--muted,#667085)}
+.dc-reference-show-all{margin-top:10px;width:100%}
+@media(max-width:480px){.dc-reference-row summary{grid-template-columns:minmax(0,1fr) 74px 74px;gap:5px}.dc-reference-name{font-size:11px}.dc-reference-value{font-size:10px}.dc-reference-tools{gap:7px}.dc-reference-count{font-size:10px}}
