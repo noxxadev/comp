@@ -82,7 +82,7 @@ function renderDcReference(){
       return '<div class="dc-reference-side"><b>Sisi '+side+'</b><span>Cleaning: '+esc(formatAge(clean))+'</span><span>Replace: '+esc(formatAge(replace))+'</span></div>';
     }).join('');
     const cleanClass=row.cleanAge!==null&&row.cleanAge>=30?' overdue':'';
-    return '<details class="dc-reference-row"><summary><span class="dc-reference-name">'+esc(row.dc)+'</span><span class="dc-reference-value'+cleanClass+'">'+esc(formatAge(row.cleanAge))+'</span><span class="dc-reference-value dc-reference-replace">'+esc(formatAge(row.replaceAge))+'</span></summary><div class="dc-reference-detail">'+detail+'</div></details>';
+    return '<details class="dc-reference-row"><summary><span class="dc-reference-name">'+esc(row.dc)+'</span><span class="dc-reference-value'+cleanClass+'">'+esc(row.cleanAge===null?'—':formatAge(row.cleanAge))+'</span><span class="dc-reference-value dc-reference-replace">'+esc(row.replaceAge===null?'—':formatAge(row.replaceAge))+'</span></summary><div class="dc-reference-detail">'+detail+'</div></details>';
   }).join('');
 }
 async function loadDcReference(){
