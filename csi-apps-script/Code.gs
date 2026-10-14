@@ -686,7 +686,8 @@ function csiRetryPriorityRequest_(payload,user) {
     const changes = found.rows.map((item,i) => {
       const before = csiSerializeRow_(item.values);
       const row = item.values.slice();
-      row[3]=dcs[i]; row[4]=side; row[5]=job; row[6]=reason; row[7]=priority; row[8]='[]'; row[9]='Menunggu CSI'; row[12]=''; row[13]=''; row[14]=''; row[15]=''; row[19]=''; row[20]=''; row[21]=''; row[22]=scheduled; row[23]=''; row[24]=''; row[25]=''; row[26]=''; row[27]=''; row[28]=''; row[29]=now; row[30]='';
+      const originalDc = csiNormalizeDcName_(row[3]);
+      row[3]=dcs.includes(originalDc) ? originalDc : dcs[i]; row[4]=side; row[5]=job; row[6]=reason; row[7]=priority; row[8]='[]'; row[9]='Menunggu CSI'; row[12]=''; row[13]=''; row[14]=''; row[15]=''; row[19]=''; row[20]=''; row[21]=''; row[22]=scheduled; row[23]=''; row[24]=''; row[25]=''; row[26]=''; row[27]=''; row[28]=''; row[29]=now; row[30]='';
       return {item,row,before};
     });
     audit.getRange(audit.getLastRow()+1,1,changes.length,CSI_PRIORITY_AUDIT_HEADERS.length).setValues(changes.map(c=>[Utilities.getUuid(),groupId,now,'AJUKAN ULANG',user.username,JSON.stringify(c.before),JSON.stringify(csiSerializeRow_(c.row))]));
