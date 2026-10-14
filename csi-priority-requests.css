@@ -152,3 +152,21 @@
 .dc-reference-metric b{font-size:10px}
 .dc-reference-metric small{font-size:9px}
 @media(max-width:1500px){.dc-reference-card{gap:6px}}
+
+
+/* DC reference controls: align search and refresh on one full-width row. */
+#dcCleaningReferenceCard .dc-reference-tools{display:flex;align-items:stretch;gap:10px;width:100%;box-sizing:border-box;margin:12px 0}
+#dcCleaningReferenceCard #dcReferenceSearch{display:block;flex:1 1 auto;width:100%;min-width:0;height:40px;box-sizing:border-box;padding:10px 13px;border:1px solid var(--border,#dfe4ec);border-radius:9px;background:var(--surface-2,var(--surface,#fff));color:var(--text,var(--text-primary,#263247));font:inherit;font-size:12px}
+#dcCleaningReferenceCard #refreshDcReferenceBtn{flex:0 0 auto;min-width:40px;min-height:40px;height:40px;padding:10px 14px;border:1px solid var(--border,#dfe4ec);border-radius:9px;background:var(--surface-2,var(--surface,#fff));color:var(--text,var(--text-primary,#263247));font:inherit;font-size:12px;font-weight:750;box-shadow:none;transform:none}
+#dcCleaningReferenceCard #refreshDcReferenceBtn:hover{background:var(--surface-2,var(--surface,#fff));border-color:var(--border,#dfe4ec);opacity:.85}
+#dcCleaningReferenceCard #refreshDcReferenceBtn:disabled{opacity:.55;cursor:wait}
+#dcCleaningReferenceCard .dc-reference-count{align-self:center;flex:0 0 auto}
+#dcCleaningReferenceCard .dc-reference-card{border-color:rgba(100,116,139,.24);box-shadow:0 2px 5px rgba(20,35,60,.035)}
+#dcCleaningReferenceCard .dc-reference-card:nth-child(6n+1){background:rgba(22,160,133,.075);border-top:3px solid rgba(22,160,133,.65)}
+#dcCleaningReferenceCard .dc-reference-card:nth-child(6n+2){background:rgba(59,130,246,.075);border-top:3px solid rgba(59,130,246,.65)}
+#dcCleaningReferenceCard .dc-reference-card:nth-child(6n+3){background:rgba(139,92,246,.075);border-top:3px solid rgba(139,92,246,.65)}
+#dcCleaningReferenceCard .dc-reference-card:nth-child(6n+4){background:rgba(217,149,24,.09);border-top:3px solid rgba(217,149,24,.7)}
+#dcCleaningReferenceCard .dc-reference-card:nth-child(6n+5){background:rgba(225,75,100,.07);border-top:3px solid rgba(225,75,100,.62)}
+#dcCleaningReferenceCard .dc-reference-card:nth-child(6n){background:rgba(14,165,233,.075);border-top:3px solid rgba(14,165,233,.65)}
+#dcCleaningReferenceCard .dc-reference-card.selected{border:2px solid var(--csi-accent,#2563eb);border-top-width:3px;box-shadow:0 3px 10px rgba(37,99,235,.12)}
+@media(max-width:520px){#dcCleaningReferenceCard .dc-reference-tools{gap:7px}#dcCleaningReferenceCard #refreshDcReferenceBtn{padding:9px 11px}#dcCleaningReferenceCard .dc-reference-count{display:none}}
