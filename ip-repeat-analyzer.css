@@ -588,3 +588,26 @@ html:not([data-theme="dark"]) .repeat-row-select-btn.selected {
 #copyResultsBtn:hover:not(:disabled) { filter: brightness(1.1); color: #fff; }
 #copyResultsBtn:disabled { opacity: .5; cursor: not-allowed; }
 [data-theme="dark"] #copyResultsBtn { background: var(--brand, var(--blue, #3b82f6)); border-color: var(--brand, var(--blue, #3b82f6)); color: #fff; }
+
+
+/* Top 5 DC Repeat Zero summary — responsive and theme-aware. */
+.repeat-top-dc { padding: 1.15rem 1.5rem 1.35rem; border-bottom: 1px solid var(--glass-border); }
+.repeat-top-dc-heading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: .9rem; }
+.repeat-top-dc-heading h3 { margin: 0 0 .25rem; color: var(--text, var(--white)); font: 600 1rem 'Outfit', sans-serif; }
+.repeat-top-dc-heading p { margin: 0; color: var(--slate); font-size: .78rem; line-height: 1.5; }
+.repeat-top-dc-heading > i { color: var(--brand, var(--blue, #3b82f6)); font-size: 1.25rem; }
+.repeat-top-dc-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: .7rem; }
+.repeat-top-dc-item { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: .25rem; min-width: 0; padding: .85rem .9rem; border: 1px solid var(--border, var(--glass-border)); border-radius: 12px; background: var(--surface-2, rgba(255,255,255,.04)); color: var(--text, var(--white)); text-align: left; cursor: pointer; transition: border-color .2s ease, transform .2s ease, background .2s ease; }
+.repeat-top-dc-item:hover { transform: translateY(-2px); border-color: var(--brand, var(--blue, #3b82f6)); background: var(--brand-soft, rgba(59,130,246,.08)); }
+.repeat-top-dc-rank { color: var(--brand, var(--blue, #3b82f6)); font-size: .7rem; font-weight: 700; }
+.repeat-top-dc-name { width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .84rem; }
+.repeat-top-dc-total { margin-top: .15rem; font: 700 1.35rem 'Outfit', sans-serif; font-variant-numeric: tabular-nums; }
+.repeat-top-dc-caption { color: var(--slate); font-size: .68rem; }
+.repeat-top-dc-empty { grid-column: 1 / -1; padding: .9rem; border: 1px dashed var(--border, var(--glass-border)); border-radius: 10px; color: var(--slate); font-size: .8rem; text-align: center; }
+@media (max-width: 900px) { .repeat-top-dc-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 560px) {
+  .repeat-top-dc { padding: 1rem; }
+  .repeat-top-dc-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .55rem; }
+  .repeat-top-dc-item { padding: .75rem; }
+  .repeat-top-dc-total { font-size: 1.2rem; }
+}
