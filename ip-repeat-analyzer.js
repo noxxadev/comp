@@ -98,6 +98,12 @@
     return match ? `Line ${match[1].toUpperCase()}` : '-';
   }
 
+  function extractDcName(location) {
+    const parts = String(location ?? '').trim().split('.');
+    if (parts.length >= 2 && parts[0].toUpperCase() === 'GBE' && parts[1].trim()) return parts[1].trim();
+    return '';
+  }
+
   function showError(message) {
     uploadError.textContent = message;
     uploadError.classList.add('visible');
@@ -423,8 +429,8 @@
     const totalsByDc = new Map();
 
     state.rows.forEach(row => {
-      const name = String(row.name || '').trim();
-      if (!name || name === 'Bukan IP DC' || !row.isMaster) return;
+      const name = extractDcName(row.name);
+      if (!name || !row.isMaster) return;
       totalsByDc.set(name, (totalsByDc.get(name) || 0) + Math.max(0, Number(row.repeat) || 0));
     });
 
@@ -482,7 +488,7 @@
 
     state.filteredRows = state.rows.filter(row => {
       const matchesQuery = state.topDcFilter
-        ? row.name === state.topDcFilter
+        ? extractDcName(row.name) === state.topDcFilter
         : hasMultiIpQuery
           ? searchIps.includes(row.ip)
           : (
