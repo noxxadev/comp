@@ -434,7 +434,7 @@
       formatRate(item.rate) + ' • Rank #' + rank +
       (tracked ? ' • Sedang dipantau' : ' • Belum masuk Progress');
 
-    recordTargetBtn.disabled = !tracked;
+    recordTargetBtn.disabled = false;
   };
 
   const recordTargetSnapshot = async () => {
@@ -445,7 +445,16 @@
       String(row.dcName || '').toLowerCase() === item.name.toLowerCase()
     );
     if (!progress) {
-      showError(item.name + ' belum ada di daftar Progress. Tambahkan DC ke Progress terlebih dahulu.');
+      // addDcProgress records the initial baseline; do not save it a second time.
+      showError('');
+      recordTargetBtn.disabled = true;
+      recordTargetBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Merekam...';
+      try {
+        await addProgress(item.name);
+      } finally {
+        updateTargetDc();
+        recordTargetBtn.innerHTML = '<i class="fas fa-camera"></i> Record Data DC';
+      }
       return;
     }
 
