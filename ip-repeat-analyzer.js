@@ -790,8 +790,8 @@
       ])
     ];
     const content = lines.map(columns => columns.map(value =>
-      String(value).replace(/[\\t\\r\\n]+/g, ' ')
-    ).join('\\t')).join('\\n');
+      String(value).replace(/[\t\r\n]+/g, ' ')
+    ).join('\t')).join('\n');
     try {
       await navigator.clipboard.writeText(content);
       const count = state.filteredRows.length;
