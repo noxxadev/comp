@@ -7,6 +7,7 @@
     filteredRows: [],
     sortDesc: true,
     zoneFilter: 'all',
+    topDcFilter: '',
     sourceColumn: '',
     sourceFileName: '',
     loadedAt: '',
@@ -461,6 +462,7 @@
       caption.textContent = 'Repeat Zero';
       button.append(rank, name, total, caption);
       button.addEventListener('click', () => {
+        state.topDcFilter = dc.name;
         searchInput.value = dc.name;
         if (zoneFilter) zoneFilter.value = 'all';
         state.zoneFilter = 'all';
@@ -479,13 +481,15 @@
     const hasMultiIpQuery = searchIps.length > 0;
 
     state.filteredRows = state.rows.filter(row => {
-      const matchesQuery = hasMultiIpQuery
-        ? searchIps.includes(row.ip)
-        : (
-            row.ip.toLowerCase().includes(query) ||
-            row.name.toLowerCase().includes(query) ||
-            String(state.serialByIp.get(row.ip) || '').toLowerCase().includes(query)
-          );
+      const matchesQuery = state.topDcFilter
+        ? row.name === state.topDcFilter
+        : hasMultiIpQuery
+          ? searchIps.includes(row.ip)
+          : (
+              row.ip.toLowerCase().includes(query) ||
+              row.name.toLowerCase().includes(query) ||
+              String(state.serialByIp.get(row.ip) || '').toLowerCase().includes(query)
+            );
       const matchesZone =
         state.zoneFilter === 'all' || row.zone === state.zoneFilter;
       return matchesQuery && matchesZone;
@@ -858,7 +862,10 @@
     }
   });
 
-  searchInput.addEventListener('input', render);
+  searchInput.addEventListener('input', () => {
+    state.topDcFilter = '';
+    render();
+  });
 
   zoneFilter?.addEventListener('change', () => {
     state.zoneFilter = zoneFilter.value;
