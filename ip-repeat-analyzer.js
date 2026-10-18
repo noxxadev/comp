@@ -34,6 +34,7 @@
   const searchInput = $('searchInput');
   const sortBtn = $('sortBtn');
   const copyResultsBtn = $('copyResultsBtn');
+  const topDcCards = $('topDcCards');
   const zoneFilter = $('zoneFilter');
   const resultSummary = $('resultSummary');
   const masterDataStatus = $('masterDataStatus');
@@ -416,7 +417,62 @@
     return [...new Set(tokens)];
   }
 
+  function renderTopDcCards() {
+    if (!topDcCards) return;
+    const totalsByDc = new Map();
+
+    state.rows.forEach(row => {
+      const name = String(row.name || '').trim();
+      if (!name || name === 'Bukan IP DC' || !row.isMaster) return;
+      totalsByDc.set(name, (totalsByDc.get(name) || 0) + Math.max(0, Number(row.repeat) || 0));
+    });
+
+    const topDcs = [...totalsByDc.entries()]
+      .map(([name, total]) => ({ name, total }))
+      .sort((a, b) => b.total - a.total || a.name.localeCompare(b.name, undefined, { numeric: true }))
+      .slice(0, 5);
+
+    topDcCards.innerHTML = '';
+    if (!topDcs.length) {
+      const empty = document.createElement('div');
+      empty.className = 'repeat-top-dc-empty';
+      empty.textContent = 'Belum ada data DC yang dapat dirangkum.';
+      topDcCards.appendChild(empty);
+      return;
+    }
+
+    topDcs.forEach((dc, index) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'repeat-top-dc-item';
+      button.title = 'Klik untuk memfilter tabel ke ' + dc.name;
+      button.setAttribute('aria-label', 'Filter ' + dc.name + ', total Repeat Zero ' + dc.total);
+      const rank = document.createElement('span');
+      rank.className = 'repeat-top-dc-rank';
+      rank.textContent = '#' + (index + 1);
+      const name = document.createElement('strong');
+      name.className = 'repeat-top-dc-name';
+      name.textContent = dc.name;
+      const total = document.createElement('span');
+      total.className = 'repeat-top-dc-total';
+      total.textContent = dc.total.toLocaleString('id-ID');
+      const caption = document.createElement('span');
+      caption.className = 'repeat-top-dc-caption';
+      caption.textContent = 'Repeat Zero';
+      button.append(rank, name, total, caption);
+      button.addEventListener('click', () => {
+        searchInput.value = dc.name;
+        if (zoneFilter) zoneFilter.value = 'all';
+        state.zoneFilter = 'all';
+        render();
+        resultsBody.closest('.repeat-table-wrap')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+      topDcCards.appendChild(button);
+    });
+  }
+
   function render() {
+    renderTopDcCards();
     const rawQuery = searchInput.value.trim();
     const query = rawQuery.toLowerCase();
     const searchIps = parseSearchIps(rawQuery);
