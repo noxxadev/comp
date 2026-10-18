@@ -33,6 +33,7 @@
   const emptyResults = $('emptyResults');
   const searchInput = $('searchInput');
   const sortBtn = $('sortBtn');
+  const copyResultsBtn = $('copyResultsBtn');
   const zoneFilter = $('zoneFilter');
   const resultSummary = $('resultSummary');
   const masterDataStatus = $('masterDataStatus');
@@ -441,6 +442,7 @@
     });
 
     resultsBody.innerHTML = '';
+    if (copyResultsBtn) copyResultsBtn.disabled = state.filteredRows.length === 0;
 
     if (!state.filteredRows.length) {
       emptyResults.hidden = false;
@@ -775,6 +777,29 @@
     }
 
     render();
+  });
+
+  copyResultsBtn?.addEventListener('click', async () => {
+    if (!state.filteredRows.length) return;
+    const lines = [
+      ['IP', 'Nama DC', 'SN'],
+      ...state.filteredRows.map(row => [
+        row.ip,
+        row.name,
+        String(state.serialByIp.get(row.ip) || '').trim()
+      ])
+    ];
+    const content = lines.map(columns => columns.map(value =>
+      String(value).replace(/[\\t\\r\\n]+/g, ' ')
+    ).join('\\t')).join('\\n');
+    try {
+      await navigator.clipboard.writeText(content);
+      const count = state.filteredRows.length;
+      copyResultsBtn.innerHTML = '<i class="fas fa-check"></i><span>' + count.toLocaleString('id-ID') + ' IP Disalin</span>';
+    } catch (error) {
+      console.error('Gagal menyalin hasil IP Repeat:', error);
+      copyResultsBtn.innerHTML = '<i class="fas fa-triangle-exclamation"></i><span>Copy Gagal</span>';
+    }
   });
 
   searchInput.addEventListener('input', render);
