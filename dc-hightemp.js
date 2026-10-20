@@ -336,7 +336,7 @@
 
     emptyRanking.hidden = state.ranking.length !== 0;
     resultNote.textContent = state.ranking.length
-      ? `Menampilkan 5 DC teratas dari ${counts.size.toLocaleString('id-ID')} Nama DC yang teridentifikasi. Perhitungan menggunakan setiap kemunculan IP, bukan hanya IP unik.`
+      ? ''
       : 'Tidak ada Nama DC yang dapat diambil dari mapping master-data.js.';
 
     resultsSection.hidden = false;
@@ -411,7 +411,7 @@
 
     const item = getTargetDcItem();
     if (!item) {
-      targetDcInfo.textContent = hasData ? 'Pilih atau ketik Nama DC yang ingin direcord.' : '';
+      targetDcInfo.textContent = '';
       recordTargetBtn.disabled = true;
       return;
     }
