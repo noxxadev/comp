@@ -6,7 +6,7 @@
   <title>DC HighTemp — COMP Tools</title>
   <link rel="icon" href="/favicon.ico" type="image/x-icon">
   <link rel="stylesheet" href="index-hub.css">
-  <link rel="stylesheet" href="dc-hightemp.css?v=20261021-top5-cards">
+  <link rel="stylesheet" href="dc-hightemp.css?v=20261021-upload-polish">
   <link rel="stylesheet" href="theme-toggle.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <script src="google-sheets-config.js"></script>
@@ -57,7 +57,9 @@
           <div class="dc-heading-icon"><i class="fas fa-file-excel"></i></div>
           <div>
             <h2>Upload History MinerPlus</h2>
+            <p>Unggah file history untuk menghitung frekuensi IP per DC.</p>
           </div>
+          <span class="dc-upload-step"><i class="fas fa-list-check"></i> 1 · Pilih file</span>
         </div>
 
         <div class="dc-upload-area" id="uploadArea">
@@ -65,20 +67,22 @@
           <div class="dc-upload-content">
             <div class="dc-upload-icon"><i class="fas fa-cloud-arrow-up"></i></div>
             <div>
-              <h3>Drop file di sini</h3>
-              <p>atau klik untuk memilih file</p>
+              <h3>Seret file ke area ini</h3>
+              <p>atau klik area untuk memilih file dari komputer</p>
               <span id="fileName">Belum ada file dipilih</span>
+              <div class="dc-file-types" aria-label="Format file yang didukung"><span>XLS</span><span>XLSX</span><span>CSV</span></div>
             </div>
           </div>
         </div>
 
-        <div class="dc-snapshot-note"><strong>Mode Snapshot</strong><span>Upload file hanya untuk analisis. Snapshot hanya direcord saat tombol Record Data Snapshot ditekan.</span></div><div class="dc-actions">
+        <div class="dc-snapshot-note"><span class="dc-snapshot-icon"><i class="fas fa-circle-info"></i></span><div><strong>Perbedaan Hitung DC dan Snapshot</strong><span><b>Hitung DC</b> menampilkan hasil analisis file. <b>Record Data Snapshot</b> menyimpan data ke riwayat Progress dan hanya tersedia setelah analisis selesai.</span></div></div>
+        <div class="dc-actions">
           <div id="fileStatus" class="dc-file-status" aria-live="polite">Belum ada data.</div>
           <div class="dc-action-buttons">
             <button id="processBtn" class="dc-btn dc-btn-primary" type="button" disabled>
               <i class="fas fa-chart-column"></i> Hitung DC
             </button>
-            <button id="recordSnapshotBtn" class="dc-btn dc-btn-secondary" type="button" disabled>
+            <button id="recordSnapshotBtn" class="dc-btn dc-btn-secondary dc-btn-record" type="button" disabled>
               <i class="fas fa-camera"></i> Record Data Snapshot
             </button>
             <button id="clearBtn" class="dc-btn dc-btn-secondary" type="button">
