@@ -295,7 +295,7 @@ function csiRefreshSummary_(dcName, side) {
   if (!matching.length) return;
 
   const latestWork = matching[0];
-  const latestCleaning = matching.find(row => String(row[5]) === 'Cleaning') || null;
+  const latestCleaning = matching.find(row => ['Cleaning', 'Replace'].includes(String(row[5]))) || null;
   const now = new Date();
   let ageDays = '';
   let status = 'Belum ada data cleaning';
@@ -477,7 +477,8 @@ function csiBuildHighTempSummary_() {
     map.set(key, item);
   });
   return [...map.values()].map(item => {
-    item.ageDays = item.lastCleaningDate ? Math.max(0, Math.floor((today - Date.parse(item.lastCleaningDate + 'T00:00:00Z')) / 86400000)) : null;
+    const effectiveDate = [item.lastCleaningDate, item.lastReplaceDate].filter(Boolean).sort().pop() || '';
+    item.ageDays = effectiveDate ? Math.max(0, Math.floor((today - Date.parse(effectiveDate + 'T00:00:00Z')) / 86400000)) : null;
     item.status = item.ageDays === null ? 'Belum ada cleaning' : item.ageDays >= 30 ? 'Perlu Cleaning' : 'Normal';
     return item;
   });
