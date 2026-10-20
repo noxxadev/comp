@@ -360,6 +360,8 @@
   form.addEventListener('submit', async event => {
     event.preventDefault();
     if (busy) return;
+    if (!$('frameSide').value) { $('frameSide').reportValidity(); return; }
+    if (!$('jobType').value) { $('jobType').reportValidity(); return; }
     busy = true; saveButton.disabled = true;
     saveButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan...';
     showNotice('', '');
