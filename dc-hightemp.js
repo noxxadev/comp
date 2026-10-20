@@ -331,15 +331,22 @@
     renderStats({ total, unique: uniqueIps.size, recognized, unrecognized });
 
     rankingBody.innerHTML = state.ranking.map((item, index) =>
-      '<tr>' +
-      '<td class="dc-rank">#' + (index + 1) + '</td>' +
-      '<td class="dc-name">' + escapeHtml(item.name) + '</td>' +
-      '<td class="dc-count">' + formatNumber(item.count) + '</td>' +
-      '<td class="dc-rate">' + formatRate(item.rate) + '</td>' +
-      '<td class="dc-machine-cleaning" data-machine-cleaning-dc="' + escapeHtml(item.name) + '">Memuat data...</td>' +
-      '<td class="dc-csi-detail" data-csi-dc="' + escapeHtml(item.name) + '">Memuat detail...</td>' +
-      '<td><button class="dc-progress-btn" type="button" data-progress-dc="' + encodeURIComponent(item.name) + '"><i class="fas fa-chart-line"></i> Progress</button></td>' +
-      '</tr>'
+      '<article class="dc-top-card">' +
+        '<div class="dc-top-card-head">' +
+          '<span class="dc-top-rank">#' + (index + 1) + '</span>' +
+          '<span class="dc-top-label">TOP ' + (index + 1) + '</span>' +
+          '<span class="dc-top-ip">' + formatNumber(item.count) + ' IP</span>' +
+        '</div>' +
+        '<h3 class="dc-top-name">' + escapeHtml(item.name) + '</h3>' +
+        '<div class="dc-top-rate"><span>Frekuensi IP</span><strong>' + formatRate(item.rate) + '</strong></div>' +
+        '<div class="dc-top-section"><span class="dc-top-section-label">Mesin Cleaning</span>' +
+          '<div class="dc-machine-cleaning" data-machine-cleaning-dc="' + escapeHtml(item.name) + '">Memuat data...</div>' +
+        '</div>' +
+        '<div class="dc-top-section dc-top-celldeck"><span class="dc-top-section-label">Detail Celldeck</span>' +
+          '<div class="dc-csi-detail" data-csi-dc="' + escapeHtml(item.name) + '">Memuat detail...</div>' +
+        '</div>' +
+        '<button class="dc-progress-btn" type="button" data-progress-dc="' + encodeURIComponent(item.name) + '"><i class="fas fa-chart-line"></i> Buka Progress</button>' +
+      '</article>'
     ).join('');
 
     emptyRanking.hidden = state.ranking.length !== 0;
