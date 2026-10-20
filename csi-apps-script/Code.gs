@@ -238,6 +238,32 @@ function csiSaveWork_(payload, user) {
     }
 
     const history = csiGetSheet_(CSI_HISTORY_SHEET, CSI_HISTORY_HEADERS);
+    const historyLastRow = history.getLastRow();
+    const existingHistory = historyLastRow > 1
+      ? history.getRange(2, 1, historyLastRow - 1, CSI_HISTORY_HEADERS.length).getValues()
+      : [];
+    const existingKeys = new Set();
+    existingHistory.forEach(row => {
+      const existingDc = csiNormalizeDcName_(row[3]);
+      const existingSide = String(row[4] || '').trim();
+      const rawDate = row[2];
+      const existingDate = rawDate instanceof Date
+        ? Utilities.formatDate(rawDate, Session.getScriptTimeZone(), 'yyyy-MM-dd')
+        : String(rawDate || '').trim().slice(0, 10);
+      if (existingDc && (existingSide === 'A' || existingSide === 'B') && existingDate) {
+        existingKeys.add([existingDc, existingSide, existingDate].join('|'));
+      }
+    });
+    const duplicateTargets = [];
+    dcNames.forEach(dcName => sides.forEach(side => {
+      const key = [dcName, side, workDateText].join('|');
+      if (existingKeys.has(key)) duplicateTargets.push({ dcName, side });
+    }));
+    if (duplicateTargets.length) {
+      const details = duplicateTargets.map(item => item.dcName + ' — Sisi ' + item.side).join(', ');
+      throw new Error('Input ditolak. DC dan sisi berikut sudah memiliki catatan pada tanggal ' + workDateText + ': ' + details + '. Setiap sisi hanya boleh dicatat satu kali per hari.');
+    }
+
     const now = new Date();
     const rows = [];
     dcNames.forEach(dcName => sides.forEach(side => {
