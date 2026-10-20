@@ -280,3 +280,32 @@
   .dc-action-buttons .dc-btn:first-child{grid-column:auto}
   .dc-action-buttons .dc-btn{width:100%}
 }
+
+
+/* Clear visual sequence: Top 5 -> tracked progress -> current condition/history. */
+.dc-section-step{display:inline-flex;align-items:center;gap:6px;margin-bottom:6px;color:var(--brand);font-size:9px;font-weight:800;letter-spacing:.09em}
+.dc-ranking-card>.dc-card-heading{align-items:flex-start;padding-bottom:14px}
+.dc-ranking-card>.dc-card-heading>div:last-child{min-width:0}
+.dc-ranking-card>.dc-card-heading .dc-section-step{display:block}
+.dc-ranking-grid{border-top:1px solid var(--border);background:var(--surface-2)}
+.dc-top-card{box-shadow:0 2px 7px rgba(15,23,42,.035)}
+.dc-tracked-card{position:relative;border-top:3px solid var(--brand)}
+.dc-tracked-card>.dc-card-heading{align-items:flex-start}
+.dc-tracked-card>.dc-card-heading>div:last-child{min-width:0}
+.dc-tracked-card .dc-section-step{display:block}
+.dc-tracked-card .dc-tracked-access{background:var(--surface-2)}
+.dc-progress-card{border-top:3px solid var(--brand)}
+.dc-progress-kicker{font-size:9px;font-weight:800;letter-spacing:.09em;color:var(--brand)}
+.dc-progress-intro{margin:5px 0 0;color:var(--muted);font-size:11px;line-height:1.5;max-width:620px}
+.dc-current-condition{border-top:3px solid var(--brand);background:var(--surface-2)}
+.dc-current-condition-head h4{font-size:15px;letter-spacing:-.02em}
+.dc-progress-chart-card{background:var(--surface)}
+.dc-progress-chart-head{padding-bottom:9px;border-bottom:1px solid var(--border)}
+.dc-progress-chart-head strong{font-size:13px}
+.dc-progress-chart-head span{line-height:1.5}
+.dc-history-table thead th{white-space:nowrap}
+[data-theme="dark"] .dc-top-card{box-shadow:none}
+@media(max-width:780px){
+  .dc-ranking-card>.dc-card-heading{padding:18px 14px 12px}
+  .dc-progress-intro{font-size:10px}
+}
