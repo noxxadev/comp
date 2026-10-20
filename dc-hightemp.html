@@ -6,7 +6,7 @@
   <title>DC HighTemp — COMP Tools</title>
   <link rel="icon" href="/favicon.ico" type="image/x-icon">
   <link rel="stylesheet" href="index-hub.css">
-  <link rel="stylesheet" href="dc-hightemp.css?v=20261013-current-dc-condition">
+  <link rel="stylesheet" href="dc-hightemp.css?v=20261021-top5-cards">
   <link rel="stylesheet" href="theme-toggle.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <script src="google-sheets-config.js"></script>
@@ -105,14 +105,7 @@
               <p>Frekuensi Nama DC berdasarkan seluruh IP yang berhasil dikenali dari file.</p>
             </div>
           </div>
-          <div class="dc-table-wrap">
-            <table class="dc-table">
-              <thead>
-                <tr><th>Rank</th><th>Nama DC</th><th>Jumlah IP</th><th>Rate</th><th>Mesin Cleaning</th><th>Detail Celldeck</th><th>Progress</th></tr>
-              </thead>
-              <tbody id="rankingBody"></tbody>
-            </table>
-          </div>
+          <div id="rankingBody" class="dc-ranking-grid" aria-live="polite"></div>
           <div class="dc-target-record" id="targetRecordCard">
             <div>
               <strong>Record Data DC Tertentu</strong>
@@ -223,7 +216,7 @@
 <script src="https://cdn.sheetjs.com/xlsx-0.18.5/package/dist/xlsx.full.min.js"></script>
 <script src="master-data.js"></script>
 <script src="csi-google-sheets-config.js?v=20261013-1"></script>
-<script src="dc-hightemp.js?v=20261018-target-any-dc"></script>
+<script src="dc-hightemp.js?v=20261021-top5-cards"></script>
 <script src="theme-toggle.js"></script>
 </body>
 </html>
