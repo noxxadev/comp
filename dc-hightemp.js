@@ -28,7 +28,6 @@
   const errorMessage = $('errorMessage');
   const loading = $('loading');
   const resultsSection = $('resultsSection');
-  const stats = $('stats');
   const rankingBody = $('rankingBody');
   const emptyRanking = $('emptyRanking');
   const resultNote = $('resultNote');
@@ -280,18 +279,6 @@
     resultsSection.hidden = true;
   };
 
-  const renderStats = (values) => {
-    const cards = [
-      ['Total IP', values.total.toLocaleString('id-ID'), 'Seluruh IP valid yang dibaca'],
-      ['Unique IP', values.unique.toLocaleString('id-ID'), 'IP unik dalam history'],
-      ['DC Teridentifikasi', values.recognized.toLocaleString('id-ID'), 'Kemunculan IP yang punya mapping'],
-      ['Bukan IP DC', values.unrecognized.toLocaleString('id-ID'), 'Kemunculan IP tanpa mapping']
-    ];
-    stats.innerHTML = cards.map(([label, value, sub]) =>
-      `<div class="dc-stat"><span class="dc-stat-label">${label}</span><strong class="dc-stat-value">${value}</strong><span class="dc-stat-sub">${sub}</span></div>`
-    ).join('');
-  };
-
   const extractDcName = (location) => {
     const parts = String(location ?? '').trim().split('.');
     if (parts.length >= 2 && parts[0].toUpperCase() === 'GBE' && parts[1].trim()) return parts[1].trim();
@@ -327,8 +314,6 @@
 
     state.allRanking = allRanking;
     state.ranking = allRanking.slice(0, 5);
-
-    renderStats({ total, unique: uniqueIps.size, recognized, unrecognized });
 
     rankingBody.innerHTML = state.ranking.map((item, index) =>
       '<article class="dc-top-card">' +
@@ -926,7 +911,6 @@
     progressSaveStatus.textContent = '';
     downloadProgressBtn.disabled = true;
     updateTrackedAccess();
-    stats.innerHTML = '';
     rankingBody.innerHTML = '';
     emptyRanking.hidden = true;
     resultNote.textContent = '';
