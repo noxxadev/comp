@@ -123,7 +123,7 @@
     return Math.max(0, Math.floor((today - date) / 86400000));
   }
   function latestCleaningFor(dc, side) {
-    return allRows.filter(row => String(row[3]) === dc && String(row[4]) === side && String(row[5]) === 'Cleaning')
+    return allRows.filter(row => String(row[3]) === dc && String(row[4]) === side && ['Cleaning', 'Replace'].includes(String(row[5])))
       .sort((a,b) => new Date(b[2]).getTime() - new Date(a[2]).getTime() || new Date(b[1]).getTime() - new Date(a[1]).getTime())[0] || null;
   }
   function oldSideKeys() {
