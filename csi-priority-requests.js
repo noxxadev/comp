@@ -62,11 +62,16 @@ function buildDcReferenceRows(rows){
     if(/^\d{4}-\d{2}-\d{2}$/.test(replace)&&(!target.replaceDate||replace>target.replaceDate))target.replaceDate=replace;
   });
   return [...byDc.values()].map(item=>{
-    const cleanA=dateAge(item.sides.A.cleanDate),cleanB=dateAge(item.sides.B.cleanDate);
-    const replaceA=dateAge(item.sides.A.replaceDate),replaceB=dateAge(item.sides.B.replaceDate);
-    const cleanAges=[cleanA,cleanB].filter(v=>v!==null),replaceAges=[replaceA,replaceB].filter(v=>v!==null);
-    return {...item,cleanA,cleanB,replaceA,replaceB,cleanAge:cleanAges.length?Math.max(...cleanAges):null,replaceAge:replaceAges.length?Math.max(...replaceAges):null};
-  }).sort((a,b)=>(b.cleanAge??-1)-(a.cleanAge??-1)||a.dc.localeCompare(b.dc,undefined,{numeric:true}));
+    const sides={};
+    ['A','B'].forEach(side=>{
+      const source=item.sides[side];
+      const lastDate=[source.cleanDate,source.replaceDate].filter(Boolean).sort().pop()||'';
+      const lastJob=!lastDate?'':source.replaceDate===lastDate?'Replace':'Cleaning';
+      sides[side]={...source,lastDate,lastJob,age:dateAge(lastDate)};
+    });
+    const ages=[sides.A.age,sides.B.age].filter(v=>v!==null);
+    return {...item,sides,age:ages.length?Math.max(...ages):null};
+  }).sort((a,b)=>(b.age??-1)-(a.age??-1)||a.dc.localeCompare(b.dc,undefined,{numeric:true}));
 }
 function renderDcReference(){
   const list=$('dcReferenceList'),query=String($('dcReferenceSearch')?.value||'').trim().toLowerCase();
@@ -77,15 +82,14 @@ function renderDcReference(){
   if(!shown.some(row=>row.dc===selectedReferenceDc))selectedReferenceDc='';
   list.innerHTML='<div class="dc-reference-grid">'+shown.map(row=>{
     const selected=row.dc===selectedReferenceDc;
-    const cleanClass=row.cleanAge===null?'no-data':row.cleanAge>=30?'overdue':row.cleanAge>=14?'warning':'good';
-    const replaceClass=row.replaceAge===null?'no-data':row.replaceAge>=90?'overdue':row.replaceAge>=60?'warning':'good';
-    return '<button type="button" class="dc-reference-card'+(selected?' selected':'')+'" data-dc-reference="'+esc(row.dc)+'" aria-pressed="'+selected+'"><span class="dc-reference-card-name">'+esc(row.dc)+'</span><span class="dc-reference-metrics"><span class="dc-reference-metric"><b class="'+cleanClass+'">'+esc(row.cleanAge===null?'—':formatAge(row.cleanAge))+'</b><small>Cleaning</small></span><span class="dc-reference-metric"><b class="'+replaceClass+'">'+esc(row.replaceAge===null?'—':formatAge(row.replaceAge))+'</b><small>Replace</small></span></span></button>';
+    const ageClass=row.age===null?'no-data':row.age>=30?'overdue':row.age>=14?'warning':'good';
+    return '<button type="button" class="dc-reference-card'+(selected?' selected':'')+'" data-dc-reference="'+esc(row.dc)+'" aria-pressed="'+selected+'"><span class="dc-reference-card-name">'+esc(row.dc)+'</span><span class="dc-reference-metrics"><span class="dc-reference-metric"><b class="'+ageClass+'">'+esc(row.age===null?'—':formatAge(row.age))+'</b><small>Umur celldeck terlama (A/B)</small></span></span></button>';
   }).join('')+'</div>';
   const selectedRow=dcReferenceRows.find(row=>row.dc===selectedReferenceDc);
   const detail=$('dcReferenceDetail');
   if(!selectedRow){detail.hidden=true;detail.innerHTML='';return}
   detail.hidden=false;
-  detail.innerHTML='<div class="dc-reference-detail-head"><div><span class="csi-section-tag">DETAIL DC</span><h3>'+esc(selectedRow.dc)+'</h3></div><button type="button" class="csi-secondary-btn" data-close-dc-detail aria-label="Tutup detail">Tutup</button></div><div class="dc-reference-detail-metrics"><div class="dc-reference-detail-stat"><span>Cleaning terlama</span><strong>'+esc(formatAge(selectedRow.cleanAge))+'</strong></div><div class="dc-reference-detail-stat"><span>Replace terlama</span><strong>'+esc(formatAge(selectedRow.replaceAge))+'</strong></div></div><h4>Rincian sisi</h4><div class="dc-reference-sides">'+['A','B'].map(side=>{const s=selectedRow.sides[side];return '<div class="dc-reference-side"><b>Sisi '+side+'</b><span>Cleaning: '+esc(formatAge(dateAge(s.cleanDate)))+'</span><small>Terakhir: '+esc(s.cleanDate||'Belum ada data')+'</small><span>Replace: '+esc(formatAge(dateAge(s.replaceDate)))+'</span><small>Terakhir: '+esc(s.replaceDate||'Belum ada data')+'</small></div>'}).join('')+'</div>';
+  detail.innerHTML='<div class="dc-reference-detail-head"><div><span class="csi-section-tag">DETAIL DC</span><h3>'+esc(selectedRow.dc)+'</h3></div><button type="button" class="csi-secondary-btn" data-close-dc-detail aria-label="Tutup detail">Tutup</button></div><div class="dc-reference-detail-metrics"><div class="dc-reference-detail-stat"><span>Umur celldeck terlama</span><strong>'+esc(formatAge(selectedRow.age))+'</strong></div></div><h4>Rincian sisi</h4><div class="dc-reference-sides">'+['A','B'].map(side=>{const s=selectedRow.sides[side];return '<div class="dc-reference-side"><b>Sisi '+side+'</b><span>Umur: '+esc(formatAge(s.age))+'</span><small>Pekerjaan terakhir: '+esc(s.lastJob||'Belum ada data')+'</small><small>Tanggal: '+esc(s.lastDate||'Belum ada data')+'</small></div>'}).join('')+'</div>';
 }
 async function loadDcReference(){
   if(dcReferenceLoading)return;
