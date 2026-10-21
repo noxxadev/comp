@@ -10,3 +10,6 @@
 [data-theme="dark"] .machinelist-upload-area:hover{background:var(--brand-soft);border-color:#4d568a}
 @media(max-width:780px){.matcher-menu-toggle{display:grid;place-items:center}.matcher-sidebar{transform:translateX(-100%);transition:transform .18s ease}.matcher-sidebar.active{transform:translateX(0)}.matcher-main{margin-left:0}.matcher-top{align-items:flex-start}.matcher-upload-grid{grid-template-columns:1fr}.action-card{align-items:stretch;flex-direction:column}.button-group{width:100%}.button-group .btn{flex:1}.machinelist-upload-area{min-height:108px}.upload-box,.action-card{min-width:0}.file-label,.dc-download-btn,.btn{min-height:42px}}
 @media(max-width:560px){.matcher-main{padding-left:16px;padding-right:16px}.matcher-card{padding:16px}.matcher-hero{padding:20px}.matcher-hero-icon{display:none}.hub-title{font-size:28px}.machinelist-upload-area{padding:16px}.machinelist-upload-text strong{font-size:10px}.machinelist-upload-content{padding:12px}.matcher-card-heading{gap:12px}.matcher-card-heading h2{font-size:16px}.upload-box{padding:14px}.file-label{width:100%}.dc-select{height:42px}.dc-download-btn{min-height:42px}.btn-filter{min-height:38px}.stats-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* Shared COMP burger sizing: visual-only override. */
+.matcher-menu-toggle{width:44px;height:44px;flex:0 0 44px;border-radius:12px}
