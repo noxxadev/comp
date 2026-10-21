@@ -365,3 +365,20 @@
 
 /* Keep the legacy resultNote hook for JS without showing the redundant status card. */
 #resultNote { display: none !important; }
+
+
+/* Burger menu alignment: match the in-header layout used by other COMP tools. */
+@media (max-width: 780px) {
+  .dc-menu-toggle {
+    position: static;
+    top: auto;
+    left: auto;
+    width: 44px;
+    height: 44px;
+    flex: 0 0 44px;
+    border-radius: 12px;
+    box-shadow: none;
+    z-index: auto;
+  }
+  .dc-main { padding-top: 20px; }
+}
