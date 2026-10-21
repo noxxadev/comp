@@ -306,3 +306,34 @@ select#filter:focus {
 @media (max-width: 780px) {
   .excel-menu-toggle { width: 44px; height: 44px; flex: 0 0 44px; }
 }
+
+
+/* Compact layout pass — presentation only; keep analyzer logic untouched. */
+.excel-top { margin-bottom: 14px; }
+.excel-card { margin-bottom: 14px; padding: 16px; }
+.excel-card-heading { margin-bottom: 12px; }
+.file-upload-area { min-height: 220px; padding: 28px 18px; }
+.upload-icon { width: 52px; height: 52px; margin-bottom: 8px; font-size: 22px; }
+.file-upload-area h3 { font-size: 15px; }
+.file-upload-area p { margin-bottom: 10px; }
+.upload-btn { min-height: 34px; }
+.controls-panel { padding: 16px; }
+.filter-section { gap: 14px; }
+.output-card { padding-bottom: 12px; }
+.output-container { margin-bottom: 0; border-radius: 10px; }
+.output-container table { min-width: 720px; }
+.output-container th { padding: 10px 11px; }
+.output-container td { padding: 10px 11px; }
+
+@media (max-width: 780px) {
+  .excel-top { margin-bottom: 12px; }
+  .excel-card { margin-bottom: 12px; padding: 15px; }
+  .file-upload-area { min-height: 210px; padding: 26px 16px; }
+  .controls-panel { padding: 15px; }
+}
+
+@media (max-width: 560px) {
+  .excel-card { padding: 14px; }
+  .file-upload-area { min-height: 190px; padding: 24px 14px; }
+  .upload-icon { width: 48px; height: 48px; font-size: 20px; }
+}
