@@ -337,3 +337,6 @@ select#filter:focus {
   .file-upload-area { min-height: 190px; padding: 24px 14px; }
   .upload-icon { width: 48px; height: 48px; font-size: 20px; }
 }
+
+/* Shared COMP burger sizing: visual-only override. */
+@media (max-width:780px){.excel-menu-toggle{width:44px;height:44px;flex:0 0 44px;border-radius:12px}}
