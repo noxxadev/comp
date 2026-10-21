@@ -6,8 +6,8 @@
   <title>Machine List — COMP Tools</title>
   <link rel="icon" href="/favicon.ico" type="image/x-icon">
   <link rel="stylesheet" href="index-hub.css">
-  <link rel="stylesheet" href="ip-repeat-analyzer.css?v=20260901-7">
-  <link rel="stylesheet" href="machine-list.css?v=20260903-1">
+  <link rel="stylesheet" href="ip-repeat-analyzer.css?v=20261022-compact-cards">
+  <link rel="stylesheet" href="machine-list.css?v=20261022-compact-cards">
   <link rel="stylesheet" href="theme-toggle.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <script src="google-sheets-config.js?v=20260904-1"></script>
@@ -51,12 +51,7 @@
         <button class="repeat-menu-toggle" id="menuToggle" type="button" aria-label="Toggle menu" aria-controls="sidebar" aria-expanded="false"><i class="fas fa-bars"></i></button>
       </section>
 
-      <section class="hub-hero repeat-hero">
-        <div><strong>Shared Machine List</strong></div>
-        <div class="repeat-hero-icon"><i class="fas fa-server"></i></div>
-      </section>
-
-      <section class="hub-card machine-list-card">
+<section class="hub-card machine-list-card">
         <div class="machine-list-heading"><div><h2>Machine List Current</h2></div><div class="machine-list-status">Status: <span id="machineListStorageStatus">Memuat...</span></div></div>
         <div class="machine-list-upload" id="machineListUploadArea"><input type="file" id="machineListFile" accept=".xls,.xlsx" aria-label="Upload Machine List"><div class="machine-list-upload-content"><div class="machine-list-upload-icon"><i class="fas fa-server"></i></div><div><h3>Drop Machine List di sini</h3><p>atau klik untuk memilih file • .xls / .xlsx</p><span id="machineListFileName">Belum ada file</span></div></div></div>
         <div id="machineListError" class="machine-list-message machine-list-error" role="alert"></div>
