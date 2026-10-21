@@ -45,3 +45,6 @@
   .manual-panel textarea{min-height:120px}
   .result-table{min-width:650px}
 }
+
+/* Shared COMP burger sizing: visual-only override. */
+.validator-menu-toggle{width:44px;height:44px;flex:0 0 44px;border-radius:12px}
