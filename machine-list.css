@@ -72,3 +72,95 @@
   .machine-list-resolver-form{padding:1rem;gap:.75rem}
   .machine-list-resolver-result{margin:0 1rem 1rem}
 }
+
+
+/* Compact Machine List presentation — styling only; keep all JS hooks unchanged. */
+.machine-list-main { padding-top: 26px; }
+.machine-list-main .hub-top { margin-bottom: 16px; }
+.machine-list-main .hub-title { font-size: 30px; }
+.machine-list-main .hub-desc { margin-top: 7px; font-size: 13px; line-height: 1.5; }
+.machine-list-card { margin-bottom: 14px; border-radius: 14px; box-shadow: var(--shadow); }
+.machine-list-heading { padding: 12px 14px; gap: 12px; border-bottom-color: var(--border); }
+.machine-list-heading h2 { margin: 0; color: var(--text); font: 650 1rem 'Inter', system-ui, sans-serif; letter-spacing: -.015em; }
+.machine-list-heading p { margin: 5px 0 0; color: var(--muted); font-size: .76rem; line-height: 1.45; }
+.machine-list-status { max-width: 100%; color: var(--muted); font-size: .7rem; white-space: normal; text-align: right; }
+.machine-list-status span { color: var(--brand); overflow-wrap: anywhere; }
+.machine-list-upload {
+  margin: 12px 14px;
+  min-height: 94px;
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  background: var(--surface-2);
+  transition: border-color .18s ease, background .18s ease;
+}
+.machine-list-upload:hover, .machine-list-upload.drag-over {
+  border-color: var(--brand);
+  background: var(--brand-soft);
+  transform: none;
+}
+.machine-list-upload.has-file { border-color: #10b981; background: rgba(16,185,129,.055); }
+.machine-list-upload-content { gap: 12px; padding: 12px 14px; }
+.machine-list-upload-icon { width: 40px; height: 40px; flex: 0 0 40px; border-radius: 11px; background: var(--brand-soft); color: var(--brand); font-size: 1rem; }
+.machine-list-upload h3 { margin: 0 0 3px; color: var(--text); font: 650 .88rem 'Inter', system-ui, sans-serif; }
+.machine-list-upload p { margin: 0 0 4px; color: var(--muted); font-size: .72rem; line-height: 1.4; }
+.machine-list-upload span { color: var(--muted); font: .68rem ui-monospace, SFMono-Regular, Menlo, monospace; overflow-wrap: anywhere; }
+.machine-list-message { margin: 0 14px 10px; padding: 9px 11px; border-radius: 9px; font-size: .76rem; }
+.machine-list-error { color: #be123c; background: #fff1f2; border-color: #fecdd3; }
+.machine-list-actions { gap: 8px; padding: 0 14px 14px; }
+.machine-list-actions .repeat-primary-btn { min-height: 36px; padding: 0 12px; border-radius: 9px; font-size: .76rem; }
+.machine-list-clear-btn { min-height: 36px; padding: 0 11px; border-color: var(--border); border-radius: 9px; background: var(--surface-2); color: var(--muted); font-size: .72rem; }
+.machine-list-clear-btn:hover:not(:disabled) { color: var(--text); border-color: var(--brand); }
+.machine-list-loading { min-height: 52px; margin-bottom: 14px; padding: 10px 12px; border-color: var(--border); border-radius: 12px; background: var(--surface); color: var(--muted); font-size: .78rem; }
+.machine-list-loading p { margin: 0; }
+.machine-list-table-wrap { overflow-x: auto; }
+.machine-list-table { min-width: 760px; font-size: .78rem; }
+.machine-list-table th { padding: 9px 12px; background: var(--surface-2); color: var(--muted); border-bottom-color: var(--border); font-size: .65rem; letter-spacing: .045em; }
+.machine-list-table td { padding: 9px 12px; border-bottom-color: var(--border); color: var(--text); }
+.machine-list-table tbody tr:hover { background: var(--brand-soft); }
+.machine-list-no { color: var(--muted) !important; }
+.machine-list-mono { font-size: .72rem; overflow-wrap: anywhere; }
+.machine-list-more { color: var(--muted) !important; }
+.machine-list-empty { padding: 24px 12px; color: var(--muted); }
+.machine-list-empty h3 { margin-bottom: 5px; color: var(--text); font-size: .95rem; }
+.machine-list-empty p { font-size: .76rem; line-height: 1.5; }
+.machine-list-resolver-form { gap: 10px; padding: 12px 14px; }
+.machine-list-resolver-form label { gap: 5px; }
+.machine-list-resolver-form label span { color: var(--muted); font-size: .68rem; }
+.machine-list-resolver-form input { min-height: 36px; padding: 0 10px; border-color: var(--border); border-radius: 9px; background: var(--surface-2); color: var(--text); font-size: .76rem; }
+.machine-list-resolver-result { margin: 0 14px 14px; padding: 10px 12px; border-color: var(--border); border-radius: 9px; background: var(--surface-2); color: var(--muted); font-size: .76rem; }
+.machine-list-resolver-result strong { color: var(--text); }
+.machine-list-resolver-result b { color: #059669; }
+[data-theme="dark"] .machine-list-heading h2,
+[data-theme="dark"] .machine-list-upload h3,
+[data-theme="dark"] .machine-list-table td,
+[data-theme="dark"] .machine-list-empty h3,
+[data-theme="dark"] .machine-list-resolver-form input,
+[data-theme="dark"] .machine-list-resolver-result strong { color: var(--text); }
+[data-theme="dark"] .machine-list-upload,
+[data-theme="dark"] .machine-list-clear-btn,
+[data-theme="dark"] .machine-list-table th,
+[data-theme="dark"] .machine-list-resolver-form input,
+[data-theme="dark"] .machine-list-resolver-result { background: var(--surface-2); border-color: var(--border); }
+[data-theme="dark"] .machine-list-error { color: #fda4af; background: rgba(244,63,94,.1); border-color: rgba(244,63,94,.25); }
+@media (max-width: 760px) {
+  .machine-list-main { padding-top: 56px; }
+  .machine-list-main .hub-top { margin-bottom: 12px; }
+  .machine-list-main .hub-title { font-size: 27px; }
+  .machine-list-heading { gap: 8px; padding: 10px 12px; }
+  .machine-list-status { text-align: left; }
+  .machine-list-upload { margin: 10px 12px; min-height: 90px; }
+  .machine-list-upload-content { flex-direction: row; text-align: left; padding: 10px; }
+  .machine-list-actions { padding: 0 12px 12px; }
+  .machine-list-loading { margin-bottom: 12px; }
+  .machine-list-resolver-form { padding: 10px 12px; }
+  .machine-list-resolver-result { margin: 0 12px 12px; }
+}
+@media (max-width: 560px) {
+  .machine-list-main .hub-title { font-size: 25px; }
+  .machine-list-heading { align-items: flex-start; flex-direction: column; }
+  .machine-list-status { text-align: left; }
+  .machine-list-upload-content { gap: 10px; }
+  .machine-list-upload-icon { width: 36px; height: 36px; flex-basis: 36px; }
+  .machine-list-actions { flex-direction: column; align-items: stretch; }
+  .machine-list-actions .repeat-primary-btn { width: 100%; }
+}
