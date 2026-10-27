@@ -593,43 +593,46 @@
       return;
     }
 
+    // Backend returns newest first. Keep the table's original array unchanged.
+    const ordered = history.map((row, index) => ({ row, index })).sort((a, b) => {
+      const at = Date.parse(a.row.recordedAt);
+      const bt = Date.parse(b.row.recordedAt);
+      if (Number.isFinite(at) && Number.isFinite(bt) && at !== bt) return at - bt;
+      return b.index - a.index;
+    }).map(item => item.row);
+    const values = ordered.map(row => Number(row.count));
+    if (ordered.some((row, i) => row.count === '' || row.count === null || row.count === undefined || !Number.isFinite(values[i]) || values[i] < 0)) {
+      progressChart.innerHTML = '<div class="dc-chart-empty">Jumlah IP pada history tidak valid.</div>';
+      return;
+    }
+
     const width = 760;
     const height = 280;
     const pad = { left: 52, right: 20, top: 22, bottom: 48 };
     const plotW = width - pad.left - pad.right;
     const plotH = height - pad.top - pad.bottom;
-    const values = history.map(row => Number(row.count || 0));
     const max = Math.max(...values, 1);
-    const min = Math.min(...values, 0);
-    const range = Math.max(max - min, 1);
-    const x = (i) => history.length === 1 ? pad.left + plotW / 2 : pad.left + (i / (history.length - 1)) * plotW;
-    const y = (v) => pad.top + (max - v) / range * plotH;
-    const points = history.map((row, i) => x(i) + ',' + y(Number(row.count || 0))).join(' ');
-    const gridValues = [max, min === max ? 0 : min + range / 2, min];
-
-    const grid = gridValues.map(v =>
+    const x = i => ordered.length === 1 ? pad.left + plotW / 2 : pad.left + i / (ordered.length - 1) * plotW;
+    const y = v => pad.top + (max - v) / max * plotH;
+    const points = values.map((value, i) => x(i) + ',' + y(value)).join(' ');
+    const grid = [max, max / 2, 0].map(v =>
       '<line x1="' + pad.left + '" y1="' + y(v) + '" x2="' + (width - pad.right) + '" y2="' + y(v) + '" class="dc-chart-grid"></line>' +
       '<text x="' + (pad.left - 8) + '" y="' + (y(v) + 4) + '" text-anchor="end" class="dc-chart-label">' + formatNumber(v) + '</text>'
     ).join('');
-
-    const labels = history.map((row, i) => {
-      const label = String(row.sourceFile || ('Snapshot ' + (i + 1)));
-      const short = label.length > 18 ? label.slice(0, 15) + '…' : label;
-      return '<text x="' + x(i) + '" y="' + (height - 15) + '" text-anchor="middle" class="dc-chart-label" title="' + escapeHtml(label) + '">' + escapeHtml(short) + '</text>';
+    const labelStep = Math.max(1, Math.ceil(ordered.length / 5));
+    const labels = ordered.map((row, i) => {
+      if (i % labelStep !== 0 && i !== ordered.length - 1) return '';
+      const time = formatDateTime(row.recordedAt);
+      const label = time === '-' ? 'Snapshot ' + (i + 1) : time;
+      return '<text x="' + x(i) + '" y="' + (height - 15) + '" text-anchor="middle" class="dc-chart-label">' + escapeHtml(label) + '</text>';
     }).join('');
-
-    const dots = history.map((row, i) =>
-      '<circle cx="' + x(i) + '" cy="' + y(Number(row.count || 0)) + '" r="4" class="dc-chart-dot"><title>' +
-      escapeHtml(String(row.sourceFile || 'Snapshot')) + ': ' + formatNumber(row.count) + ' IP</title></circle>'
+    const dots = ordered.map((row, i) =>
+      '<circle cx="' + x(i) + '" cy="' + y(values[i]) + '" r="4" class="dc-chart-dot"><title>' +
+      escapeHtml(formatDateTime(row.recordedAt) + ' | ' + String(row.sourceFile || 'Snapshot') + ': ' + formatNumber(values[i]) + ' IP') + '</title></circle>'
     ).join('');
-
     progressChart.innerHTML =
-      '<svg viewBox="0 0 ' + width + ' ' + height + '" preserveAspectRatio="none" aria-hidden="true">' +
-      grid +
-      '<polyline points="' + points + '" class="dc-chart-line" fill="none"></polyline>' +
-      dots +
-      labels +
-      '</svg>';
+      '<svg viewBox="0 0 ' + width + ' ' + height + '" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Trend jumlah IP dari snapshot terlama hingga terbaru">' +
+      grid + '<polyline points="' + points + '" class="dc-chart-line" fill="none"></polyline>' + dots + labels + '</svg>';
   };
 
   const renderProgress = async (dcName = state.selectedDc) => {
