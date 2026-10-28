@@ -507,8 +507,8 @@
       await renderProgress(progress.dcName);
 
       if (result.saved) {
-        targetDcInfo.textContent = item.name + ' • ' + formatNumber(item.count) + ' IP • ' +
-          formatRate(item.rate) + ' • Rank #' + rank + ' • Data berhasil direcord.';
+        targetDcInfo.textContent = item.name + ' • ' + formatNumber(item.count) + ' IP unik • ' +
+          formatDcRate(item.count, item.machineCount) + ' • Rank #' + rank + ' • Data berhasil direcord.';
         progressSaveStatus.innerHTML = '<i class="fas fa-circle-check"></i> Data ' +
           escapeHtml(item.name) + ' berhasil direcord.';
         progressSaveStatus.classList.add('visible');
@@ -694,7 +694,7 @@
         '<tr>' +
         '<td title="' + escapeHtml(item.sourceFile || '') + '">' + escapeHtml(item.sourceFile || '-') + '</td>' +
         '<td class="dc-count">' + formatNumber(item.count) + '</td>' +
-        '<td class="dc-rate">' + formatRate(item.rate) + '</td>' +
+        '<td class="dc-rate">' + (Number(item.machineCount || 0) > 0 ? formatRate(item.rate) : '—') + '</td>' +
         '<td class="' + (Number(item.countChange || 0) < 0 ? 'decrease' : Number(item.countChange || 0) > 0 ? 'increase' : '') + '">' +
           (Number(item.countChange || 0) > 0 ? '+' : '') + formatNumber(item.countChange) +
         '</td>' +
@@ -828,26 +828,29 @@
     );
     const baseline = Number(progress?.baselineCount || history[0]?.count || 0);
 
-    const headers = ['Record At', 'Nama DC', 'Baseline', 'Perubahan', 'Perubahan %'];
+    const headers = ['Record At', 'Nama DC', 'Baseline IP Unik', 'IP Unik', 'Kemunculan IP', 'Mesin Tercatat', 'Rasio HighTemp', 'Perubahan IP Unik', 'Perubahan %'];
     const rows = history.map(item => [
       formatDateTime(item.recordedAt),
       item.dcName || dcName,
       baseline,
+      Number(item.count || 0),
+      Number(item.occurrences || 0),
+      Number(item.machineCount || 0),
+      Number(item.machineCount || 0) > 0 ? Number(item.rate || 0) / 100 : '',
       Number(item.countChange || 0),
       Number(item.percentChange || 0) / 100
     ]);
 
     const worksheet = XLSX.utils.aoa_to_sheet([headers, ...rows]);
     worksheet['!cols'] = [
-      { wch: 22 },
-      { wch: 18 },
-      { wch: 14 },
-      { wch: 14 },
-      { wch: 16 }
+      { wch: 22 }, { wch: 18 }, { wch: 17 }, { wch: 12 }, { wch: 16 },
+      { wch: 16 }, { wch: 16 }, { wch: 18 }, { wch: 14 }
     ];
 
     for (let rowIndex = 2; rowIndex <= rows.length + 1; rowIndex++) {
-      const percentCell = worksheet['E' + rowIndex];
+      const rateCell = worksheet['G' + rowIndex];
+      const percentCell = worksheet['I' + rowIndex];
+      if (rateCell) rateCell.z = '0.00%';
       if (percentCell) percentCell.z = '0.00%';
     }
 
