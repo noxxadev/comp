@@ -339,12 +339,12 @@
     rankingBody.innerHTML = state.ranking.map((item, index) =>
       '<article class="dc-top-card">' +
         '<div class="dc-top-card-head">' +
-          '<div class="dc-top-rank-group"><span class="dc-top-rank">#' + (index + 1) + '</span><span class="dc-top-label">TOP ' + (index + 1) + '</span></div>' +
+          '<div class="dc-top-rank-group"><span class="dc-top-rank">#' + (index + 1) + '</span><span class="dc-top-label">TOP ' + (index + 1) + '</span>' +
+            '<h3 class="dc-top-name">' + escapeHtml(item.name) + '</h3></div>' +
           '<div class="dc-top-head-metrics"><span class="dc-top-ip">' + formatNumber(item.occurrences) + ' Kemunculan IP</span>' +
             '<span class="dc-top-rate-label">Rasio Zero Hashrate</span>' +
             '<strong class="dc-top-rate-value">' + formatDcRate(item.count, item.machineCount) + '</strong></div>' +
         '</div>' +
-        '<h3 class="dc-top-name">' + escapeHtml(item.name) + '</h3>' +
         '<div class="dc-top-section"><span class="dc-top-section-label">Zero Summary</span>' +
           '<div class="dc-top-ip-occurrences"><strong>' + formatNumber(item.count) + ' IP</strong> mengalami zero berulang dari <strong>' + formatNumber(item.machineCount) + ' total mesin</strong></div>' +
         '</div>' +
