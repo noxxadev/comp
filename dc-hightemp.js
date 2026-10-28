@@ -341,12 +341,12 @@
         '<div class="dc-top-card-head">' +
           '<span class="dc-top-rank">#' + (index + 1) + '</span>' +
           '<span class="dc-top-label">TOP ' + (index + 1) + '</span>' +
-          '<span class="dc-top-ip">' + formatNumber(item.count) + ' IP unik</span>' +
+          '<span class="dc-top-ip">' + formatNumber(item.occurrences) + ' Kemunculan IP</span>' +
         '</div>' +
         '<h3 class="dc-top-name">' + escapeHtml(item.name) + '</h3>' +
         '<div class="dc-top-rate"><span>Rasio mesin tercatat</span><strong>' + formatDcRate(item.count, item.machineCount) + '</strong></div>' +
-        '<div class="dc-top-section"><span class="dc-top-section-label">Kemunculan IP</span>' +
-          '<div class="dc-top-ip-occurrences">' + formatNumber(item.occurrences) + ' kemunculan · ' + formatNumber(item.machineCount) + ' mesin tercatat</div>' +
+        '<div class="dc-top-section"><span class="dc-top-section-label">IP Zero · Total Mesin</span>' +
+          '<div class="dc-top-ip-occurrences">' + formatNumber(item.count) + ' IP Zero · ' + formatNumber(item.machineCount) + ' mesin tercatat</div>' +
         '</div>' +
         '<div class="dc-top-section"><span class="dc-top-section-label">Mesin Cleaning</span>' +
           '<div class="dc-machine-cleaning" data-machine-cleaning-dc="' + escapeHtml(item.name) + '">Memuat data...</div>' +
