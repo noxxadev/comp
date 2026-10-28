@@ -387,9 +387,10 @@
     const items = state.progressRows.map(progress => {
       const dcName = String(progress.dcName || '').trim();
       const item = state.allRanking.find(row => row.name.toLowerCase() === dcName.toLowerCase());
+      const machineData = state.machineCleaningByDc.get(dcName.toUpperCase());
       const count = item ? item.count : 0;
       const occurrences = item ? item.occurrences : 0;
-      const machineCount = item ? item.machineCount : 0;
+      const machineCount = item ? item.machineCount : Number(machineData?.totalMachines || 0);
       const rate = machineCount > 0 ? count / machineCount * 100 : 0;
       const rank = rankMap.get(item?.name || dcName) || 0;
 
