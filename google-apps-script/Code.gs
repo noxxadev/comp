@@ -1468,16 +1468,14 @@ function addDcProgress(payload) {
     ]]);
 
     SpreadsheetApp.flush();
-    return {
-      ...jsonResponse({
-        ok: true,
-        action: 'addDcProgress',
-        duplicate: false,
-        progress: dcProgressRowToObject(
-          progressSheet.getRange(progressSheet.getLastRow(), 1, 1, DC_PROGRESS_HEADERS.length).getValues()[0]
-        )
-      })
-    };
+    return jsonResponse({
+      ok: true,
+      action: 'addDcProgress',
+      duplicate: false,
+      progress: dcProgressRowToObject(
+        progressSheet.getRange(progressSheet.getLastRow(), 1, 1, DC_PROGRESS_HEADERS.length).getValues()[0]
+      )
+    });
   } finally {
     lock.releaseLock();
   }
