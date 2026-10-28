@@ -345,8 +345,8 @@
         '</div>' +
         '<h3 class="dc-top-name">' + escapeHtml(item.name) + '</h3>' +
         '<div class="dc-top-rate"><span>Rasio mesin tercatat</span><strong>' + formatDcRate(item.count, item.machineCount) + '</strong></div>' +
-        '<div class="dc-top-section"><span class="dc-top-section-label">IP Zero · Total Mesin</span>' +
-          '<div class="dc-top-ip-occurrences">' + formatNumber(item.count) + ' IP Zero · ' + formatNumber(item.machineCount) + ' mesin tercatat</div>' +
+        '<div class="dc-top-section"><span class="dc-top-section-label">Zero Summary</span>' +
+          '<div class="dc-top-ip-occurrences"><strong>' + formatNumber(item.count) + ' IP</strong> mengalami zero berulang dari <strong>' + formatNumber(item.machineCount) + ' total mesin</strong></div>' +
         '</div>' +
         '<div class="dc-top-section"><span class="dc-top-section-label">Mesin Cleaning</span>' +
           '<div class="dc-machine-cleaning" data-machine-cleaning-dc="' + escapeHtml(item.name) + '">Memuat data...</div>' +
