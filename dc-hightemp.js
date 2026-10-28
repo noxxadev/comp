@@ -694,6 +694,8 @@
         '<tr>' +
         '<td title="' + escapeHtml(item.sourceFile || '') + '">' + escapeHtml(item.sourceFile || '-') + '</td>' +
         '<td class="dc-count">' + formatNumber(item.count) + '</td>' +
+        '<td>' + formatNumber(item.occurrences) + '</td>' +
+        '<td>' + formatNumber(item.machineCount) + '</td>' +
         '<td class="dc-rate">' + (Number(item.machineCount || 0) > 0 ? formatRate(item.rate) : '—') + '</td>' +
         '<td class="' + (Number(item.countChange || 0) < 0 ? 'decrease' : Number(item.countChange || 0) > 0 ? 'increase' : '') + '">' +
           (Number(item.countChange || 0) > 0 ? '+' : '') + formatNumber(item.countChange) +
