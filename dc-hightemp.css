@@ -463,3 +463,13 @@
 /* Zero Summary: compact, theme-aligned explanatory text on TOP 5 cards. */
 .dc-top-ip-occurrences{color:var(--text);font-size:11px;line-height:1.5;overflow-wrap:anywhere}
 .dc-top-ip-occurrences strong{font-size:11px;font-weight:700;color:var(--text)}
+
+
+/* TOP 5 header metrics: visual arrangement only. */
+.dc-top-card-head{align-items:flex-start;justify-content:space-between}
+.dc-top-rank-group{display:flex;align-items:center;gap:8px;flex:0 0 auto}
+.dc-top-head-metrics{display:flex;flex-direction:column;align-items:flex-end;gap:4px;min-width:0;text-align:right}
+.dc-top-head-metrics .dc-top-ip{margin-left:0;white-space:normal;line-height:1.35}
+.dc-top-rate-label{color:var(--muted);font-size:10px;font-weight:700;line-height:1.3}
+.dc-top-rate-value{display:inline-flex;align-items:center;justify-content:center;padding:5px 9px;border:1px solid var(--border);border-radius:8px;background:var(--surface-2);color:var(--dc-rank-color,var(--brand));font:700 18px 'JetBrains Mono',ui-monospace,monospace;line-height:1.2}
+@media(max-width:520px){.dc-top-rate-value{font-size:16px;padding:5px 8px}.dc-top-rate-label{font-size:9px}}
