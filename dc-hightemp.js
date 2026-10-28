@@ -8,6 +8,8 @@
     ranking: [],
     allRanking: [],
     total: 0,
+    totalUniqueIps: 0,
+    unmappedIps: [],
     progressRows: [],
     selectedDc: '',
     progressHistory: [],
@@ -169,6 +171,9 @@
   const formatRate = (v) =>
     Number(v || 0).toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
 
+  const formatDcRate = (count, machineCount) =>
+    Number(machineCount || 0) > 0 ? formatRate(Number(count || 0) / Number(machineCount) * 100) : '—';
+
   const formatNumber = (v) => Number(v || 0).toLocaleString('id-ID');
 
   const formatDateTime = (value) => {
@@ -286,10 +291,10 @@
   };
 
   const calculateSnapshot = () => {
-    const counts = new Map();
+    const dcCounts = new Map();
     const uniqueIps = new Set();
+    const unmappedIps = new Set();
     let total = 0;
-    let recognized = 0;
 
     for (const row of state.rows) {
       const ip = normalizeIP(row[state.ipColumn]);
@@ -299,18 +304,34 @@
 
       const location = window.masterData && window.masterData[ip];
       const dcName = extractDcName(location);
-      if (!dcName) continue;
+      if (!dcName) {
+        unmappedIps.add(ip);
+        continue;
+      }
 
-      recognized++;
-      counts.set(dcName, (counts.get(dcName) || 0) + 1);
+      const key = dcName.toUpperCase();
+      if (!dcCounts.has(key)) dcCounts.set(key, { name: dcName, ips: new Set(), occurrences: 0 });
+      const entry = dcCounts.get(key);
+      entry.ips.add(ip);
+      entry.occurrences++;
     }
 
-    const unrecognized = total - recognized;
     state.total = total;
+    state.totalUniqueIps = uniqueIps.size;
+    state.unmappedIps = [...unmappedIps].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
 
-    const allRanking = [...counts.entries()]
-      .map(([name, count]) => ({ name, count, rate: total ? count / total * 100 : 0 }))
-      .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, undefined, { numeric: true }));
+    const allRanking = [...dcCounts.values()].map(entry => {
+      const machineData = state.machineCleaningByDc.get(entry.name.toUpperCase());
+      const machineCount = Number(machineData?.totalMachines || 0);
+      const count = entry.ips.size;
+      return {
+        name: entry.name,
+        count,
+        occurrences: entry.occurrences,
+        machineCount,
+        rate: machineCount > 0 ? count / machineCount * 100 : 0
+      };
+    }).sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, undefined, { numeric: true }));
 
     state.allRanking = allRanking;
     state.ranking = allRanking.slice(0, 5);
@@ -320,10 +341,13 @@
         '<div class="dc-top-card-head">' +
           '<span class="dc-top-rank">#' + (index + 1) + '</span>' +
           '<span class="dc-top-label">TOP ' + (index + 1) + '</span>' +
-          '<span class="dc-top-ip">' + formatNumber(item.count) + ' IP</span>' +
+          '<span class="dc-top-ip">' + formatNumber(item.count) + ' IP unik</span>' +
         '</div>' +
         '<h3 class="dc-top-name">' + escapeHtml(item.name) + '</h3>' +
-        '<div class="dc-top-rate"><span>Frekuensi IP</span><strong>' + formatRate(item.rate) + '</strong></div>' +
+        '<div class="dc-top-rate"><span>Rasio mesin tercatat</span><strong>' + formatDcRate(item.count, item.machineCount) + '</strong></div>' +
+        '<div class="dc-top-section"><span class="dc-top-section-label">Kemunculan IP</span>' +
+          '<div class="dc-top-ip-occurrences">' + formatNumber(item.occurrences) + ' kemunculan · ' + formatNumber(item.machineCount) + ' mesin tercatat</div>' +
+        '</div>' +
         '<div class="dc-top-section"><span class="dc-top-section-label">Mesin Cleaning</span>' +
           '<div class="dc-machine-cleaning" data-machine-cleaning-dc="' + escapeHtml(item.name) + '">Memuat data...</div>' +
         '</div>' +
@@ -335,11 +359,18 @@
     ).join('');
 
     emptyRanking.hidden = state.ranking.length !== 0;
-    resultNote.textContent = state.ranking.length
+    const noRankingNote = state.ranking.length
       ? ''
-      : 'Tidak ada Nama DC yang dapat diambil dari mapping master-data.js.';
+      : '<p>Tidak ada Nama DC yang dapat diambil dari mapping master-data.js.</p>';
+    const unmappedNote = state.unmappedIps.length
+      ? '<details class="dc-unmapped-ips"><summary>' +
+        formatNumber(state.unmappedIps.length) + ' IP unik tidak terpetakan ke DC</summary><p>' +
+        escapeHtml(state.unmappedIps.join(', ')) + '</p></details>'
+      : '';
+    resultNote.innerHTML = noRankingNote + unmappedNote;
 
     resultsSection.hidden = false;
+    renderMachineCleaningCells();
     updateTrackedAccess();
     updateTargetDc();
   };
@@ -363,13 +394,18 @@
     const items = state.progressRows.map(progress => {
       const dcName = String(progress.dcName || '').trim();
       const item = state.allRanking.find(row => row.name.toLowerCase() === dcName.toLowerCase());
+      const machineData = state.machineCleaningByDc.get(dcName.toUpperCase());
       const count = item ? item.count : 0;
-      const rate = state.total ? count / state.total * 100 : 0;
+      const occurrences = item ? item.occurrences : 0;
+      const machineCount = item ? item.machineCount : Number(machineData?.totalMachines || 0);
+      const rate = machineCount > 0 ? count / machineCount * 100 : 0;
       const rank = rankMap.get(item?.name || dcName) || 0;
 
       return {
         dcName,
         count,
+        occurrences,
+        machineCount,
         total: state.total,
         rate,
         rank,
@@ -422,8 +458,8 @@
 
     const rank = state.allRanking.findIndex(row => row.name === item.name) + 1;
     targetDcInfo.textContent =
-      item.name + ' • ' + formatNumber(item.count) + ' IP • ' +
-      formatRate(item.rate) + ' • Rank #' + rank +
+      item.name + ' • ' + formatNumber(item.count) + ' IP unik • ' +
+      formatDcRate(item.count, item.machineCount) + ' • Rank #' + rank +
       (tracked ? ' • Sedang dipantau' : ' • Belum masuk Progress');
 
     recordTargetBtn.disabled = false;
@@ -466,6 +502,8 @@
         items: [{
           dcName: progress.dcName,
           count: item.count,
+          occurrences: item.occurrences,
+          machineCount: item.machineCount,
           total: state.total,
           rate: item.rate,
           rank,
@@ -477,8 +515,8 @@
       await renderProgress(progress.dcName);
 
       if (result.saved) {
-        targetDcInfo.textContent = item.name + ' • ' + formatNumber(item.count) + ' IP • ' +
-          formatRate(item.rate) + ' • Rank #' + rank + ' • Data berhasil direcord.';
+        targetDcInfo.textContent = item.name + ' • ' + formatNumber(item.count) + ' IP unik • ' +
+          formatDcRate(item.count, item.machineCount) + ' • Rank #' + rank + ' • Data berhasil direcord.';
         progressSaveStatus.innerHTML = '<i class="fas fa-circle-check"></i> Data ' +
           escapeHtml(item.name) + ' berhasil direcord.';
         progressSaveStatus.classList.add('visible');
@@ -664,7 +702,9 @@
         '<tr>' +
         '<td title="' + escapeHtml(item.sourceFile || '') + '">' + escapeHtml(item.sourceFile || '-') + '</td>' +
         '<td class="dc-count">' + formatNumber(item.count) + '</td>' +
-        '<td class="dc-rate">' + formatRate(item.rate) + '</td>' +
+        '<td>' + formatNumber(item.occurrences) + '</td>' +
+        '<td>' + formatNumber(item.machineCount) + '</td>' +
+        '<td class="dc-rate">' + (Number(item.machineCount || 0) > 0 ? formatRate(item.rate) : '—') + '</td>' +
         '<td class="' + (Number(item.countChange || 0) < 0 ? 'decrease' : Number(item.countChange || 0) > 0 ? 'increase' : '') + '">' +
           (Number(item.countChange || 0) > 0 ? '+' : '') + formatNumber(item.countChange) +
         '</td>' +
@@ -711,6 +751,8 @@
         baselineCount: item.count,
         baselineTotal: state.total,
         baselineRate: item.rate,
+        baselineOccurrences: item.occurrences,
+        baselineMachines: item.machineCount,
         baselineRank: rank,
         baselineTop5: rank <= 5,
         baselineFile: state.file.name,
@@ -796,26 +838,29 @@
     );
     const baseline = Number(progress?.baselineCount || history[0]?.count || 0);
 
-    const headers = ['Record At', 'Nama DC', 'Baseline', 'Perubahan', 'Perubahan %'];
+    const headers = ['Record At', 'Nama DC', 'Baseline IP Unik', 'IP Unik', 'Kemunculan IP', 'Mesin Tercatat', 'Rasio HighTemp', 'Perubahan IP Unik', 'Perubahan %'];
     const rows = history.map(item => [
       formatDateTime(item.recordedAt),
       item.dcName || dcName,
       baseline,
+      Number(item.count || 0),
+      Number(item.occurrences || 0),
+      Number(item.machineCount || 0),
+      Number(item.machineCount || 0) > 0 ? Number(item.rate || 0) / 100 : '',
       Number(item.countChange || 0),
       Number(item.percentChange || 0) / 100
     ]);
 
     const worksheet = XLSX.utils.aoa_to_sheet([headers, ...rows]);
     worksheet['!cols'] = [
-      { wch: 22 },
-      { wch: 18 },
-      { wch: 14 },
-      { wch: 14 },
-      { wch: 16 }
+      { wch: 22 }, { wch: 18 }, { wch: 17 }, { wch: 12 }, { wch: 16 },
+      { wch: 16 }, { wch: 16 }, { wch: 18 }, { wch: 14 }
     ];
 
     for (let rowIndex = 2; rowIndex <= rows.length + 1; rowIndex++) {
-      const percentCell = worksheet['E' + rowIndex];
+      const rateCell = worksheet['G' + rowIndex];
+      const percentCell = worksheet['I' + rowIndex];
+      if (rateCell) rateCell.z = '0.00%';
       if (percentCell) percentCell.z = '0.00%';
     }
 
@@ -872,8 +917,8 @@
     processBtn.disabled = true;
 
     try {
-      calculateSnapshot();
       await loadMachineCleaningSummary();
+      calculateSnapshot();
       await loadProgress();
       try {
         await loadCsiSummary();
@@ -898,6 +943,8 @@
     state.ranking = [];
     state.allRanking = [];
     state.total = 0;
+    state.totalUniqueIps = 0;
+    state.unmappedIps = [];
     historyFile.value = '';
     fileName.textContent = 'Belum ada file dipilih';
     fileStatus.textContent = 'Belum ada data.';
