@@ -359,11 +359,18 @@
     ).join('');
 
     emptyRanking.hidden = state.ranking.length !== 0;
-    resultNote.textContent = state.ranking.length
-      ? (state.unmappedIps.length ? state.unmappedIps.length.toLocaleString('id-ID') + ' IP unik tidak terpetakan ke DC dan tidak masuk ranking.' : '')
-      : 'Tidak ada Nama DC yang dapat diambil dari mapping master-data.js.';
+    if (state.ranking.length) {
+      resultNote.innerHTML = state.unmappedIps.length
+        ? '<details class="dc-unmapped-ips"><summary>' +
+          formatNumber(state.unmappedIps.length) + ' IP unik tidak terpetakan ke DC</summary><p>' +
+          escapeHtml(state.unmappedIps.join(', ')) + '</p></details>'
+        : '';
+    } else {
+      resultNote.textContent = 'Tidak ada Nama DC yang dapat diambil dari mapping master-data.js.';
+    }
 
     resultsSection.hidden = false;
+    renderMachineCleaningCells();
     updateTrackedAccess();
     updateTargetDc();
   };
