@@ -422,3 +422,39 @@
 
 
 
+
+
+/* Snapshot history: keep each header aligned with its corresponding values. */
+.dc-history-table{
+  table-layout:fixed;
+  width:100%;
+  min-width:1125px;
+}
+.dc-history-table th,
+.dc-history-table td{
+  box-sizing:border-box;
+  vertical-align:middle;
+}
+.dc-history-table th:nth-child(1),
+.dc-history-table td:nth-child(1){width:200px;text-align:left}
+.dc-history-table th:nth-child(2),
+.dc-history-table td:nth-child(2){width:90px;text-align:center}
+.dc-history-table th:nth-child(3),
+.dc-history-table td:nth-child(3){width:120px;text-align:center}
+.dc-history-table th:nth-child(4),
+.dc-history-table td:nth-child(4){width:120px;text-align:center}
+.dc-history-table th:nth-child(5),
+.dc-history-table td:nth-child(5){width:125px;text-align:center}
+.dc-history-table th:nth-child(6),
+.dc-history-table td:nth-child(6){width:100px;text-align:center}
+.dc-history-table th:nth-child(7),
+.dc-history-table td:nth-child(7){width:110px;text-align:center}
+.dc-history-table th:nth-child(8),
+.dc-history-table td:nth-child(8){width:80px;text-align:center}
+.dc-history-table th:nth-child(9),
+.dc-history-table td:nth-child(9){width:180px;text-align:center;white-space:nowrap}
+.dc-history-table td:first-child{
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
