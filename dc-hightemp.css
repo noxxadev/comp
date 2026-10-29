@@ -500,3 +500,97 @@
 .dc-readiness-chip.is-not-ready{color:var(--muted);background:var(--surface)}
 .dc-export-note{margin-top:7px;color:var(--muted);font-size:11px}
 @media(max-width:780px){.dc-export-panel{margin:0 14px 14px}.dc-export-controls{align-items:stretch}.dc-export-controls label{flex:1;min-width:130px}.dc-export-controls .dc-btn{width:100%}}
+
+/* Fit-to-card refinement for DC HighTemp.
+   Visual-only overrides: preserve existing IDs, markup hooks and JavaScript behavior. */
+.dc-card,
+.dc-ranking-card,
+.dc-tracked-card,
+.dc-progress-card {
+  border-radius: 14px;
+}
+.dc-upload-card { padding: 16px; }
+.dc-upload-card .dc-card-heading { margin-bottom: 12px; }
+.dc-upload-area { min-height: 112px; border-radius: 12px; }
+.dc-upload-content { padding: 16px; }
+.dc-snapshot-note { margin-top: 12px; padding: 10px 12px; border-radius: 10px; }
+.dc-actions { margin-top: 12px; gap: 12px; }
+.dc-btn { min-height: 37px; padding: 0 12px; border-radius: 9px; }
+.dc-ranking-card > .dc-card-heading { padding: 16px 16px 12px; gap: 10px; }
+.dc-ranking-card > .dc-card-heading h2 { font-size: 16px; }
+.dc-ranking-card .dc-heading-icon { width: 38px; height: 38px; flex-basis: 38px; border-radius: 10px; }
+.dc-export-panel {
+  display: grid;
+  gap: 10px;
+  margin: 0 16px 14px;
+  padding: 11px;
+  border-radius: 11px;
+  background: var(--surface-2);
+}
+.dc-export-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(105px, .7fr) auto;
+  align-items: end;
+  gap: 9px;
+  min-width: 0;
+}
+.dc-export-controls label { min-width: 0; gap: 5px; font-size: 10px; letter-spacing: .01em; }
+.dc-export-controls select {
+  width: 100%;
+  min-width: 0;
+  min-height: 36px;
+  padding: 0 9px;
+  border-radius: 8px;
+  font-size: 11px;
+}
+.dc-export-controls #exportCount { min-width: 0; }
+.dc-export-controls .dc-btn {
+  min-height: 36px;
+  padding: 0 12px;
+  white-space: nowrap;
+  border-radius: 8px;
+  font-size: 11px;
+}
+.dc-export-readiness {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+  margin-top: 0;
+}
+.dc-readiness-chip {
+  justify-content: center;
+  min-width: 0;
+  padding: 6px 8px;
+  border-radius: 8px;
+  font-size: 10px;
+  white-space: nowrap;
+}
+.dc-export-note { margin: 0; font-size: 10px; }
+.dc-ranking-grid { gap: 11px; padding: 14px 16px 16px; }
+.dc-top-card { border-radius: 13px; padding: 14px; }
+.dc-target-record { margin-top: 0; padding: 12px 16px; }
+.dc-tracked-card { padding: 16px; }
+.dc-tracked-card > .dc-card-heading { margin-bottom: 10px; }
+.dc-progress-card { padding: 16px; }
+.dc-current-condition { border-radius: 12px; }
+@media (max-width: 780px) {
+  .dc-upload-card { padding: 13px; }
+  .dc-export-panel { margin: 0 12px 12px; padding: 10px; }
+  .dc-export-controls { grid-template-columns: minmax(0, 1fr) minmax(0, .75fr); }
+  .dc-export-controls .dc-btn { grid-column: 1 / -1; width: 100%; }
+  .dc-ranking-card > .dc-card-heading { padding: 14px 12px 10px; }
+  .dc-ranking-grid { padding: 12px; gap: 10px; }
+  .dc-target-record { padding: 12px; }
+  .dc-tracked-card, .dc-progress-card { padding: 13px; }
+}
+@media (max-width: 480px) {
+  .dc-export-controls { grid-template-columns: 1fr; }
+  .dc-export-controls .dc-btn { grid-column: auto; }
+  .dc-export-readiness { grid-template-columns: 1fr; }
+  .dc-readiness-chip { justify-content: flex-start; }
+  .dc-upload-content { padding: 12px; gap: 10px; }
+  .dc-upload-icon { width: 40px; height: 40px; flex-basis: 40px; }
+  .dc-actions { align-items: stretch; flex-direction: column; }
+  .dc-action-buttons { display: grid; grid-template-columns: 1fr; }
+}
+
