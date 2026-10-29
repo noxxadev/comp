@@ -594,3 +594,14 @@
   .dc-action-buttons { display: grid; grid-template-columns: 1fr; }
 }
 
+
+
+/* Top 5 display selector: presentation only; ranking calculations remain unchanged. */
+.dc-ranking-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.dc-ranking-heading .dc-heading-title{display:flex;align-items:center;gap:12px;min-width:0}
+.dc-ranking-mode{display:inline-flex;align-items:center;gap:4px;padding:4px;border:1px solid var(--border);border-radius:10px;background:var(--surface-2)}
+.dc-ranking-mode-btn{min-width:68px;min-height:34px;padding:7px 13px;border:1px solid transparent;border-radius:7px;background:transparent;color:var(--muted);font:700 11px Inter,system-ui,sans-serif;cursor:pointer;transition:background .16s ease,color .16s ease,border-color .16s ease}
+.dc-ranking-mode-btn:hover{color:var(--text)}
+.dc-ranking-mode-btn.is-active{background:var(--brand);border-color:var(--brand);color:#fff}
+[data-theme="dark"] .dc-ranking-mode-btn.is-active{color:#fff}
+@media(max-width:520px){.dc-ranking-heading{align-items:flex-start}.dc-ranking-heading .dc-heading-title{gap:10px}.dc-ranking-mode{width:100%}.dc-ranking-mode-btn{flex:1}}
