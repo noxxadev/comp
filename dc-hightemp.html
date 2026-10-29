@@ -99,11 +99,17 @@
 
       <section id="resultsSection" class="dc-results" hidden>
         <section class="hub-card dc-card dc-ranking-card" aria-labelledby="rankingTitle">
-          <div class="dc-card-heading">
-            <div class="dc-heading-icon ranking"><i class="fas fa-temperature-high"></i></div>
-            <div>
-              <span class="dc-section-step">LANGKAH 1 · TEMUKAN DC</span>
-              <h2 id="rankingTitle">TOP 5 DC HIGHTEMP</h2>
+          <div class="dc-card-heading dc-ranking-heading">
+            <div class="dc-heading-title">
+              <div class="dc-heading-icon ranking"><i class="fas fa-temperature-high"></i></div>
+              <div>
+                <span class="dc-section-step">LANGKAH 1 · TEMUKAN DC</span>
+                <h2 id="rankingTitle">TOP 5 DC HIGHTEMP</h2>
+              </div>
+            </div>
+            <div class="dc-ranking-mode" role="group" aria-label="Pilih ranking Top 5 DC">
+              <button id="rankingWorstBtn" class="dc-ranking-mode-btn is-active" type="button" aria-pressed="true">Worst</button>
+              <button id="rankingBestBtn" class="dc-ranking-mode-btn" type="button" aria-pressed="false">Best</button>
             </div>
           </div>
           <div class="dc-export-panel" aria-label="Download ranking DC">
