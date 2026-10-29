@@ -16,7 +16,9 @@
     csiSummaryByDc: new Map(),
     csiSummaryError: '',
     machineCleaningByDc: new Map(),
-    machineCleaningError: ''
+    machineCleaningError: '',
+    readiness: { minerplus: false, machine: false, csi: false },
+    exportBusy: false
   };
 
   const $ = (id) => document.getElementById(id);
@@ -49,6 +51,10 @@
   const targetDcList = $('targetDcList');
   const recordTargetBtn = $('recordTargetBtn');
   const targetDcInfo = $('targetDcInfo');
+  const exportMode = $('exportMode');
+  const exportCount = $('exportCount');
+  const exportBtn = $('exportRankingBtn');
+  const exportReadiness = $('exportReadiness');
 
   const getConfig = () => window.CompGoogleSheetsConfig || { webAppUrl: '', requestKey: '' };
 
@@ -81,6 +87,8 @@
   };
 
   const loadCsiSummary = async () => {
+    state.readiness.csi = false;
+    updateExportReadiness();
     const config = window.CompCsiConfig || {};
     const session = window.CompAuth?.getSession?.() || localStorage.getItem('comp.auth.session') || '';
     if (!config.webAppUrl || !session) throw new Error('Endpoint CSI atau sesi login belum tersedia.');
@@ -99,10 +107,14 @@
       if (!state.csiSummaryByDc.has(key)) state.csiSummaryByDc.set(key, {});
       state.csiSummaryByDc.get(key)[String(row.frameSide || '').trim().toUpperCase()] = row;
     });
+    state.readiness.csi = true;
     renderCsiSummaryCells();
+    updateExportReadiness();
   };
 
   const loadMachineCleaningSummary = async () => {
+    state.readiness.machine = false;
+    updateExportReadiness();
     try {
       const result = await apiGet('getDcMachineCleaningSummary');
       state.machineCleaningByDc = new Map();
@@ -111,12 +123,15 @@
         if (key) state.machineCleaningByDc.set(key, row);
       });
       state.machineCleaningError = '';
+      state.readiness.machine = true;
     } catch (error) {
       state.machineCleaningByDc = new Map();
       state.machineCleaningError = 'Data mesin tidak tersedia';
+      state.readiness.machine = false;
       console.warn('Ringkasan mesin dibersihkan belum dapat dimuat:', error);
     }
     renderMachineCleaningCells();
+    updateExportReadiness();
   };
 
   const renderMachineCleaningCells = () => {
@@ -214,6 +229,112 @@
   const showError = (message) => {
     errorMessage.textContent = message || '';
     errorMessage.classList.toggle('visible', Boolean(message));
+  };
+
+  const updateExportReadiness = () => {
+    if (!exportReadiness || !exportBtn) return;
+    const items = [
+      ['MinerPlus', state.readiness.minerplus],
+      ['Machine List', state.readiness.machine],
+      ['CSI', state.readiness.csi]
+    ];
+    exportReadiness.innerHTML = items.map(([name, ready]) =>
+      '<span class="dc-readiness-chip ' + (ready ? 'is-ready' : 'is-not-ready') + '">' +
+      '<i class="fas ' + (ready ? 'fa-circle-check' : 'fa-circle-xmark') + '"></i> ' +
+      escapeHtml(name) + ' ' + (ready ? 'Ready' : 'Belum Ready') + '</span>'
+    ).join('');
+    const allReady = items.every(([, ready]) => ready);
+    const canExport = Boolean(state.file && state.allRanking.length && allReady && !state.exportBusy);
+    exportBtn.disabled = !canExport;
+    if (exportBusyLabel) exportBusyLabel.hidden = !state.exportBusy;
+  };
+
+  const exportBusyLabel = $('exportBusyLabel');
+
+  const exportRanking = () => {
+    if (!state.file || !state.allRanking.length) {
+      showError('Analisis MinerPlus belum tersedia.');
+      return;
+    }
+    if (!state.readiness.minerplus || !state.readiness.machine || !state.readiness.csi) {
+      showError('Download belum dapat dilakukan. Pastikan MinerPlus, Machine List, dan CSI berstatus Ready.');
+      return;
+    }
+    if (typeof XLSX === 'undefined') {
+      showError('Library Excel belum termuat. Refresh halaman lalu coba lagi.');
+      return;
+    }
+
+    const mode = exportMode?.value === 'best' ? 'best' : 'worst';
+    const requestedCount = Number(exportCount?.value || 5);
+    const candidates = state.allRanking.filter(item => Number(item.machineCount) > 0);
+    candidates.sort((a, b) => {
+      const rateDiff = mode === 'best' ? a.rate - b.rate : b.rate - a.rate;
+      if (rateDiff) return rateDiff;
+      const countDiff = mode === 'best' ? a.count - b.count : b.count - a.count;
+      if (countDiff) return countDiff;
+      const occurrencesDiff = mode === 'best' ? a.occurrences - b.occurrences : b.occurrences - a.occurrences;
+      return occurrencesDiff || a.name.localeCompare(b.name, undefined, { numeric: true });
+    });
+    const selected = candidates.slice(0, requestedCount);
+    if (selected.length < requestedCount) {
+      showError('Hanya ' + selected.length + ' DC dengan rasio valid yang tersedia. Tidak membuat file TOP ' + requestedCount + ' yang tidak lengkap.');
+      return;
+    }
+
+    const machineMissing = selected.filter(item => !state.machineCleaningByDc.has(item.name.toUpperCase()));
+    if (machineMissing.length) {
+      showError('Data Machine List tidak ditemukan untuk: ' + machineMissing.map(item => item.name).join(', ') + '. Download dibatalkan agar laporan tidak keliru.');
+      return;
+    }
+
+    const headers = [
+      'Rank', 'Nama DC', 'Rasio Zero Hashrate (%)', 'IP Unik Zero', 'Total Kemunculan IP',
+      'Total Mesin MinerPlus', 'Mesin Cleaning Selesai', 'Mesin Belum Cleaning',
+      'Total Mesin Machine List', 'Persentase Mesin Cleaning (%)',
+      'Sisi A Status', 'Sisi A Umur Cleaning (hari)', 'Sisi A Cleaning Terakhir',
+      'Sisi A Replace Terakhir', 'Sisi A Pekerjaan Terakhir', 'Sisi B Status',
+      'Sisi B Umur Cleaning (hari)', 'Sisi B Cleaning Terakhir', 'Sisi B Replace Terakhir',
+      'Sisi B Pekerjaan Terakhir'
+    ];
+    const rows = selected.map((item, index) => {
+      const machine = state.machineCleaningByDc.get(item.name.toUpperCase()) || {};
+      const csi = state.csiSummaryByDc.get(item.name.toUpperCase()) || {};
+      const sideValues = side => {
+        const detail = csi[side];
+        if (!detail) return ['Belum ada data', '', '', '', 'Belum ada pekerjaan'];
+        return [
+          detail.status || 'Belum ada data',
+          detail.ageDays === null || detail.ageDays === undefined ? '' : detail.ageDays,
+          detail.lastCleaningDate ? formatCsiDate(detail.lastCleaningDate) : 'Belum ada cleaning',
+          detail.lastReplaceDate ? formatCsiDate(detail.lastReplaceDate) : 'Belum ada replace',
+          detail.lastWorkDate
+            ? String(detail.lastJobType || 'Pekerjaan') + ' ' + formatCsiDate(detail.lastWorkDate)
+            : 'Belum ada pekerjaan'
+        ];
+      };
+      const sideA = sideValues('A');
+      const sideB = sideValues('B');
+      return [
+        index + 1, item.name, item.rate / 100, item.count, item.occurrences,
+        item.machineCount, Number(machine.cleanedMachines ?? 0), Number(machine.notCleanedMachines ?? 0),
+        Number(machine.totalMachines ?? 0), Number(machine.cleaningRate ?? 0) / 100,
+        ...sideA, ...sideB
+      ];
+    });
+    const worksheet = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+    worksheet['!cols'] = [
+      {wch:8},{wch:16},{wch:22},{wch:14},{wch:19},{wch:20},{wch:20},{wch:20},{wch:20},{wch:25},
+      {wch:18},{wch:22},{wch:22},{wch:22},{wch:32},{wch:18},{wch:22},{wch:22},{wch:22},{wch:32}
+    ];
+    for (let rowIndex = 2; rowIndex <= rows.length + 1; rowIndex++) {
+      ['C','J'].forEach(col => { if (worksheet[col + rowIndex]) worksheet[col + rowIndex].z = '0.00%'; });
+    }
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Ranking DC');
+    XLSX.writeFile(workbook, mode.toUpperCase() + '_TOP' + requestedCount + '_DC_HighTemp_' +
+      new Date().toISOString().slice(0, 10) + '.xlsx');
+    showError('');
   };
 
   const normalizeHeader = (value) => String(value ?? '')
@@ -815,6 +936,8 @@
       state.file = null;
       state.rows = [];
       state.ipColumn = -1;
+      state.readiness = { minerplus: false, machine: false, csi: false };
+      updateExportReadiness();
       fileName.textContent = file.name;
       fileStatus.textContent = 'File belum siap diproses.';
       showError(error instanceof Error ? error.message : 'Gagal membaca file.');
@@ -831,6 +954,8 @@
 
   targetDcSearch.addEventListener('input', updateTargetDc);
   recordTargetBtn.addEventListener('click', recordTargetSnapshot);
+
+  if (exportBtn) exportBtn.addEventListener('click', exportRanking);
 
   downloadProgressBtn.addEventListener('click', () => {
     const dcName = state.selectedDc || 'DC';
@@ -926,16 +1051,28 @@
     processBtn.disabled = true;
 
     try {
+      state.readiness.minerplus = false;
+      state.readiness.machine = false;
+      state.readiness.csi = false;
+      state.machineCleaningError = '';
+      state.csiSummaryError = '';
+      updateExportReadiness();
       await loadMachineCleaningSummary();
       calculateSnapshot();
+      state.readiness.minerplus = Boolean(state.file && state.allRanking.length);
+      updateExportReadiness();
       await loadProgress();
       try {
         await loadCsiSummary();
       } catch (csiError) {
+        state.csiSummaryByDc = new Map();
         state.csiSummaryError = 'Detail CSI tidak tersedia';
+        state.readiness.csi = false;
         renderCsiSummaryCells();
+        updateExportReadiness();
         console.warn('Detail CSI belum dapat dimuat:', csiError);
       }
+      updateExportReadiness();
       recordSnapshotBtn.disabled = !(state.file && state.progressRows.length && state.allRanking.length);
     } catch (e) {
       showError(e.message || 'Gagal menghitung snapshot.');
@@ -951,6 +1088,12 @@
     state.ipColumn = -1;
     state.ranking = [];
     state.allRanking = [];
+    state.readiness = { minerplus: false, machine: false, csi: false };
+    state.machineCleaningByDc = new Map();
+    state.machineCleaningError = '';
+    state.csiSummaryByDc = new Map();
+    state.csiSummaryError = '';
+    updateExportReadiness();
     state.total = 0;
     state.totalUniqueIps = 0;
     state.unmappedIps = [];
