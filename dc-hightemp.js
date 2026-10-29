@@ -994,6 +994,13 @@
     state.ipColumn = -1;
     state.ranking = [];
     state.allRanking = [];
+    state.rankingMode = 'worst';
+    if (rankingWorstBtn && rankingBestBtn) {
+      rankingWorstBtn.classList.add('is-active');
+      rankingBestBtn.classList.remove('is-active');
+      rankingWorstBtn.setAttribute('aria-pressed', 'true');
+      rankingBestBtn.setAttribute('aria-pressed', 'false');
+    }
     state.readiness = { minerplus: false, machine: false, csi: false };
     state.machineCleaningByDc = new Map();
     state.machineCleaningError = '';
