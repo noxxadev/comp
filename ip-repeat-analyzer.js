@@ -426,16 +426,17 @@
 
   function renderTopDcCards() {
     if (!topDcCards) return;
-    const totalsByDc = new Map();
+    const ipsByDc = new Map();
 
     state.rows.forEach(row => {
       const name = extractDcName(row.name);
-      if (!name || !row.isMaster) return;
-      totalsByDc.set(name, (totalsByDc.get(name) || 0) + Math.max(0, Number(row.repeat) || 0));
+      if (!name || !row.isMaster || !row.ip) return;
+      if (!ipsByDc.has(name)) ipsByDc.set(name, new Set());
+      ipsByDc.get(name).add(normalizeIp(row.ip));
     });
 
-    const topDcs = [...totalsByDc.entries()]
-      .map(([name, total]) => ({ name, total }))
+    const topDcs = [...ipsByDc.entries()]
+      .map(([name, ips]) => ({ name, total: ips.size }))
       .sort((a, b) => b.total - a.total || a.name.localeCompare(b.name, undefined, { numeric: true }))
       .slice(0, 5);
 
