@@ -41,6 +41,7 @@
   const progressSaveStatus = $('progressSaveStatus');
   const progressSummary = $('progressSummary');
   const progressChart = $('progressChart');
+  const progressMachineChart = $('progressMachineChart');
   const progressHistoryBody = $('progressHistoryBody');
   const progressEmpty = $('progressEmpty');
   const trackedProgressCard = $('trackedProgressCard');
@@ -741,51 +742,73 @@
   };
 
   const renderSummary = (row) => {
-    const status = String(row.status || 'Tetap');
-    const statusClass = status === 'Berkurang' ? 'decrease' : status === 'Bertambah' ? 'increase' : 'same';
+    const baselineRate = Number(row.baselineRate);
+    const currentRate = Number(row.currentRate);
+    const baselineAvailable = Number(row.baselineMachines || 0) > 0 && Number.isFinite(baselineRate);
+    const currentAvailable = Number(row.currentMachines || 0) > 0 && Number.isFinite(currentRate);
+    const rateChange = baselineAvailable && currentAvailable ? currentRate - baselineRate : null;
+    const percentChange = baselineAvailable && currentAvailable && baselineRate !== 0
+      ? ((currentRate - baselineRate) / baselineRate) * 100
+      : null;
+    const progressPercent = percentChange === null ? null : -percentChange;
+    const status = rateChange === null ? '—' : rateChange < 0 ? 'Membaik' : rateChange > 0 ? 'Memburuk' : 'Tetap';
+    const statusClass = status === 'Membaik' ? 'decrease' : status === 'Memburuk' ? 'increase' : 'same';
     progressSummary.innerHTML = [
-      ['Baseline', formatNumber(row.baselineCount)],
-      ['Current', formatNumber(row.currentCount)],
-      ['Perubahan', (row.countChange > 0 ? '+' : '') + formatNumber(row.countChange)],
-      ['% Perubahan', (row.percentChange > 0 ? '+' : '') + formatRate(row.percentChange)],
-      ['Progress', formatRate(row.progressPercent)],
+      ['Baseline Rasio', baselineAvailable ? formatRate(baselineRate) : '—'],
+      ['Current Rasio', currentAvailable ? formatRate(currentRate) : '—'],
+      ['Perubahan Rasio', rateChange === null ? '—' : (rateChange > 0 ? '+' : '') + formatRate(rateChange) + ' pp'],
+      ['Perubahan Relatif', percentChange === null ? '—' : (percentChange > 0 ? '+' : '') + formatRate(percentChange)],
+      ['Progress', progressPercent === null ? '—' : (progressPercent > 0 ? '+' : '') + formatRate(progressPercent)],
       ['Status', '<span class="dc-progress-status ' + statusClass + '">' + escapeHtml(status) + '</span>']
     ].map(([label, value]) =>
       '<div class="dc-progress-metric"><span>' + label + '</span><strong>' + value + '</strong></div>'
     ).join('');
   };
 
-  const renderChart = (history) => {
+  const renderMetricChart = (container, history, metric, title, unit, baselineRate = null) => {
+    if (!container) return;
     if (!history.length) {
-      progressChart.innerHTML = '<div class="dc-chart-empty">Belum ada data grafik.</div>';
+      container.innerHTML = '<div class="dc-chart-empty">Belum ada data grafik.</div>';
       return;
     }
 
-    // Backend returns newest first. Keep the table's original array unchanged.
     const ordered = history.map((row, index) => ({ row, index })).sort((a, b) => {
       const at = Date.parse(a.row.recordedAt);
       const bt = Date.parse(b.row.recordedAt);
       if (Number.isFinite(at) && Number.isFinite(bt) && at !== bt) return at - bt;
       return b.index - a.index;
     }).map(item => item.row);
-    const values = ordered.map(row => Number(row.count));
-    if (ordered.some((row, i) => row.count === '' || row.count === null || row.count === undefined || !Number.isFinite(values[i]) || values[i] < 0)) {
-      progressChart.innerHTML = '<div class="dc-chart-empty">Jumlah IP pada history tidak valid.</div>';
+    const values = ordered.map(row => {
+      if (metric === 'rate') return Number(row.machineCount || 0) > 0 && row.rate !== '' && row.rate !== null && row.rate !== undefined && Number.isFinite(Number(row.rate)) ? Number(row.rate) : null;
+      const value = Number(row[metric]);
+      return row[metric] !== '' && row[metric] !== null && row[metric] !== undefined && Number.isFinite(value) && value >= 0 ? value : null;
+    });
+    const validValues = values.filter(value => value !== null);
+    if (!validValues.length) {
+      container.innerHTML = '<div class="dc-chart-empty">Data ' + escapeHtml(title.toLowerCase()) + ' belum tersedia.</div>';
       return;
     }
 
     const width = 760;
     const height = 280;
-    const pad = { left: 52, right: 20, top: 22, bottom: 48 };
+    const pad = { left: 60, right: 20, top: 22, bottom: 48 };
     const plotW = width - pad.left - pad.right;
     const plotH = height - pad.top - pad.bottom;
-    const max = Math.max(...values, 1);
+    const max = Math.max(...validValues, 1);
     const x = i => ordered.length === 1 ? pad.left + plotW / 2 : pad.left + i / (ordered.length - 1) * plotW;
     const y = v => pad.top + (max - v) / max * plotH;
-    const points = values.map((value, i) => x(i) + ',' + y(value)).join(' ');
+    const segments = [];
+    let segment = [];
+    values.forEach((value, i) => {
+      if (value === null) {
+        if (segment.length) segments.push(segment);
+        segment = [];
+      } else segment.push(x(i) + ',' + y(value));
+    });
+    if (segment.length) segments.push(segment);
     const grid = [max, max / 2, 0].map(v =>
       '<line x1="' + pad.left + '" y1="' + y(v) + '" x2="' + (width - pad.right) + '" y2="' + y(v) + '" class="dc-chart-grid"></line>' +
-      '<text x="' + (pad.left - 8) + '" y="' + (y(v) + 4) + '" text-anchor="end" class="dc-chart-label">' + formatNumber(v) + '</text>'
+      '<text x="' + (pad.left - 8) + '" y="' + (y(v) + 4) + '" text-anchor="end" class="dc-chart-label">' + escapeHtml(formatRate(v).replace(/%$/, unit === '%' ? '%' : '')) + '</text>'
     ).join('');
     const labelStep = Math.max(1, Math.ceil(ordered.length / 5));
     const labels = ordered.map((row, i) => {
@@ -794,14 +817,17 @@
       const label = time === '-' ? 'Snapshot ' + (i + 1) : time;
       return '<text x="' + x(i) + '" y="' + (height - 15) + '" text-anchor="middle" class="dc-chart-label">' + escapeHtml(label) + '</text>';
     }).join('');
-    const dots = ordered.map((row, i) =>
+    const dots = ordered.map((row, i) => values[i] === null ? '' :
       '<circle cx="' + x(i) + '" cy="' + y(values[i]) + '" r="4" class="dc-chart-dot"><title>' +
-      escapeHtml(formatDateTime(row.recordedAt) + ' | ' + String(row.sourceFile || 'Snapshot') + ': ' + formatNumber(values[i]) + ' IP') + '</title></circle>'
+      escapeHtml(formatDateTime(row.recordedAt) + ' | ' + String(row.sourceFile || 'Snapshot') + ': ' + formatNumber(values[i]) + (unit === '%' ? '%' : ' mesin')) + '</title></circle>'
     ).join('');
-    progressChart.innerHTML =
-      '<svg viewBox="0 0 ' + width + ' ' + height + '" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Trend jumlah IP dari snapshot terlama hingga terbaru">' +
-      grid + '<polyline points="' + points + '" class="dc-chart-line" fill="none"></polyline>' + dots + labels + '</svg>';
+    container.innerHTML =
+      '<svg viewBox="0 0 ' + width + ' ' + height + '" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Trend ' + escapeHtml(title.toLowerCase()) + ' dari snapshot terlama hingga terbaru">' +
+      grid + segments.map(points => '<polyline points="' + points.join(' ') + '" class="dc-chart-line" fill="none"></polyline>').join('') + dots + labels + '</svg>';
   };
+
+  const renderChart = (history) => renderMetricChart(progressChart, history, 'rate', 'Rasio Zero Hashrate', '%');
+  const renderMachineChart = (history) => renderMetricChart(progressMachineChart, history, 'machineCount', 'Jumlah Mesin Tercatat', 'mesin');
 
   const renderProgress = async (dcName = state.selectedDc) => {
     state.selectedDc = dcName;
@@ -813,6 +839,7 @@
     if (!row) {
       progressSummary.innerHTML = '';
       progressChart.innerHTML = '';
+      if (progressMachineChart) progressMachineChart.innerHTML = '';
       progressHistoryBody.innerHTML = '';
       state.progressHistory = [];
       progressEmpty.hidden = false;
@@ -827,7 +854,10 @@
       const x = await apiGet('getDcProgressHistory', { progressId: row.progressId });
       const history = Array.isArray(x.rows) ? x.rows : [];
       renderChart(history);
+      renderMachineChart(history);
 
+      const baselineRate = Number(row.baselineRate);
+      const baselineAvailable = Number(row.baselineMachines || 0) > 0 && Number.isFinite(baselineRate);
       progressHistoryBody.innerHTML = history.map(item =>
         '<tr>' +
         '<td title="' + escapeHtml(item.sourceFile || '') + '">' + escapeHtml(item.sourceFile || '-') + '</td>' +
@@ -835,10 +865,10 @@
         '<td>' + formatNumber(item.occurrences) + '</td>' +
         '<td>' + formatNumber(item.machineCount) + '</td>' +
         '<td class="dc-rate">' + (Number(item.machineCount || 0) > 0 ? formatRate(item.rate) : '—') + '</td>' +
-        '<td class="' + (Number(item.countChange || 0) < 0 ? 'decrease' : Number(item.countChange || 0) > 0 ? 'increase' : '') + '">' +
-          (Number(item.countChange || 0) > 0 ? '+' : '') + formatNumber(item.countChange) +
+        '<td class="' + (baselineAvailable && Number(item.machineCount || 0) > 0 && Number(item.rate) < baselineRate ? 'decrease' : baselineAvailable && Number(item.machineCount || 0) > 0 && Number(item.rate) > baselineRate ? 'increase' : '') + '">' +
+          (baselineAvailable && Number(item.machineCount || 0) > 0 ? ((Number(item.rate) - baselineRate > 0 ? '+' : '') + formatRate(Number(item.rate) - baselineRate) + ' pp') : '—') +
         '</td>' +
-        '<td>' + (Number(item.percentChange || 0) > 0 ? '+' : '') + formatRate(item.percentChange) + '</td>' +
+        '<td>' + (baselineAvailable && baselineRate !== 0 && Number(item.machineCount || 0) > 0 ? (((Number(item.rate) - baselineRate) / baselineRate * 100 > 0 ? '+' : '') + formatRate((Number(item.rate) - baselineRate) / baselineRate * 100)) : '—') + '</td>' +
         '<td class="' + (item.isTop5 ? 'yes' : 'no') + '">' + (item.isTop5 ? 'Ya' : 'Tidak') + '</td>' +
         '<td>' + escapeHtml(formatDateTime(item.recordedAt)) + '</td>' +
         '</tr>'
@@ -851,6 +881,7 @@
       state.progressHistory = [];
       progressHistoryBody.innerHTML = '';
       progressChart.innerHTML = '<div class="dc-chart-empty">History belum dapat dimuat.</div>';
+      if (progressMachineChart) progressMachineChart.innerHTML = '<div class="dc-chart-empty">History belum dapat dimuat.</div>';
       progressEmpty.hidden = false;
       downloadProgressBtn.disabled = true;
       showError('Progress ' + dcName + ' ditemukan, tetapi history belum dapat dimuat: ' + e.message);
@@ -970,32 +1001,38 @@
     const progress = state.progressRows.find(row =>
       String(row.dcName || '').toLowerCase() === String(dcName || '').toLowerCase()
     );
-    const baseline = Number(progress?.baselineCount || history[0]?.count || 0);
+    const baselineRate = Number(progress?.baselineRate);
+    const baselineAvailable = Number(progress?.baselineMachines || 0) > 0 && Number.isFinite(baselineRate);
 
-    const headers = ['Record At', 'Nama DC', 'Baseline IP Unik', 'IP Unik', 'Kemunculan IP', 'Mesin Tercatat', 'Rasio HighTemp', 'Perubahan IP Unik', 'Perubahan %'];
-    const rows = history.map(item => [
-      formatDateTime(item.recordedAt),
-      item.dcName || dcName,
-      baseline,
-      Number(item.count || 0),
-      Number(item.occurrences || 0),
-      Number(item.machineCount || 0),
-      Number(item.machineCount || 0) > 0 ? Number(item.rate || 0) / 100 : '',
-      Number(item.countChange || 0),
-      Number(item.percentChange || 0) / 100
-    ]);
+    const headers = ['Record At', 'Nama DC', 'Baseline Rasio', 'Rasio Zero Hashrate', 'Perubahan Rasio (pp)', 'Perubahan Relatif', 'Mesin Tercatat', 'IP Unik', 'Kemunculan IP'];
+    const rows = history.map(item => {
+      const currentAvailable = Number(item.machineCount || 0) > 0 && Number.isFinite(Number(item.rate));
+      const rateChange = baselineAvailable && currentAvailable ? Number(item.rate) - baselineRate : null;
+      const relativeChange = rateChange !== null && baselineRate !== 0 ? rateChange / baselineRate : null;
+      return [
+        formatDateTime(item.recordedAt),
+        item.dcName || dcName,
+        baselineAvailable ? baselineRate / 100 : '',
+        currentAvailable ? Number(item.rate || 0) / 100 : '',
+        rateChange === null ? '' : rateChange / 100,
+        relativeChange === null ? '' : relativeChange,
+        Number(item.machineCount || 0),
+        Number(item.count || 0),
+        Number(item.occurrences || 0)
+      ];
+    });
 
     const worksheet = XLSX.utils.aoa_to_sheet([headers, ...rows]);
     worksheet['!cols'] = [
-      { wch: 22 }, { wch: 18 }, { wch: 17 }, { wch: 12 }, { wch: 16 },
-      { wch: 16 }, { wch: 16 }, { wch: 18 }, { wch: 14 }
+      { wch: 22 }, { wch: 18 }, { wch: 16 }, { wch: 20 }, { wch: 20 },
+      { wch: 18 }, { wch: 16 }, { wch: 12 }, { wch: 18 }
     ];
 
     for (let rowIndex = 2; rowIndex <= rows.length + 1; rowIndex++) {
-      const rateCell = worksheet['G' + rowIndex];
-      const percentCell = worksheet['I' + rowIndex];
-      if (rateCell) rateCell.z = '0.00%';
-      if (percentCell) percentCell.z = '0.00%';
+      ['C', 'D', 'E', 'F'].forEach(column => {
+        const cell = worksheet[column + rowIndex];
+        if (cell) cell.z = '0.00%';
+      });
     }
 
     const workbook = XLSX.utils.book_new();
