@@ -18,7 +18,9 @@
     machineCleaningByDc: new Map(),
     machineCleaningError: '',
     readiness: { minerplus: false, machine: false, csi: false },
-    exportBusy: false
+    exportBusy: false,
+    snapshotStatus: { alreadyRecordedToday: false, date: '' },
+    snapshotBusy: false
   };
 
   const $ = (id) => document.getElementById(id);
@@ -48,10 +50,6 @@
   const trackedAccess = $('trackedAccess');
   const trackedDcSelect = $('trackedDcSelect');
   const openTrackedBtn = $('openTrackedBtn');
-  const targetDcSearch = $('targetDcSearch');
-  const targetDcList = $('targetDcList');
-  const recordTargetBtn = $('recordTargetBtn');
-  const targetDcInfo = $('targetDcInfo');
   const exportMode = $('exportMode');
   const exportCount = $('exportCount');
   const exportBtn = $('exportRankingBtn');
@@ -503,7 +501,6 @@
     resultsSection.hidden = false;
     renderMachineCleaningCells();
     updateTrackedAccess();
-    updateTargetDc();
   };
 
   const getRankMap = () => {
@@ -519,150 +516,30 @@
   };
 
   const persistTrackedSnapshot = async () => {
-    if (!state.progressRows.length || !state.file?.name) return;
-
+    if (!state.allRanking.length || !state.file?.name) throw new Error('Hitung DC terlebih dahulu sebelum merekam snapshot.');
     const rankMap = getRankMap();
-    const items = state.progressRows.map(progress => {
-      const dcName = String(progress.dcName || '').trim();
-      const item = state.allRanking.find(row => row.name.toLowerCase() === dcName.toLowerCase());
-      const machineData = state.machineCleaningByDc.get(dcName.toUpperCase());
-      const count = item ? item.count : 0;
-      const occurrences = item ? item.occurrences : 0;
-      const machineCount = item ? item.machineCount : Number(machineData?.totalMachines || 0);
-      const rate = machineCount > 0 ? count / machineCount * 100 : 0;
-      const rank = rankMap.get(item?.name || dcName) || 0;
-
-      return {
-        dcName,
-        count,
-        occurrences,
-        machineCount,
-        total: state.total,
-        rate,
-        rank,
-        isTop5: rank > 0 && rank <= 5
-      };
+    const items = state.allRanking.map(item => {
+      const rank = rankMap.get(item.name) || 0;
+      return {dcName:item.name,count:Number(item.count||0),occurrences:Number(item.occurrences||0),machineCount:Number(item.machineCount||0),total:state.total,rate:Number(item.machineCount||0)>0?Number(item.count||0)/Number(item.machineCount||0)*100:0,rank,isTop5:rank>0&&rank<=5};
     });
-
-    try {
-      await apiPost({
-        action: 'saveDcProgressSnapshot',
-        sourceFile: state.file.name,
-        snapshotId: makeSnapshotId(),
-        total: state.total,
-        items
-      });
-      await loadProgress();
-      if (state.selectedDc && !progressPanel.hidden) await renderProgress(state.selectedDc);
-    } catch (e) {
-      console.warn('Snapshot DC Progress gagal disimpan:', e);
-      showError('Snapshot progress belum tersimpan: ' + e.message);
-      throw e;
-    }
+    const result = await apiPost({action:'saveDcProgressSnapshot',sourceFile:state.file.name,snapshotId:makeSnapshotId(),total:state.total,items});
+    state.snapshotStatus={alreadyRecordedToday:true,date:String(result.date||''),recordedAt:String(result.recordedAt||'')};
+    await loadProgress();
+    if(state.selectedDc&&!progressPanel.hidden)await renderProgress(state.selectedDc);
+    updateSnapshotButton();
+    return result;
   };
 
-  const getTargetDcItem = () => {
-    const value = String(targetDcSearch?.value || '').trim();
-    if (!value) return null;
-    return state.allRanking.find(item => item.name.toLowerCase() === value.toLowerCase()) || null;
+  const refreshSnapshotStatus = async () => {
+    try { const result=await apiGet('getDcSnapshotStatus'); state.snapshotStatus={alreadyRecordedToday:Boolean(result.alreadyRecordedToday),date:String(result.date||''),recordedAt:String(result.recordedAt||'')}; }
+    catch(error){console.warn('Status snapshot harian belum dapat dimuat:',error);state.snapshotStatus={alreadyRecordedToday:false,date:''};}
+    updateSnapshotButton();
   };
 
-  const updateTargetDc = () => {
-    if (!targetDcSearch || !recordTargetBtn) return;
-    const hasData = Boolean(state.file && state.allRanking.length);
-    targetDcSearch.disabled = !hasData;
-
-    targetDcList.innerHTML = state.allRanking.map(item =>
-      '<option value="' + escapeHtml(item.name) + '"></option>'
-    ).join('');
-
-    const item = getTargetDcItem();
-    if (!item) {
-      targetDcInfo.textContent = '';
-      recordTargetBtn.disabled = true;
-      return;
-    }
-
-    const tracked = state.progressRows.some(row =>
-      String(row.dcName || '').toLowerCase() === item.name.toLowerCase()
-    );
-
-    const rank = state.allRanking.findIndex(row => row.name === item.name) + 1;
-    targetDcInfo.textContent =
-      item.name + ' • ' + formatNumber(item.count) + ' IP unik • ' +
-      formatDcRate(item.count, item.machineCount) + ' • Rank #' + rank +
-      (tracked ? ' • Sedang dipantau' : ' • Belum masuk Progress');
-
-    recordTargetBtn.disabled = false;
-  };
-
-  const recordTargetSnapshot = async () => {
-    const item = getTargetDcItem();
-    if (!item || !state.file?.name || !state.total) return;
-
-    const progress = state.progressRows.find(row =>
-      String(row.dcName || '').toLowerCase() === item.name.toLowerCase()
-    );
-    if (!progress) {
-      // addDcProgress records the initial baseline; do not save it a second time.
-      showError('');
-      recordTargetBtn.disabled = true;
-      recordTargetBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Merekam...';
-      try {
-        await addProgress(item.name);
-      } finally {
-        updateTargetDc();
-        recordTargetBtn.innerHTML = '<i class="fas fa-camera"></i> Record Data DC';
-      }
-      return;
-    }
-
-    const rank = state.allRanking.findIndex(row => row.name === item.name) + 1;
-    const isTop5 = rank > 0 && rank <= 5;
-
-    showError('');
-    recordTargetBtn.disabled = true;
-    recordTargetBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Merekam...';
-
-    try {
-      const result = await apiPost({
-        action: 'saveDcProgressSnapshot',
-        sourceFile: state.file.name,
-        snapshotId: makeSnapshotId(),
-        total: state.total,
-        items: [{
-          dcName: progress.dcName,
-          count: item.count,
-          occurrences: item.occurrences,
-          machineCount: item.machineCount,
-          total: state.total,
-          rate: item.rate,
-          rank,
-          isTop5
-        }]
-      });
-
-      await loadProgress();
-      await renderProgress(progress.dcName);
-
-      if (result.saved) {
-        targetDcInfo.textContent = item.name + ' • ' + formatNumber(item.count) + ' IP unik • ' +
-          formatDcRate(item.count, item.machineCount) + ' • Rank #' + rank + ' • Data berhasil direcord.';
-        progressSaveStatus.innerHTML = '<i class="fas fa-circle-check"></i> Data ' +
-          escapeHtml(item.name) + ' berhasil direcord.';
-        progressSaveStatus.classList.add('visible');
-      } else {
-        targetDcInfo.textContent = item.name + ' • Data pada file ini sudah pernah direcord.';
-        progressSaveStatus.innerHTML = '<i class="fas fa-circle-check"></i> Data ' +
-          escapeHtml(item.name) + ' sudah pernah direcord dari file ini.';
-        progressSaveStatus.classList.add('visible');
-      }
-    } catch (e) {
-      showError('Data ' + item.name + ' belum tersimpan: ' + e.message);
-    } finally {
-      updateTargetDc();
-      recordTargetBtn.innerHTML = '<i class="fas fa-camera"></i> Record Data DC';
-    }
+  const updateSnapshotButton = () => {
+    if(!recordSnapshotBtn)return;
+    recordSnapshotBtn.disabled=!Boolean(state.file&&state.allRanking.length&&!state.snapshotStatus.alreadyRecordedToday&&!state.snapshotBusy);
+    recordSnapshotBtn.title=state.snapshotStatus.alreadyRecordedToday?'Snapshot seluruh DC sudah direkam hari ini (WIB).':'';
   };
 
   const normalizeDcKey = value => String(value || '').trim().toUpperCase().replace(/^GBE\./, '');
@@ -983,8 +860,6 @@
 
   openTrackedBtn.addEventListener('click', () => openProgress(trackedDcSelect.value));
 
-  targetDcSearch.addEventListener('input', updateTargetDc);
-  recordTargetBtn.addEventListener('click', recordTargetSnapshot);
 
   if (exportBtn) exportBtn.addEventListener('click', exportRanking);
 
@@ -1062,22 +937,15 @@
   uploadArea.addEventListener('drop', (event) => handleFile(event.dataTransfer?.files?.[0]));
 
   recordSnapshotBtn.addEventListener('click', async () => {
-    if (!state.file || !state.progressRows.length || !state.allRanking.length) return;
-
-    showError('');
-    recordSnapshotBtn.disabled = true;
-    recordSnapshotBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Merekam Snapshot...';
-
+    if(!state.file||!state.allRanking.length||state.snapshotStatus.alreadyRecordedToday||state.snapshotBusy)return;
+    showError('');state.snapshotBusy=true;updateSnapshotButton();
+    recordSnapshotBtn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Merekam Snapshot...';
     try {
-      await persistTrackedSnapshot();
-      progressSaveStatus.innerHTML = '<i class="fas fa-circle-check"></i> Data snapshot berhasil direcord untuk DC yang sedang dipantau.';
+      const result=await persistTrackedSnapshot();
+      progressSaveStatus.innerHTML='<i class="fas fa-circle-check"></i> Snapshot seluruh DC berhasil direkam. '+formatNumber(result.updatedDcs?.length||0)+' DC diperbarui, '+formatNumber(result.createdDcs?.length||0)+' DC baru ditambahkan ke Progress.';
       progressSaveStatus.classList.add('visible');
-    } catch (e) {
-      showError(e.message || 'Gagal merecord snapshot.');
-    } finally {
-      recordSnapshotBtn.disabled = false;
-      recordSnapshotBtn.innerHTML = '<i class="fas fa-camera"></i> Record Data Snapshot';
-    }
+    } catch(e){showError(e.message||'Gagal merekam snapshot.');await refreshSnapshotStatus();}
+    finally{state.snapshotBusy=false;recordSnapshotBtn.innerHTML='<i class="fas fa-camera"></i> Record Data Snapshot';updateSnapshotButton();}
   });
 
   processBtn.addEventListener('click', async () => {
@@ -1099,6 +967,7 @@
       state.readiness.minerplus = Boolean(state.file && state.allRanking.length);
       updateExportReadiness();
       await loadProgress();
+      await refreshSnapshotStatus();
       try {
         await loadCsiSummary();
       } catch (csiError) {
@@ -1110,7 +979,7 @@
         console.warn('Detail CSI belum dapat dimuat:', csiError);
       }
       updateExportReadiness();
-      recordSnapshotBtn.disabled = !(state.file && state.progressRows.length && state.allRanking.length);
+      updateSnapshotButton();
     } catch (e) {
       showError(e.message || 'Gagal menghitung snapshot.');
     } finally {
@@ -1141,10 +1010,8 @@
     recordSnapshotBtn.disabled = true;
     resultsSection.hidden = true;
     progressPanel.hidden = true;
-    targetDcSearch.value = '';
-    targetDcInfo.textContent = '';
-    targetDcSearch.disabled = true;
-    recordTargetBtn.disabled = true;
+    state.snapshotStatus = { alreadyRecordedToday:false, date:'' };
+    state.snapshotBusy = false;
     state.progressHistory = [];
     progressSaveStatus.classList.remove('visible');
     progressSaveStatus.textContent = '';
