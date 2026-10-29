@@ -1539,13 +1539,13 @@ function saveDcProgressSnapshot(payload) {
 
       const countChange = count - target.data.baselineCount;
       const rateChange = rate - target.data.baselineRate;
-      const percentChange = target.data.baselineCount === 0
+      const percentChange = target.data.baselineRate === 0
         ? 0
-        : ((count - target.data.baselineCount) / target.data.baselineCount) * 100;
-      const status = count < target.data.baselineCount
-        ? 'Berkurang'
-        : count > target.data.baselineCount
-          ? 'Bertambah'
+        : ((rate - target.data.baselineRate) / target.data.baselineRate) * 100;
+      const status = rate < target.data.baselineRate
+        ? 'Membaik'
+        : rate > target.data.baselineRate
+          ? 'Memburuk'
           : 'Tetap';
 
       historyRows.push([
@@ -1667,7 +1667,7 @@ function dcProgressRowToObject(row) {
     rateChange: Number(row[10] || 0),
     percentChange: Number(row[11] || 0),
     status: String(row[12] || '').trim(),
-    progressPercent: Number(row[2] || 0) === 0 ? 0 : ((Number(row[2] || 0) - Number(row[6] || 0)) / Number(row[2] || 0)) * 100,
+    progressPercent: Number(row[4] || 0) === 0 ? 0 : ((Number(row[4] || 0) - Number(row[8] || 0)) / Number(row[4] || 0)) * 100,
     updatedAt: toIsoOrText(row[13]),
     baselineOccurrences: Number(row[14] || 0),
     baselineMachines: Number(row[15] || 0),
