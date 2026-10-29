@@ -7,6 +7,7 @@
     ipColumn: -1,
     ranking: [],
     allRanking: [],
+    rankingMode: 'worst',
     total: 0,
     totalUniqueIps: 0,
     unmappedIps: [],
@@ -35,6 +36,8 @@
   const loading = $('loading');
   const resultsSection = $('resultsSection');
   const rankingBody = $('rankingBody');
+  const rankingWorstBtn = $('rankingWorstBtn');
+  const rankingBestBtn = $('rankingBestBtn');
   const emptyRanking = $('emptyRanking');
   const resultNote = $('resultNote');
   const progressPanel = $('progressPanel');
@@ -463,7 +466,34 @@
     });
 
     state.allRanking = allRanking;
-    state.ranking = allRanking.slice(0, 5);
+    renderRankingCards();
+
+    emptyRanking.hidden = state.ranking.length !== 0;
+    const noRankingNote = state.ranking.length
+      ? ''
+      : '<p>Tidak ada Nama DC yang dapat diambil dari mapping master-data.js.</p>';
+    const unmappedNote = state.unmappedIps.length
+      ? '<details class="dc-unmapped-ips"><summary>' +
+        formatNumber(state.unmappedIps.length) + ' IP unik tidak terpetakan ke DC</summary><p>' +
+        escapeHtml(state.unmappedIps.join(', ')) + '</p></details>'
+      : '';
+    resultNote.innerHTML = noRankingNote + unmappedNote;
+
+    resultsSection.hidden = false;
+    renderMachineCleaningCells();
+    updateTrackedAccess();
+  };
+
+  const renderRankingCards = () => {
+    const mode = state.rankingMode === 'best' ? 'best' : 'worst';
+    const candidates = mode === 'best'
+      ? state.allRanking.filter(item => Number(item.machineCount) > 0).slice().sort((a, b) =>
+          (a.rate - b.rate) ||
+          (a.count - b.count) ||
+          (a.occurrences - b.occurrences) ||
+          a.name.localeCompare(b.name, undefined, { numeric: true }))
+      : state.allRanking;
+    state.ranking = candidates.slice(0, 5);
 
     rankingBody.innerHTML = state.ranking.map((item, index) =>
       '<article class="dc-top-card">' +
@@ -483,24 +513,19 @@
         '<div class="dc-top-section dc-top-celldeck"><span class="dc-top-section-label">Detail Celldeck</span>' +
           '<div class="dc-csi-detail" data-csi-dc="' + escapeHtml(item.name) + '">Memuat detail...</div>' +
         '</div>' +
-        '<button class="dc-progress-btn" type="button" data-progress-dc="' + encodeURIComponent(item.name) + '"><i class="fas fa-chart-line"></i> Buka Progress</button>' +
       '</article>'
     ).join('');
 
     emptyRanking.hidden = state.ranking.length !== 0;
-    const noRankingNote = state.ranking.length
-      ? ''
-      : '<p>Tidak ada Nama DC yang dapat diambil dari mapping master-data.js.</p>';
-    const unmappedNote = state.unmappedIps.length
-      ? '<details class="dc-unmapped-ips"><summary>' +
-        formatNumber(state.unmappedIps.length) + ' IP unik tidak terpetakan ke DC</summary><p>' +
-        escapeHtml(state.unmappedIps.join(', ')) + '</p></details>'
-      : '';
-    resultNote.innerHTML = noRankingNote + unmappedNote;
-
-    resultsSection.hidden = false;
+    if (rankingWorstBtn && rankingBestBtn) {
+      const worstActive = mode === 'worst';
+      rankingWorstBtn.classList.toggle('is-active', worstActive);
+      rankingBestBtn.classList.toggle('is-active', !worstActive);
+      rankingWorstBtn.setAttribute('aria-pressed', String(worstActive));
+      rankingBestBtn.setAttribute('aria-pressed', String(!worstActive));
+    }
     renderMachineCleaningCells();
-    updateTrackedAccess();
+    renderCsiSummaryCells();
   };
 
   const getRankMap = () => {
@@ -852,14 +877,19 @@
     }
   };
 
-  rankingBody.addEventListener('click', (event) => {
-    const button = event.target.closest('[data-progress-dc]');
-    if (!button) return;
-    addProgress(decodeURIComponent(button.dataset.progressDc || ''));
-  });
-
   openTrackedBtn.addEventListener('click', () => openProgress(trackedDcSelect.value));
 
+
+  if (rankingWorstBtn) rankingWorstBtn.addEventListener('click', () => {
+    if (state.rankingMode === 'worst') return;
+    state.rankingMode = 'worst';
+    renderRankingCards();
+  });
+  if (rankingBestBtn) rankingBestBtn.addEventListener('click', () => {
+    if (state.rankingMode === 'best') return;
+    state.rankingMode = 'best';
+    renderRankingCards();
+  });
 
   if (exportBtn) exportBtn.addEventListener('click', exportRanking);
 
