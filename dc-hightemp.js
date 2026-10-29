@@ -331,7 +331,16 @@
         machineCount,
         rate: machineCount > 0 ? count / machineCount * 100 : 0
       };
-    }).sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, undefined, { numeric: true }));
+    }).sort((a, b) => {
+      // Rank by Zero Hashrate ratio; DCs without a machine denominator rank last.
+      const aHasMachines = a.machineCount > 0;
+      const bHasMachines = b.machineCount > 0;
+      if (aHasMachines !== bHasMachines) return aHasMachines ? -1 : 1;
+      return (b.rate - a.rate) ||
+        (b.count - a.count) ||
+        (b.occurrences - a.occurrences) ||
+        a.name.localeCompare(b.name, undefined, { numeric: true });
+    });
 
     state.allRanking = allRanking;
     state.ranking = allRanking.slice(0, 5);
