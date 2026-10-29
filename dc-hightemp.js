@@ -808,7 +808,7 @@
     if (segment.length) segments.push(segment);
     const grid = [max, max / 2, 0].map(v =>
       '<line x1="' + pad.left + '" y1="' + y(v) + '" x2="' + (width - pad.right) + '" y2="' + y(v) + '" class="dc-chart-grid"></line>' +
-      '<text x="' + (pad.left - 8) + '" y="' + (y(v) + 4) + '" text-anchor="end" class="dc-chart-label">' + escapeHtml(formatRate(v).replace(/%$/, unit === '%' ? '%' : '')) + '</text>'
+      '<text x="' + (pad.left - 8) + '" y="' + (y(v) + 4) + '" text-anchor="end" class="dc-chart-label">' + escapeHtml(unit === '%' ? formatRate(v) : formatNumber(v)) + '</text>'
     ).join('');
     const labelStep = Math.max(1, Math.ceil(ordered.length / 5));
     const labels = ordered.map((row, i) => {
