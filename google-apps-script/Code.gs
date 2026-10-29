@@ -81,6 +81,7 @@ function doGet(e) {
     if (action === 'getEngineers') return getEngineers();
     if (action === 'getDcProgress') return getDcProgress(e);
     if (action === 'getDcProgressHistory') return getDcProgressHistory(e);
+    if (action === 'getDcSnapshotStatus') return getDcSnapshotStatus();
     return jsonResponse({
       ok: true,
       service: 'COMP Work Tracking',
@@ -1408,6 +1409,11 @@ function getDcProgressHistory(e) {
   return jsonResponse({ ok: true, rows, total: rows.length });
 }
 
+function getDcSnapshotStatus() {
+ const props=PropertiesService.getScriptProperties(),today=Utilities.formatDate(new Date(),'Asia/Jakarta','yyyy-MM-dd'),date=String(props.getProperty('dc.hightemp.globalSnapshotDate')||'');
+ return jsonResponse({ok:true,date:today,alreadyRecordedToday:date===today,recordedAt:date===today?String(props.getProperty('dc.hightemp.globalSnapshotAt')||''):''});
+}
+
 function addDcProgress(payload) {
   const dcName = normalizeDcProgressText(payload?.dcName);
   const baselineCount = toNonNegativeNumber(payload?.baselineCount);
@@ -1482,114 +1488,36 @@ function addDcProgress(payload) {
 }
 
 function saveDcProgressSnapshot(payload) {
-  const sourceFile = normalizeDcProgressText(payload?.sourceFile);
-  const snapshotId = normalizeDcProgressText(payload?.snapshotId);
-  const total = toPositiveNumber(payload?.total);
-  const items = Array.isArray(payload?.items) ? payload.items : [];
-
-  if (!sourceFile || sourceFile.length > 255) return jsonResponse({ ok: false, error: 'Nama file snapshot tidak valid.' });
-  if (!snapshotId || snapshotId.length > 500) return jsonResponse({ ok: false, error: 'Snapshot ID tidak valid.' });
-  if (total === null) return jsonResponse({ ok: false, error: 'Total snapshot tidak valid.' });
-  if (!items.length) return jsonResponse({ ok: true, action: 'saveDcProgressSnapshot', saved: 0, duplicate: false });
-
-  const lock = LockService.getScriptLock();
-  lock.waitLock(30000);
-
-  try {
-    const progressSheet = getDcProgressSheet();
-    const historySheet = getDcProgressHistorySheet();
-    const progressData = progressSheet.getDataRange().getValues();
-    const historyData = historySheet.getDataRange().getValues();
-
-    const progressByDc = new Map();
-    for (let r = 1; r < progressData.length; r++) {
-      const row = dcProgressRowToObject(progressData[r]);
-      if (!row.status || !row.progressId || !row.dcName) continue;
-      const key = row.dcName.toLowerCase();
-      if (!progressByDc.has(key)) progressByDc.set(key, { rowNumber: r + 1, data: row });
-    }
-
-    const existingSnapshotKeys = new Set();
-    for (let r = 1; r < historyData.length; r++) {
-      const row = dcProgressHistoryRowToObject(historyData[r]);
-      if (row.progressId && row.snapshotId) existingSnapshotKeys.add(row.progressId + '|' + row.snapshotId);
-    }
-
-    const now = new Date();
-    const historyRows = [];
-    const updated = [];
-
-    for (const item of items) {
-      const dcName = normalizeDcProgressText(item?.dcName);
-      const target = progressByDc.get(dcName.toLowerCase());
-      if (!target) continue;
-
-      const count = toNonNegativeNumber(item?.count);
-      const occurrences = toNonNegativeNumber(item?.occurrences);
-      const machineCount = toNonNegativeNumber(item?.machineCount);
-      const rate = toFiniteNumber(item?.rate);
-      const rank = Number(item?.rank || 0);
-      const isTop5 = normalizeBoolean(item?.isTop5);
-
-      if (count === null || count > total || occurrences === null || occurrences > total ||
-          machineCount === null || rate === null || rate < 0) continue;
-
-      const snapshotKey = target.data.progressId + '|' + snapshotId;
-      if (existingSnapshotKeys.has(snapshotKey)) continue;
-
-      const countChange = count - target.data.baselineCount;
-      const rateChange = rate - target.data.baselineRate;
-      const percentChange = target.data.baselineRate === 0
-        ? 0
-        : ((rate - target.data.baselineRate) / target.data.baselineRate) * 100;
-      const status = rate < target.data.baselineRate
-        ? 'Membaik'
-        : rate > target.data.baselineRate
-          ? 'Memburuk'
-          : 'Tetap';
-
-      historyRows.push([
-        'DCPH-' + Utilities.getUuid().replace(/-/g, '').slice(0, 16).toUpperCase(),
-        target.data.progressId,
-        target.data.dcName,
-        sourceFile,
-        snapshotId,
-        count,
-        total,
-        rate,
-        countChange,
-        percentChange,
-        rank > 0 ? rank : '',
-        isTop5,
-        now,
-        occurrences,
-        machineCount
-      ]);
-
-      progressSheet.getRange(target.rowNumber, 7, 1, 8).setValues([[
-        count, total, rate,
-        countChange, rateChange, percentChange, status, now
-      ]]);
-      progressSheet.getRange(target.rowNumber, 17, 1, 2).setValues([[occurrences, machineCount]]);
-
-      existingSnapshotKeys.add(snapshotKey);
-      updated.push(target.data.dcName);
-    }
-
-    if (historyRows.length) {
-      historySheet.getRange(historySheet.getLastRow() + 1, 1, historyRows.length, DC_PROGRESS_HISTORY_HEADERS.length).setValues(historyRows);
-    }
-
-    SpreadsheetApp.flush();
-    return jsonResponse({
-      ok: true,
-      action: 'saveDcProgressSnapshot',
-      saved: historyRows.length,
-      updatedDcs: updated
-    });
-  } finally {
-    lock.releaseLock();
+  const sourceFile=normalizeDcProgressText(payload?.sourceFile),snapshotId=normalizeDcProgressText(payload?.snapshotId),total=toPositiveNumber(payload?.total),items=Array.isArray(payload?.items)?payload.items:[];
+  if(!sourceFile||sourceFile.length>255)return jsonResponse({ok:false,error:'Nama file snapshot tidak valid.'});
+  if(!snapshotId||snapshotId.length>500)return jsonResponse({ok:false,error:'Snapshot ID tidak valid.'});
+  if(total===null)return jsonResponse({ok:false,error:'Total snapshot tidak valid.'});
+  if(!items.length)return jsonResponse({ok:false,error:'Tidak ada DC yang dapat direkam.'});
+  const normalized=[],seen=new Set();
+  for(const item of items){const dcName=normalizeDcProgressText(item?.dcName),count=toNonNegativeNumber(item?.count),occurrences=toNonNegativeNumber(item?.occurrences),machineCount=toNonNegativeNumber(item?.machineCount),rate=toFiniteNumber(item?.rate),rank=Number(item?.rank||0);
+    if(!dcName||dcName.length>150||seen.has(dcName.toLowerCase()))return jsonResponse({ok:false,error:'Nama DC kosong, terlalu panjang, atau duplikat: '+dcName});
+    if(count===null||count>total||occurrences===null||occurrences>total||machineCount===null||rate===null||rate<0||!Number.isFinite(rank)||rank<0)return jsonResponse({ok:false,error:'Data snapshot tidak valid untuk DC '+dcName+'.'});
+    seen.add(dcName.toLowerCase());normalized.push({dcName,count,occurrences,machineCount,rate,rank:rank>0?rank:0,isTop5:normalizeBoolean(item?.isTop5)});
   }
+  const lock=LockService.getScriptLock();lock.waitLock(30000);
+  try{
+    const today=Utilities.formatDate(new Date(),'Asia/Jakarta','yyyy-MM-dd'),props=PropertiesService.getScriptProperties();
+    if(String(props.getProperty('dc.hightemp.globalSnapshotDate')||'')===today)return jsonResponse({ok:false,alreadyRecordedToday:true,date:today,error:'Snapshot seluruh DC sudah direkam hari ini (WIB).'});
+    const ps=getDcProgressSheet(),hs=getDcProgressHistorySheet(),data=ps.getDataRange().getValues(),byDc=new Map();
+    for(let r=1;r<data.length;r++){const row=dcProgressRowToObject(data[r]);if(row.status&&row.progressId&&row.dcName&&!byDc.has(row.dcName.toLowerCase()))byDc.set(row.dcName.toLowerCase(),{rowNumber:r+1,data:row});}
+    const now=new Date(),newRows=[],historyRows=[],updates=[],created=[],updated=[];
+    for(const item of normalized){let target=byDc.get(item.dcName.toLowerCase()),isNew=!target;
+      if(isNew){const id='DCP-'+Utilities.getUuid().replace(/-/g,'').slice(0,16).toUpperCase();target={rowNumber:0,data:{progressId:id,dcName:item.dcName,baselineCount:item.count,baselineTotal:total,baselineRate:item.rate,baselineFile:sourceFile}};newRows.push([id,item.dcName,item.count,total,item.rate,sourceFile,item.count,total,item.rate,0,0,0,'Tetap',now,item.occurrences,item.machineCount,item.occurrences,item.machineCount]);created.push(item.dcName);}
+      else{const base=Number(target.data.baselineRate||0),countChange=item.count-Number(target.data.baselineCount||0),rateChange=item.rate-base,percentChange=base===0?0:((item.rate-base)/base)*100,status=item.rate<base?'Membaik':item.rate>base?'Memburuk':'Tetap';updates.push({rowNumber:target.rowNumber,item,countChange,rateChange,percentChange,status});updated.push(target.data.dcName);}
+      const baseRate=Number(target.data.baselineRate||0);
+      historyRows.push(['DCPH-'+Utilities.getUuid().replace(/-/g,'').slice(0,16).toUpperCase(),target.data.progressId,target.data.dcName,sourceFile,snapshotId,item.count,total,item.rate,isNew?0:item.count-Number(target.data.baselineCount||0),isNew||baseRate===0?0:((item.rate-baseRate)/baseRate)*100,item.rank||'',item.isTop5,now,item.occurrences,item.machineCount]);
+    }
+    for(const u of updates){ps.getRange(u.rowNumber,7,1,8).setValues([[u.item.count,total,u.item.rate,u.countChange,u.rateChange,u.percentChange,u.status,now]]);ps.getRange(u.rowNumber,17,1,2).setValues([[u.item.occurrences,u.item.machineCount]]);}
+    if(newRows.length)ps.getRange(ps.getLastRow()+1,1,newRows.length,DC_PROGRESS_HEADERS.length).setValues(newRows);
+    if(historyRows.length)hs.getRange(hs.getLastRow()+1,1,historyRows.length,DC_PROGRESS_HISTORY_HEADERS.length).setValues(historyRows);
+    SpreadsheetApp.flush();props.setProperty('dc.hightemp.globalSnapshotDate',today);props.setProperty('dc.hightemp.globalSnapshotAt',now.toISOString());
+    return jsonResponse({ok:true,action:'saveDcProgressSnapshot',date:today,recordedAt:now.toISOString(),saved:historyRows.length,updatedDcs:updated,createdDcs:created});
+  }finally{lock.releaseLock();}
 }
 
 function getDcProgressSheet() {
