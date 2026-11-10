@@ -2,13 +2,11 @@
   'use strict';
 
   const state = {
-    file: null,
     rows: [],
     filteredRows: [],
     sortDesc: true,
     zoneFilter: 'all',
     topDcFilter: '',
-    sourceColumn: '',
     sourceFileName: '',
     loadedAt: '',
     dataSource: 'none',
@@ -23,12 +21,6 @@
 
   const $ = (id) => document.getElementById(id);
 
-  const fileInput = $('excelFile');
-  const uploadArea = $('fileUploadArea');
-  const fileName = $('fileName');
-  const processBtn = $('processBtn');
-  const uploadError = $('uploadError');
-  const loading = $('loading');
   const resultsSection = $('resultsSection');
   const resultsBody = $('resultsBody');
   const emptyResults = $('emptyResults');
@@ -38,7 +30,6 @@
   const topDcCards = $('topDcCards');
   const zoneFilter = $('zoneFilter');
   const resultSummary = $('resultSummary');
-  const masterDataStatus = $('masterDataStatus');
   const sharedDataStatus = $('sharedDataStatus');
   const menuToggle = $('menuToggle');
   const sidebar = $('sidebar');
@@ -72,15 +63,6 @@
     });
   }
 
-  function findLocationColumn(headers) {
-    const normalized = headers.map(header => String(header ?? '').replace(/\uFEFF/g, '').replace(/\s+/g, '').toLowerCase());
-    return normalized.findIndex(header => ['locationid', 'location', 'locationname'].includes(header));
-  }
-
-  function normalizeUploadedLocation(value) {
-    return String(value ?? '').replace(/\s+/g, ' ').trim().toUpperCase();
-  }
-
   function findIpColumn(headers) {
     const normalized = headers.map(header => String(header ?? '').replace(/\uFEFF/g, '').replace(/\s+/g, '').toLowerCase());
     let index = normalized.findIndex(header => header === 'ip');
@@ -103,17 +85,6 @@
     if (parts.length >= 2 && parts[0].toUpperCase() === 'GBE' && parts[1].trim()) return parts[1].trim();
     return '';
   }
-
-  function showError(message) {
-    uploadError.textContent = message;
-    uploadError.classList.add('visible');
-  }
-
-  function clearError() {
-    uploadError.textContent = '';
-    uploadError.classList.remove('visible');
-  }
-
 
   function getSheetsConfig() {
     return window.CompGoogleSheetsConfig || { webAppUrl: '', requestKey: '' };
@@ -168,45 +139,6 @@
     return result;
   }
 
-  async function saveSharedIpRepeat(rows, sourceFileName) {
-    const config = getSheetsConfig();
-    const baseUrl = String(config.webAppUrl || '').trim();
-    if (!baseUrl) throw new Error('Google Sheets belum dikonfigurasi.');
-
-    const response = await fetch(baseUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
-      body: JSON.stringify({
-        action: 'replaceIpRepeat',
-        rows,
-        sourceFileName,
-        requestKey: String(config.requestKey || '')
-      })
-    });
-
-    const text = await response.text();
-    let result;
-    try {
-      result = JSON.parse(text);
-    } catch (_) {
-      throw new Error(`Google Apps Script mengembalikan response tidak valid (HTTP ${response.status}).`);
-    }
-
-    if (!response.ok || !result?.ok) {
-      throw new Error(result?.error || `Gagal menyimpan IP Repeat bersama (HTTP ${response.status}).`);
-    }
-
-    if (Number(result.saved || 0) !== rows.length) {
-      throw new Error(`Google Sheets menyimpan ${result.saved || 0} dari ${rows.length} IP.`);
-    }
-
-    state.sourceFileName = sourceFileName || '';
-    state.loadedAt = result.updatedAt || new Date().toISOString();
-    state.dataSource = 'remote';
-    updateSharedDataStatus();
-    return result;
-  }
-
   function applySharedRows(result) {
     const rows = Array.isArray(result?.rows) ? result.rows : [];
     state.rows = rows
@@ -219,7 +151,6 @@
         zone: String(row.zone || '-').trim() || '-'
       }));
 
-    state.sourceColumn = 'IP';
     state.sourceFileName = String(result?.sourceFileName || '').trim();
     state.loadedAt = result?.updatedAt || new Date().toISOString();
     state.dataSource = 'remote';
@@ -253,25 +184,6 @@
     }
   }
 
-
-  function setFile(file) {
-    clearError();
-    if (!file) return;
-
-    const extension = file.name.split('.').pop().toLowerCase();
-    if (!['xls', 'xlsx'].includes(extension)) {
-      state.file = null;
-      processBtn.disabled = true;
-      fileName.textContent = 'Belum ada file';
-      showError('Format file tidak didukung. Gunakan file .xls atau .xlsx.');
-      return;
-    }
-
-    state.file = file;
-    fileName.textContent = file.name;
-    processBtn.disabled = false;
-    uploadArea.classList.add('has-file');
-  }
 
   async function loadEngineerCatalog() {
     const fallbackCatalog = Array.isArray(window.engineerData) ? window.engineerData : [];
@@ -591,125 +503,6 @@
     updateSelectionUi();
   }
 
-  async function processFile() {
-    if (!state.file) return;
-
-    clearError();
-    showWorkMessage('');
-    loading.classList.add('visible');
-    resultsSection.hidden = true;
-    processBtn.disabled = true;
-
-    try {
-      const buffer = await state.file.arrayBuffer();
-      const workbook = XLSX.read(buffer, { type: 'array', cellDates: false });
-
-      if (!workbook.SheetNames.length) {
-        throw new Error('File Excel tidak memiliki worksheet.');
-      }
-
-      const sheet = workbook.Sheets[workbook.SheetNames[0]];
-      const matrix = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '', raw: false });
-
-      let headerRowIndex = -1;
-      let ipColumnIndex = -1;
-      let locationColumnIndex = -1;
-
-      const scanLimit = Math.min(matrix.length, 20);
-      for (let i = 0; i < scanLimit; i++) {
-        const candidate = findIpColumn(matrix[i] || []);
-        if (candidate !== -1) {
-          headerRowIndex = i;
-          ipColumnIndex = candidate;
-          locationColumnIndex = findLocationColumn(matrix[i] || []);
-          break;
-        }
-      }
-
-      if (headerRowIndex === -1) {
-        throw new Error('Kolom IP tidak ditemukan. Pastikan file memiliki header bernama IP.');
-      }
-
-      state.sourceColumn = String(matrix[headerRowIndex][ipColumnIndex] ?? 'IP').trim() || 'IP';
-
-      const counts = new Map();
-      const locationsByIp = new Map();
-      let validIpRows = 0;
-
-      for (let i = headerRowIndex + 1; i < matrix.length; i++) {
-        const ip = normalizeIp(matrix[i]?.[ipColumnIndex]);
-        if (!ip || !isIpv4(ip)) continue;
-
-        validIpRows++;
-        counts.set(ip, (counts.get(ip) || 0) + 1);
-        if (locationColumnIndex !== -1) {
-          const location = normalizeUploadedLocation(matrix[i]?.[locationColumnIndex]);
-          if (location && !locationsByIp.has(ip)) locationsByIp.set(ip, location);
-        }
-      }
-
-      state.rows = Array.from(counts, ([ip, repeat]) => {
-        const masterName = window.masterData && Object.prototype.hasOwnProperty.call(window.masterData, ip)
-          ? String(window.masterData[ip] ?? '').trim()
-          : null;
-
-        return {
-          ip,
-          repeat,
-          location: locationsByIp.get(ip) || normalizeUploadedLocation(masterName),
-          name: masterName || 'Bukan IP DC',
-          isMaster: Boolean(masterName),
-          zone: getZoneFromMasterName(masterName)
-        };
-      });
-
-      state.selectedIps.clear();
-      if (window.CompMachineResolver?.setIpRepeatUploadLocations) {
-        window.CompMachineResolver.setIpRepeatUploadLocations(locationsByIp);
-      }
-      state.sourceFileName = state.file.name;
-      state.loadedAt = '';
-      state.dataSource = 'local';
-      updateSharedDataStatus();
-      showWorkMessage('');
-      resultSummary.textContent =
-        `${validIpRows.toLocaleString('id-ID')} data IP valid dari kolom "${state.sourceColumn}" → ${state.rows.length.toLocaleString('id-ID')} IP unik.`;
-
-      resultsSection.hidden = false;
-      searchInput.value = '';
-      if (zoneFilter) zoneFilter.value = 'all';
-      state.zoneFilter = 'all';
-      state.sortDesc = true;
-      sortBtn.dataset.order = 'desc';
-      sortBtn.innerHTML = '<i class="fas fa-arrow-down-wide-short"></i><span>Repeat Terbanyak</span>';
-      render();
-
-      try {
-        showWorkMessage('Menyimpan dataset IP Repeat ke Google Sheets untuk dibagikan ke user lain...');
-        const sharedRows = state.rows.map(row => ({
-          ip: row.ip,
-          name: row.name,
-          zone: row.zone,
-          repeat: row.repeat
-        }));
-        await saveSharedIpRepeat(sharedRows, state.sourceFileName);
-        showWorkMessage('Dataset IP Repeat berhasil dibagikan ke Google Sheets.');
-      } catch (shareError) {
-        console.error(shareError);
-        showWorkMessage(
-          `Analisis lokal berhasil, tetapi dataset belum berhasil dibagikan: ${shareError.message || 'error'}`,
-          true
-        );
-      }
-    } catch (error) {
-      console.error(error);
-      showError(error.message || 'Gagal memproses file Excel.');
-    } finally {
-      loading.classList.remove('visible');
-      processBtn.disabled = !state.file;
-    }
-  }
-
   async function saveWorkForSelected() {
     if (state.saveInProgress) return;
 
@@ -814,25 +607,6 @@
     XLSX.writeFile(workbook, 'IP_Repeat_Analysis.xlsx');
   }
 
-  fileInput.addEventListener('change', event => setFile(event.target.files?.[0]));
-
-  ['dragenter', 'dragover'].forEach(type => {
-    uploadArea.addEventListener(type, event => {
-      event.preventDefault();
-      uploadArea.classList.add('drag-over');
-    });
-  });
-
-  ['dragleave', 'drop'].forEach(type => {
-    uploadArea.addEventListener(type, event => {
-      event.preventDefault();
-      uploadArea.classList.remove('drag-over');
-    });
-  });
-
-  uploadArea.addEventListener('drop', event => setFile(event.dataTransfer.files?.[0]));
-
-  processBtn.addEventListener('click', processFile);
   window.addEventListener('comp:ip-repeat-serials-ready', (event) => {
     const serials = event.detail?.serialByIp;
     if (!(serials instanceof Map)) return;
@@ -956,10 +730,6 @@
       sidebarOverlay.classList.remove('active');
     }
   });
-
-  masterDataStatus.textContent = window.masterData && typeof window.masterData === 'object'
-    ? `${Object.keys(window.masterData).length.toLocaleString('id-ID')} IP`
-    : 'Tidak tersedia';
 
   loadEngineerCatalog();
   updateSelectionUi();
