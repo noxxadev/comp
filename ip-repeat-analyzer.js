@@ -29,8 +29,6 @@
   const copyResultsBtn = $('copyResultsBtn');
   const topDcCards = $('topDcCards');
   const zoneFilter = $('zoneFilter');
-  const resultSummary = $('resultSummary');
-  const sharedDataStatus = $('sharedDataStatus');
   const menuToggle = $('menuToggle');
   const sidebar = $('sidebar');
   const sidebarOverlay = $('sidebarOverlay');
@@ -90,27 +88,6 @@
     return window.CompGoogleSheetsConfig || { webAppUrl: '', requestKey: '' };
   }
 
-  function updateSharedDataStatus() {
-    if (!sharedDataStatus) return;
-
-    if (!state.rows.length) {
-      sharedDataStatus.textContent = 'Belum ada dataset';
-      return;
-    }
-
-    const stamp = state.loadedAt ? new Date(state.loadedAt) : null;
-    const stampText = stamp && !Number.isNaN(stamp.getTime())
-      ? ` • ${stamp.toLocaleString('id-ID')}`
-      : '';
-
-    const source = state.dataSource === 'remote'
-      ? 'Google Sheets'
-      : 'Lokal';
-
-    sharedDataStatus.textContent =
-      `${state.rows.length.toLocaleString('id-ID')} IP • ${source}${stampText}`;
-  }
-
   async function getSharedIpRepeat() {
     const config = getSheetsConfig();
     const baseUrl = String(config.webAppUrl || '').trim();
@@ -156,9 +133,6 @@
     state.dataSource = 'remote';
     state.selectedIps.clear();
 
-    resultSummary.textContent =
-      `${state.rows.length.toLocaleString('id-ID')} IP unik dari dataset bersama${state.sourceFileName ? ` • ${state.sourceFileName}` : ''}.`;
-
     resultsSection.hidden = false;
     searchInput.value = '';
     if (zoneFilter) zoneFilter.value = 'all';
@@ -167,20 +141,20 @@
     sortBtn.dataset.order = 'desc';
     sortBtn.innerHTML = '<i class="fas fa-arrow-down-wide-short"></i><span>Repeat Terbanyak</span>';
     render();
-    updateSharedDataStatus();
+
   }
 
   async function loadSharedIpRepeat() {
     try {
       const result = await getSharedIpRepeat();
       if (!Array.isArray(result?.rows) || !result.rows.length) {
-        updateSharedDataStatus();
+
         return;
       }
       applySharedRows(result);
     } catch (error) {
       console.warn('IP Repeat shared dataset tidak tersedia:', error);
-      updateSharedDataStatus();
+
     }
   }
 
@@ -733,6 +707,6 @@
 
   loadEngineerCatalog();
   updateSelectionUi();
-  updateSharedDataStatus();
+
   loadSharedIpRepeat();
 })();
