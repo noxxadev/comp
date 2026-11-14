@@ -91,6 +91,22 @@
       return;
     }
 
+    // MinerPlus upload is an Admin-only page. Enforce access here,
+    // not only by hiding its navigation link.
+    if (currentPage === 'ip-repeat-upload.html' && role !== 'ADMIN') {
+      location.replace(role === 'CSI' ? 'csi.html' : 'index.html');
+      return;
+    }
+
+    // Hide every navigation/workflow link to the Admin-only upload page
+    // for non-Admin users, including the CSI role.
+    if (role !== 'ADMIN') {
+      document.querySelectorAll('a[href]').forEach(link => {
+        const target = (link.getAttribute('href') || '').split(/[?#]/)[0].split('/').pop();
+        if (target === 'ip-repeat-upload.html') link.remove();
+      });
+    }
+
     // Priority requests are restricted to Admin accounts; backend checks remain authoritative.
     if (currentPage === 'csi-priority-requests.html' && role !== 'ADMIN') {
       location.replace(role === 'CSI' ? 'csi.html' : 'index.html');
