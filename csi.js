@@ -29,18 +29,21 @@
     return window.CompAuth?.getSession?.() || localStorage.getItem('comp.auth.session') || '';
   }
   function configUrl() {
-    return String(window.CompCsiConfig?.apiUrl || '/api/csi');
+    const url = String(window.CompCsiConfig?.webAppUrl || '').trim();
+    if (!url) throw new Error('URL Web App CSI belum diatur di csi-google-sheets-config.js.');
+    if (!/^https:\/\/script\.google\.com\/(?:a\/macros\/[^/]+\/s|macros\/s)\/[^/]+\/exec(?:\?.*)?$/.test(url)) throw new Error('URL Web App CSI tidak valid. Gunakan URL deployment yang berakhiran /exec.');
+    return url;
   }
   async function request(action, payload = {}) {
     const response = await fetch(configUrl(), {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
       body: JSON.stringify({ action, session: session(), ...payload }),
-      cache: 'no-store', credentials: 'same-origin'
+      cache: 'no-store', credentials: 'omit', redirect: 'follow'
     });
     const raw = await response.text();
     let result;
-    try { result = JSON.parse(raw); } catch (_) { throw new Error('Respons CSI tidak valid. Periksa API proxy Vercel dan deployment backend.'); }
+    try { result = JSON.parse(raw); } catch (_) { throw new Error('Respons CSI tidak valid. Pastikan URL Web App sudah benar dan deployment terbaru sudah aktif.'); }
     if (!response.ok || !result?.ok) throw new Error(result?.error || 'Permintaan CSI gagal.');
     return result;
   }
